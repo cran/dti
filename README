@@ -1,0 +1,9 @@
+2008/3/10: changes from version 0.4-0 to 0.5-0
+
+- new method for tensor estimation 
+  method=="regularized"  uses the parametrization from Koay et.al. (2006)
+
+- alternative statistical penalty based on difference of log-likelihood values 
+  (this will be the only available method for method=="nonlinear" and method=="regularized"
+  since it eliminates the need to distinguish between covariance matrices for D and rho)
+  

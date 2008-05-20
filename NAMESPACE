@@ -1,0 +1,9 @@
+useDynLib(dti)
+
+importFrom(graphics,plot)
+importFrom(fmri,read.NIFTI,write.NIFTI)
+importFrom(adimpro,make.image,show.image)
+exportClasses("dti","dtiData","dtiTensor","dtiIndices")
+exportMethods("plot","print","summary","dti.smooth","dtiTensor","dtiIndices")
+export(dtiData)
+export(tensor2medinria,medinria2tensor)
