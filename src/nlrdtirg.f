@@ -1,5 +1,5 @@
-      subroutine nlrdtirg(s,nb,n1,n2,n3,mask,b,th0,D,niter,eps,
-     1                    res,rss)
+      subroutine nlrdtirg(s,nb,n1,n2,n3,mask,b,sdcoef,th0,D,niter,eps,
+     1                    res,rss,varinv)
 C
 C  this is based on a regularized tensor similar to Koay et.al. (2006)
 C
@@ -7,17 +7,14 @@ C
       integer nb,n1,n2,n3,s(nb,n1,n2,n3),niter
       logical mask(n1,n2,n3)
       real*8 D(6,n1,n2,n3),b(6,nb),res(nb,n1,n2,n3),
-     1    th0(n1,n2,n3),eps,rss(n1,n2,n3)
+     1    th0(n1,n2,n3),eps,rss(n1,n2,n3),sdcoef(4),varinv(nb)
       integer i1,i2,i3,j
-      call intpr("niter",5,niter,1)
       DO i3=1,n3
-         call intpr("Nonlinear regression for slice No:",34,i3,1)
          DO i2=1,n2
             DO i1=1,n1
-C               call intpr("i1",2,i1,1)
                if(mask(i1,i2,i3)) THEN
-                  call islvdti(s(1,i1,i2,i3),nb,b,th0(i1,i2,i3),
-     1                       D(1,i1,i2,i3),
+                  call islvdti(s(1,i1,i2,i3),nb,b,sdcoef,varinv,
+     1                       th0(i1,i2,i3),D(1,i1,i2,i3),
      2                       res(1,i1,i2,i3),niter,eps,rss(i1,i2,i3))
                ELSE
                   DO j=1,6
@@ -30,7 +27,7 @@ C               call intpr("i1",2,i1,1)
       END DO
       RETURN
       END
-      subroutine islvdtir(s,nb,b,th0,D,F,niter,eps,rss)
+      subroutine islvdtir(s,nb,b,varinv,th0,D,F,niter,eps,rss)
 C
 C  Implements the regularized Gauss-Newton Algortithm (10.2.8)
 C  from Schwetlick (1979)
@@ -38,12 +35,11 @@ C
       implicit logical (a-z)
       integer nb,s(nb),niter
       real*8 D(6),rho(6),b(6,nb),th0,F(nb),eps
-      integer i,j,k,info,iter,indvar,icount
-      real*8 z,gamma,alpha,delta,
+      integer i,j,k,info,iter,icount
+      real*8 z,gamma,alpha,delta,varinv(nb),
      1       dg(7),pk(7),ak(7,7),ck(7,7),rss,nrss,crss,maxabsdg,
-     2       oldrss,relrss,rhon(6),Dn(6),res,X(7),th0n,XX(6)
-      external indvar
-C      call intpr("slvdtirg",8,1,1)
+     2       oldrss,relrss,rhon(6),Dn(6),res,X(7),th0n,XX(6),xzvarinv
+      logical negdefin
       delta=0.25D0
       gamma=1.d0
       alpha=0.7d0
@@ -54,13 +50,13 @@ C   for test purposes only
       call D2rho(D,rho)
 C includes regularization of D
       DO i=1,nb
-         z=0.d0
-         DO j=1,6
+         z=b(1,i)*D(1)
+         DO j=2,6
             z=z+b(j,i)*D(j)
          END DO
          z=exp(-z)
          res=s(i)-th0*z
-         rss=rss+res*res
+         rss=rss+res*res*varinv(i)
          F(i)=res
       END DO
       th0n = th0
@@ -71,10 +67,10 @@ C includes regularization of D
             DO k=j,7
                ak(j,k)=0.d0
             END DO
-         END DO            
+         END DO
          DO i=1,nb
-            z=0.d0
-            DO j=1,6
+            z=b(1,i)*D(1)
+            DO j=2,6
                z=z+b(j,i)*D(j)
             END DO
             z=exp(-z)
@@ -90,9 +86,10 @@ C includes regularization of D
             X(5)=rho(4)*XX(5)+2.d0*rho(5)*XX(6)
             X(6)=2*rho(6)*XX(6)
             DO j=1,7
-               dg(j)=dg(j)+X(j)*F(i)
+               xzvarinv=X(j)*varinv(i)
+               dg(j)=dg(j)+xzvarinv*F(i)
                DO k=j,7
-                  ak(j,k)=ak(j,k)+X(j)*X(k)
+                  ak(j,k)=ak(j,k)+xzvarinv*X(k)
                END DO
             END DO 
          END DO
@@ -103,22 +100,12 @@ C includes regularization of D
          relrss = (oldrss-rss)/rss
          IF(maxabsdg.lt.eps.or.relrss.lt.1d-6) THEN
 C  prepare things for return if gradient is close to 0
-            call regularD(D,negdefin)
-C      call dblepr("D0",2,D0,6)
-C      call dblepr("Da",2,D,6)
-C            call testreg(D,1)
-C            call dblepr("rhon1",5,rhon,6)
-C            call intpr("iter",4,iter,1)
+            call regD0(D,negdefin)
             RETURN
          END IF
-         IF(iter.gt.1.and.abs(rhon(1)*rhon(4)*rhon(6)).lt.1.d-10) THEN
+         IF(iter.gt.1.and.abs(rho(1)*rho(4)*rho(6)).lt.1.d-10) THEN
 C  prepare things for return if gradient is close to 0
-            call regularD(D,negdefin)
-C      call dblepr("D0",2,D0,6)
-C      call dblepr("Db",2,D,6)
-C            call testreg(D,1)
-C            call dblepr("rhon3",5,rhon,6)
-C            call intpr("iter",4,iter,1)
+            call regD0(D,negdefin)
             RETURN
          END IF
          gamma=min(gamma/alpha,1.d0)
@@ -147,7 +134,7 @@ C   we may still need ak and dg so copy them to pk and ck
                pk(j)=dg(j)
             END DO
 C   Now solve  ak%*%dtheta= dg
-	    call dposv("U",7,1,ck,7,pk,7,info)
+            call dposv("U",7,1,ck,7,pk,7,info)
 C  Step 4 we have pk 
             IF(info.ne.0) THEN
                gamma=alpha*gamma
@@ -164,16 +151,16 @@ C  next iteration
                nrss=0.d0
                call rho2D(rhon,Dn)
                DO i=1,nb
-                  z=0.d0
-                  DO j=1,6
+                  z=b(1,i)*Dn(1)
+                  DO j=2,6
                      z=z+b(j,i)*Dn(j)
                   END DO
-                  res=s(i)-th0n*exp(-z)
-                  nrss=nrss+res*res
+                  res=(s(i)-th0n*exp(-z))
+                  nrss=nrss+res*res*varinv(i)
                   F(i)=res
                END DO
-               crss=0.d0
-               DO j=1,7
+               crss=dg(1)*pk(1)
+               DO j=2,7
                   crss=crss+dg(j)*pk(j)
                END DO
                crss=rss-delta*gamma*crss
@@ -195,42 +182,36 @@ C  decrease gamma and try new regularization
          rss=nrss
          call rchkusr()
       END DO
-      call regularD(D,negdefin)
-C      call dblepr("D0",2,D0,6)
-C      call dblepr("Dc",2,D,6)
-C      call testreg(D,2)
-C      call dblepr("rhon2",5,rhon,6)
-C      call intpr("niter",5,niter,1)
+      call regD0(D,negdefin)
       RETURN
       END
-      subroutine dslvdtir(s,nb,b,th0,D,F,niter,eps,rss)
+      subroutine dslvdtir(s,nb,b,varinv,th0,D,F,niter,eps,rss)
 C
 C  Implements the regularized Gauss-Newton Algortithm (10.2.8)
 C  from Schwetlick (1979)
 C
       implicit logical (a-z)
       integer nb,niter
-      real*8 s(nb),D(6),rho(6),b(6,nb),th0,F(nb),eps
-      integer i,j,k,info,iter,indvar,icount
-      real*8 z,gamma,alpha,delta,
+      real*8 s(nb),D(6),rho(6),b(6,nb),varinv(nb),th0,F(nb),eps
+      integer i,j,k,info,iter,icount
+      real*8 z,gamma,alpha,delta,xzvarinv,
      1       dg(7),pk(7),ak(7,7),ck(7,7),rss,nrss,crss,maxabsdg,
      2       oldrss,relrss,rhon(6),Dn(6),res,X(7),th0n,XX(6)
-      external indvar
+      logical negdefin
       delta=0.25D0
       gamma=1.d0
       alpha=0.7d0
       oldrss=1.d50
       rss=0.d0
-C      call regularD(D)
       call D2rho(D,rho)
       DO i=1,nb
-         z=0.d0
-         DO j=1,6
+         z=b(1,i)*D(1)
+         DO j=2,6
             z=z+b(j,i)*D(j)
          END DO
          z=exp(-z)
          res=s(i)-th0*z
-         rss=rss+res*res
+         rss=rss+res*res*varinv(i)
          F(i)=res
       END DO
       th0n = th0
@@ -243,8 +224,8 @@ C      call regularD(D)
             END DO
          END DO            
          DO i=1,nb
-            z=0.d0
-            DO j=1,6
+            z=b(1,i)*D(1)
+            DO j=2,6
                z=z+b(j,i)*D(j)
             END DO
             z=exp(-z)
@@ -260,9 +241,10 @@ C      call regularD(D)
             X(5)=rho(4)*XX(5)+2.d0*rho(5)*XX(6)
             X(6)=2*rho(6)*XX(6)
             DO j=1,7
-               dg(j)=dg(j)+X(j)*F(i)
+               xzvarinv=X(j)*varinv(i)
+               dg(j)=dg(j)+xzvarinv*F(i)
                DO k=j,7
-                  ak(j,k)=ak(j,k)+X(j)*X(k)
+                  ak(j,k)=ak(j,k)+xzvarinv*X(k)
                END DO
             END DO 
          END DO
@@ -273,16 +255,12 @@ C      call regularD(D)
          relrss = (oldrss-rss)/rss
          IF(maxabsdg.lt.eps.or.relrss.lt.1d-6) THEN
 C  prepare things for return if gradient is close to 0
-            call regularD(D,negdefin)
-C            call testreg(D,1)
+            call regD0(D,negdefin)
             RETURN
          END IF
-         IF(iter.gt.1.and.abs(rhon(1)*rhon(4)*rhon(6)).lt.1.d-10) THEN
+         IF(iter.gt.1.and.abs(rho(1)*rho(4)*rho(6)).lt.1.d-10) THEN
 C  prepare things for return if gradient is close to 0
-            call regularD(D,negdefin)
-C            call testreg(D,1)
-C            call dblepr("rhon3",5,rhon,6)
-C            call intpr("iter",4,iter,1)
+            call regD0(D,negdefin)
             RETURN
          END IF
          gamma=min(gamma/alpha,1.d0)
@@ -310,7 +288,7 @@ C   we may still need ak and dg so copy them to pk and ck
                pk(j)=dg(j)
             END DO
 C   Now solve  ak%*%dtheta= dg
-	    call dposv("U",7,1,ck,7,pk,7,info)
+            call dposv("U",7,1,ck,7,pk,7,info)
 C  Step 4 we have pk 
             IF(info.ne.0) THEN
                gamma=alpha*gamma
@@ -327,16 +305,16 @@ C  next iteration
                nrss=0.d0
                call rho2D(rhon,Dn)
                DO i=1,nb
-                  z=0.d0
-                  DO j=1,6
+                  z=b(1,i)*Dn(1)
+                  DO j=2,6
                      z=z+b(j,i)*Dn(j)
                   END DO
                   res=s(i)-th0n*exp(-z)
-                  nrss=nrss+res*res
+                  nrss=nrss+res*res*varinv(i)
                   F(i)=res
                END DO
-               crss=0.d0
-               DO j=1,7
+               crss=dg(1)*pk(1)
+               DO j=2,7
                   crss=crss+dg(j)*pk(j)
                END DO
                crss=rss-delta*gamma*crss
@@ -358,7 +336,6 @@ C  decrease gamma and try new regularization
          rss=nrss
          call rchkusr()
       END DO
-      call regularD(D,negdefin)
-C      call testreg(D,2)
+      call regD0(D,negdefin)
       RETURN
       END

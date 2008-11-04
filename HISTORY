@@ -1,3 +1,13 @@
+2008-12-04 version 0.6-0
+  - major update to include 3D visualization with rgl
+  - included Rician bias correction
+  - included non-linear regression tensor estimation
+  - implemented print(), summary(), show(), extract() on all classes
+
+2008-10-07 version 0.5-6
+  - new function readDWIdata reads DWI data from directories with imaging files (DICOM,NIFTI,AFNI,ANALYZE)
+  - documentation now consistent with S4-documentation
+
 2008-01-21 version 0.4-0
 
   - plot() on dtiIndices has new argument view for axial, sagittal, coronal view

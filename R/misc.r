@@ -16,32 +16,6 @@ replind <- function(gradient){
   as.integer(replind)
 }
 
-replvar <- function(x,ind){
-# Estimate voxelwise variances using replications
-# of gradients
-tind <- table(ind)
-df <- sum(tind-1)
-if(df<1) {
-warning("No replications available")
-return(NULL)
-}
-lind <- sort(unique(ind))
-dx <- dim(x)
-z<-.Fortran("replvar",
-              as.integer(x),
-              as.integer(dx[1]),
-              as.integer(dx[2]),
-              as.integer(dx[3]),
-              as.integer(dx[4]),
-              as.integer(ind),
-              as.integer(tind),
-              as.integer(lind),
-              as.integer(length(tind)),
-              sigma2=double(prod(dx[2:4])),
-              double(prod(dx[2:4])),
-              PACKAGE="dti",DUP=FALSE)$sigma2
-z/df
-}
 
 
 Spatialvar.gauss<-function(h,h0,d,interv=1){
@@ -111,6 +85,21 @@ Spatialvar.gauss<-function(h,h0,d,interv=1){
   sum(z^2)/sum(z)^2*interv^d
 }
 
+Varcor.gauss<-function(h){
+#
+#   Calculates a correction for the variance estimate obtained by (IQRdiff(y)/1.908)^2
+#
+#   in case of colored noise that was produced by smoothing with lkern and bandwidth h
+#
+h<-pmax(h/2.3548,1e-5)
+ih<-trunc(4*h)+1
+dx<-2*ih+1
+d<-length(h)
+penl <- dnorm(((-ih[1]):ih[1])/h[1])
+if(d==2) penl <- outer(penl,dnorm(((-ih[2]):ih[2])/h[2]),"*")
+if(d==3) penl <- outer(penl,outer(dnorm(((-ih[2]):ih[2])/h[2]),dnorm(((-ih[3]):ih[3])/h[3]),"*"),"*")
+2*sum(penl)^2/sum(diff(penl)^2)
+}
 
 
 corrrisk <- function(bw,lag,data){
@@ -222,10 +211,11 @@ tensor2medinria <- function(obj, filename, xind=NULL, yind=NULL, zind=NULL) {
 
 medinria2tensor <- function(filename) {
   if (!require(fmri)) stop("cannot execute function without package fmri, because of missing read.NIFTI() function")
-
+  args <- sys.call() 
   data <- read.NIFTI(filename)
  
   invisible(new("dtiTensor",
+                call  = list(args),
                 D     = aperm(extract.data(data),c(4,1:3))[c(1,2,4,3,5,6),,,],
                 sigma = array(0,data$dim[1:3]),
                 scorr = array(0,c(1,1,1)),
@@ -243,7 +233,32 @@ medinria2tensor <- function(filename) {
                 yind  = 1:data$dim[2],
                 zind  = 1:data$dim[3],
                 voxelext = data$delta,
+                scale = 1,
                 source= "unknown")
             )
 
 }
+connect.mask <- function(mask){
+dm <- dim(mask)
+n1 <- dm[1]
+n2 <- dm[2]
+n3 <- dm[3]
+n <- n1*n2*n3
+mask1 <- .Fortran("lconnect",
+                 as.logical(mask),
+                 as.integer(n1),
+                 as.integer(n2),
+                 as.integer(n3),
+                 as.integer((n1+1)/2),
+                 as.integer((n2+1)/2),
+                 as.integer((n3+1)/2),
+                 integer(n),
+                 integer(n),
+                 integer(n),
+                 mask=logical(n),
+                 DUP=FALSE,
+                 PACKAGE="dti")$mask
+dim(mask1) <- dm
+mask1
+}
+

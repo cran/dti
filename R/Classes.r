@@ -1,5 +1,6 @@
 setClass("dti",
          representation(.Data = "list",
+                        call = "list",
                         btb    = "matrix",
                         ngrad  = "integer", # = dim(btb)[2]
                         s0ind  = "integer", # indices of s0 images
@@ -16,7 +17,8 @@ setClass("dti",
          )
 
 setClass("dtiData",
-         representation(si = "array"),
+         representation(si   = "array",
+                        sdcoef = "numeric"),
          contains=c("list","dti"),
          validity=function(object){
           if (any(dim(object@si)!=c(object@ddim,object@ngrad))) {
@@ -39,6 +41,14 @@ setClass("dtiData",
             cat("invalid level \n")
              return(invisible(FALSE))
          }
+          if (length(object@sdcoef) != 4) {
+             cat("invalid model for error standard deviation \n")
+             return(invisible(FALSE))
+         }
+          if (any(object@sdcoef<0)||object@sdcoef[3]>object@sdcoef[4]) {
+             cat("illegal interval of linearity in model for  error standard deviation \n")
+             return(invisible(FALSE))
+         }
          }
          )
 setClass("dtiTensor",
@@ -49,7 +59,9 @@ setClass("dtiTensor",
                         scorr  = "array",
                         bw     = "numeric",
                         mask   = "array",
-                        hmax   = "numeric"),
+                        hmax   = "numeric",
+                        outlier = "numeric",
+                        scale  = "numeric"),
          contains=c("list","dti"),
          validity=function(object){
           if (any(dim(object@D)!=c(6,object@ddim))) {
@@ -60,11 +72,13 @@ setClass("dtiTensor",
             cat("invalid dimension of array th0\n")
             return(invisible(FALSE))
           }
-          if (any(dim(object@sigma)!=object@ddim)) {
+          if (object@method=="linear"&any(dim(object@sigma)!=object@ddim)) {
             cat("invalid dimension of array sigma\n")
             return(invisible(FALSE))
           }
           if (any(dim(object@mask)!=object@ddim)) {
+            cat("dimension of mask:",dim(object@mask),"\n")
+            cat("should be:",object@ddim,"\n")
             cat("invalid dimension of array mask\n")
             return(invisible(FALSE))
           }
@@ -90,6 +104,7 @@ setClass("dtiTensor",
 setClass("dtiIndices",
          representation(method = "character",
                         fa     = "array",
+                        ga     = "array",
                         md     = "array",
                         andir  = "array",
                         bary   = "array"),
@@ -97,6 +112,10 @@ setClass("dtiIndices",
           validity=function(object){
           if (any(dim(object@fa)!=object@ddim)) {
             cat("invalid dimension of array fa\n")
+            return(invisible(FALSE))
+          }
+          if (any(dim(object@ga)!=object@ddim)) {
+            cat("invalid dimension of array ga\n")
             return(invisible(FALSE))
           }
           if (any(dim(object@md)!=object@ddim)) {
