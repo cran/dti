@@ -289,7 +289,11 @@ C     triangular location kernel
                            sij = bii*max(0.d0,rssj-rssi)
                            if(center.eq.0) sij=0.d0
                            if(sij.gt.1.d0) CYCLE
-                           wij=wij*(1.d0-sij)
+C  use Plateau kernel
+                           if(sij.gt.0.5d0) THEN
+                              wij=wij*2.d0*(1.d0-sij)
+                           END IF
+C                           wij=wij*(1.d0-sij)
                         END IF
                         sw=sw+wij
                         sw2=sw2+wij*wij
@@ -300,8 +304,8 @@ C     triangular location kernel
                               z=z*z
                               swsi2(k)=swsi2(k)+wij*z
                            END DO
-                          if(nselect.gt.nw) THEN
-                              call intpr("nselect>nw",10,nselect,1)
+                          if(nselect.ge.nw) THEN
+C                              call intpr("nselect>nw",10,nselect,1)
                               CYCLE
                            ENDIF 
                            nselect=nselect+1

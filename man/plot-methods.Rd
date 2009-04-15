@@ -2,7 +2,7 @@
 \docType{methods}
 \alias{plot-methods}
 \alias{plot,ANY-method}
-\alias{plot,dti-method}
+\alias{plot,dwi-method}
 \alias{plot,dtiData-method}
 \alias{plot,dtiIndices-method}
 \alias{plot,dtiTensor-method}
@@ -12,8 +12,8 @@
 }
 \usage{
   \S4method{plot}{dtiData}(x, y, slice=1, gradient=NULL, view= "axial", show=TRUE, density=FALSE, xind=NULL, yind=NULL, zind=NULL, mar=c(3,3,3,.3), mgp=c(2,1,0), \dots)
-  \S4method{plot}{dtiTensor}(x, y, slice=1, view= "axial", method=1, quant=0, minanindex=NULL, show=TRUE, contrast.enh=1, what="FA", xind=NULL, yind=NULL, zind=NULL, mar=c(3,3,3,.3), mgp=c(2,1,0), \dots)
-  \S4method{plot}{dtiIndices}(x, y, slice=1, view="axial", quant=0, minanindex=NULL, show=TRUE, density=FALSE, contrast.enh=1,what="FA", qrange=c(.01,.99), xind=NULL, yind=NULL, zind=NULL, mar=c(2,2,2,.2), mgp=c(2,1,0), \dots)
+  \S4method{plot}{dtiTensor}(x, y, slice=1, view="axial", quant=0, minanindex=NULL, contrast.enh=1, what="FA", qrange=c(.01,.99), xind=NULL, yind=NULL, zind=NULL, mar=c(2,2,2,.2), mgp=c(2,1,0), \dots)
+  \S4method{plot}{dtiIndices}(x, y, slice=1, view= "axial", method=1, quant=0, minanindex=NULL, show=TRUE, density=FALSE, contrast.enh=1, what="FA", xind=NULL, yind=NULL, zind=NULL, mar=c(3,3,3,.3), mgp=c(2,1,0), \dots)
 }
 \arguments{
   \item{x}{ Object of class \code{"dtiIndices"}, \code{"dtiData"} or \code{"dtiTensor"}}
@@ -40,7 +40,7 @@
 \describe{
   \item{x = "ANY"}{ Generic function: see \code{\link[graphics]{plot}}. }
 
-  \item{x =  "dti"}{ Returns a warning. }
+  \item{x =  "dwi"}{ Returns a warning. }
 
   \item{x = "dtiData"}{ \code{gradient} can be used to specify a specific data cube associated with the index of a gradient direction. For objects of class \code{"dtiData"} images are produces that are scaled by the maximal observed image value. This guarantees that subsequently produced images are on a comparable grey scale. The resulting image of class \code{"adimpro"} from package \pkg{adimpro} is returned. }
 

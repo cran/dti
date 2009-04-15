@@ -21,6 +21,7 @@ if (toupper(a) == "N") {
 }
 
 a <- readline("Provide standard deviation in K-space (default: 2400, example in Neuroimage paper: 1600):")
+
 sigma <- if(!is.null(a)) as.numeric(a) else 2400
 if( is.na(sigma)) sigma <- 2400
 
@@ -41,9 +42,11 @@ bvec <- read.table(system.file("dat/b-directions.txt",package="dti"))
 #
 #  generate files containing the phantom- and noisy diffusion weighted images
 #
+a <- readline("Use phantom nr. 1 or 2 ? (1/2)?")
 
-source(system.file("rcode/generatedata.r",package="dti"))
-
+a <- if(a %in% c("1","2")) as.numeric(a) else 1
+switch(a,source(system.file("rcode/generatedata.r",package="dti")),
+         source(system.file("rcode/generatedata2.r",package="dti")))
 # Read Phantom data 
 
 dt0obj <- dtiData(bvec,tmpfile1,mins0value=mins0value,ddim)
@@ -70,9 +73,13 @@ dthat1 <- dtiTensor(dtobj, method=method)
 
 dthat1aniso <- dtiIndices(dthat1)
 
-# adaptive smoothing bandwidth=4
+# adaptive smoothing
+a <- readline("Provide bandwidth for adaptive smoothing (default 4)")
 
-dthat4 <- dti.smooth(dtobj,hmax=4,graph=TRUE,lambda=lambda,minanindex=0,slice=15,rho=rho,lseq=NULL,method=method)
+hmax <- if(!is.null(a)) as.numeric(a) else 4
+if( is.na(hmax) || hmax<1) hmax <- 4
+
+dthat4 <- dti.smooth(dtobj,hmax=hmax,graph=TRUE,lambda=lambda,minanindex=0,slice=15,rho=rho,lseq=NULL,method=method)
 
 # Compute indices of estimated smoothed tensors 
 
@@ -104,6 +111,7 @@ dthat4b <- medinria2tensor(tmpfile3)
 # plot the resulting object
 plot(dthat4b,slice=15)
 
+source(system.file("rcode/mousecallbacks.r",package="dti"))
 z <- readline("Visualize and compare estimated tensors (Y/N) :")
 
 size <- as.integer(min(.adimpro$xsize/3.2,.adimpro$ysize/2.4))
@@ -111,10 +119,9 @@ if(toupper(z)!="N"){
 dthat1@scale <- dt0@scale
 dthat4@scale <- dt0@scale 
 #  use same scale in all plots
-w1<-show3d(dt0,level=.3,nz=5,center=c(20,20,13),maxobjects=2000,FOV=1,windowRect = c(1, 1, size, size))
-w2<-show3d(dthat1,level=.3,nz=5,center=c(20,20,13),maxobjects=2000,FOV=1,windowRect = c(size+11, 1, 2*size+10, size))
-w3<-show3d(dthat4,level=.3,nz=5,center=c(20,20,13),maxobjects=2000,FOV=1,windowRect = c(2*size+21, 1, 3*size+20, size))
-source(system.file("rcode/mousecallbacks.r",package="dti"))
+w1<-show3d(dt0,level=.3,nz=5,center=c(20,20,13),maxobjects=2000,FOV=1,windowRect = c(1, 1, size, size),what="tensor")
+w2<-show3d(dthat1,level=.3,nz=5,center=c(20,20,13),maxobjects=2000,FOV=1,windowRect = c(size+11, 1, 2*size+10, size),what="tensor")
+w3<-show3d(dthat4,level=.3,nz=5,center=c(20,20,13),maxobjects=2000,FOV=1,windowRect = c(2*size+21, 1, 3*size+20, size),what="tensor")
 #
 #  from package rgl::demo(mouseCallbacks)
 #

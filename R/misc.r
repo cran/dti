@@ -224,6 +224,7 @@ medinria2tensor <- function(filename) {
                 method = "unknown",
                 hmax  = 1,
                 th0   = array(0,dim=data$dim[1:3]),
+                gradient = matrix(0,1,1),
                 btb   = matrix(0,1,1),
                 ngrad = as.integer(0), # = dim(btb)[2]
                 s0ind = as.integer(0),
@@ -262,3 +263,90 @@ dim(mask1) <- dm
 mask1
 }
 
+sphcoord <- function(ccoord){
+#
+#  transform cartesian into sherical coordinates
+#
+ccoord <- ccoord/sqrt(sum(ccoord^2))
+phi <- atan2(ccoord[2],ccoord[1])
+theta <- atan2(sqrt(ccoord[2]^2+ccoord[1]^2),ccoord[3])
+c(theta,phi)
+}
+
+design.spheven <- function(order,gradients,lambda,smatrix=TRUE,plz=TRUE){
+#
+#  compute design matrix for Q-ball
+#
+order <- as.integer(max(0,order))
+if(order%%2==1){
+warning("maximum order needs to be even, increase order by one")
+order <- order+1
+} 
+n <- dim(gradients)[2]
+theta <- phi <- numeric(n)
+for( i in 1:n){
+angles <- sphcoord(gradients[,i])
+theta[i] <- angles[1]
+phi[i] <-  angles[2]
+}
+sphharmonics <- getsphericalharmonicseven(order,theta,phi)
+lord <- rep(seq(0,order,2),2*seq(0,order,2)+1)
+L <- lambda*diag(lord^2*(lord+1)^2)
+ttt <- if(smatrix) solve(sphharmonics%*%t(sphharmonics)+L)%*%sphharmonics  else  NULL
+if(smatrix&plz) ttt <- plzero(order)%*%ttt
+ list(design=sphharmonics,matrix=ttt,theta=theta,phi=phi)
+}
+design.sphall <- function(order,gradients,lambda,smatrix=TRUE){
+#
+#  compute design matrix for Q-ball
+#
+order <- as.integer(max(0,order))
+n <- dim(gradients)[2]
+theta <- phi <- numeric(n)
+for( i in 1:n){
+angles <- sphcoord(gradients[,i])
+theta[i] <- angles[1]
+phi[i] <-  angles[2]
+}
+sphharmonics <- getsphericalharmonicsall(order,theta,phi)
+lord <- rep(0:order,2*(0:order)+1)
+L <- lambda*diag(lord^2*(lord+1)^2)
+ttt <- if(smatrix) solve(sphharmonics%*%t(sphharmonics)+L)%*%sphharmonics  else  NULL
+ list(design=sphharmonics,matrix=ttt,theta=theta,phi=phi)
+}
+
+plzero <- function(order){
+l <- seq(2,order,2)
+pl <- l
+for(i in 1:length(l)) pl[i] <- (-1)^(l[i]/2)*prod(seq(1,(l[i]-1),2))/prod(seq(2,l[i],2))
+2*pi*diag(rep(c(1,pl),2*seq(0,order,2)+1))
+}
+
+gettriangles <- function(gradients){
+   dgrad <- dim(gradients)
+   if(dgrad[2]==3) gradients <- t(gradients)
+   ngrad <- dim(gradients)[2]
+   ndist <- ngrad*(ngrad-1)/2
+   z <- .Fortran("distvert",
+                 as.double(gradients),
+                 as.integer(ngrad),
+                 ab=integer(2*ndist),
+                 distab=double(ndist),
+                 as.integer(ndist),
+                 DUPL=FALSE,
+                 PACKAGE="dti")[c("ab","distab")]
+   o <- order(z$distab)
+   distab <- z$distab[o]
+   ab <- matrix(z$ab,2,ndist)[,o]
+   z <- .Fortran("triedges",
+                 as.integer(ab),
+                 as.double(distab),
+                 iab=integer(ndist),
+                 as.integer(ndist),
+                 triangles=integer(3*5*ngrad),
+                 ntriangles=as.integer(5*ngrad),
+                 DUPL=FALSE,
+                 PACKAGE="dti")[c("iab","triangles","ntriangles")]
+list(triangles=matrix(z$triangles,3,5*ngrad)[,1:z$ntriangle],
+     edges=ab[,z$iab==2])
+}

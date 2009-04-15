@@ -1,8 +1,9 @@
-setClass("dti",
+setClass("dwi",
          representation(.Data = "list",
                         call = "list",
+                        gradient = "matrix",
                         btb    = "matrix",
-                        ngrad  = "integer", # = dim(btb)[2]
+                        ngrad  = "integer", # = dim(btb)[2] = dim(gradient)[2]
                         s0ind  = "integer", # indices of s0 images
                         replind = "integer", # replications in gradient design
                         ddim   = "integer",
@@ -19,10 +20,10 @@ setClass("dti",
 setClass("dtiData",
          representation(si   = "array",
                         sdcoef = "numeric"),
-         contains=c("list","dti"),
+         contains=c("list","dwi"),
          validity=function(object){
           if (any(dim(object@si)!=c(object@ddim,object@ngrad))) {
-            cat("incorrect dimension of image data\n")
+            cat("incorrect dimension of image data",dim(object@si),"\n")
             return(invisible(FALSE))
           }
           if (length(object@s0ind)<1) {
@@ -62,7 +63,7 @@ setClass("dtiTensor",
                         hmax   = "numeric",
                         outlier = "numeric",
                         scale  = "numeric"),
-         contains=c("list","dti"),
+         contains=c("list","dwi"),
          validity=function(object){
           if (any(dim(object@D)!=c(6,object@ddim))) {
             cat("invalid dimension of tensor array D \n")
@@ -108,7 +109,7 @@ setClass("dtiIndices",
                         md     = "array",
                         andir  = "array",
                         bary   = "array"),
-         contains=c("list","dti"),
+         contains=c("list","dwi"),
           validity=function(object){
           if (any(dim(object@fa)!=object@ddim)) {
             cat("invalid dimension of array fa\n")
@@ -132,3 +133,55 @@ setClass("dtiIndices",
           }
          }
         )
+
+setClass("dwiQball",
+         representation(what = "character",
+                        order  = "integer",
+                        lambda = "numeric",
+                        sphcoef = "array",
+                        th0 = "array",
+                        sigma  = "array",
+                        scorr  = "array",
+                        bw     = "numeric",
+                        mask   = "array",
+                        hmax   = "numeric",
+                        outlier = "numeric",
+                        scale  = "numeric"),
+         contains=c("list","dwi"),
+         validity=function(object){
+          if (object@order%%2!=0) {
+            cat("invalid order of spherical harmonics \n")
+            return(invisible(FALSE))
+          }
+          if(object@what=="Qball"&any(dim(object@sphcoef)!=c((object@order+1)*(object@order+2)/2,object@ddim))) {
+            cat("invalid dimension of ceofficient array \n")
+            return(invisible(FALSE))
+          }
+          if (object@lambda<0) {
+            cat("invalid regularization parameter \n")
+            return(invisible(FALSE))
+          }
+          if (any(dim(object@mask)!=object@ddim)) {
+            cat("dimension of mask:",dim(object@mask),"\n")
+            cat("should be:",object@ddim,"\n")
+            cat("invalid dimension of array mask\n")
+            return(invisible(FALSE))
+          }
+          if (!is.logical(object@mask)) {
+            cat("invalid type of array mask, should be logical\n")
+            return(invisible(FALSE))
+          }
+          if (length(dim(object@scorr))!=3) {
+            cat("invalid dimension of scorr\n")
+            return(invisible(FALSE))
+          }
+          if (length(object@bw)!=3) {
+            cat("invalid length of bw\n")
+            return(invisible(FALSE))
+          }
+          if (!(object@what %in% c("Qball","ADC"))) {
+            cat("what should specify either Qball or ADC\n")
+            return(invisible(FALSE))
+          }
+         }
+         )

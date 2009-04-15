@@ -2,19 +2,20 @@
 \docType{methods}
 \alias{summary-methods}
 \alias{summary,ANY-method}
-\alias{summary,dti-method}
+\alias{summary,dwi-method}
 \alias{summary,dtiData-method}
 \alias{summary,dtiTensor-method}
 \alias{summary,dtiIndices-method}
+\alias{summary,dwiQball-method}
 \title{ Methods for Function `summary' in Package `dti' }
 \description{
   The method provides summary information for objects of class \code{"dti"}.
 }
 \usage{
-  \S4method{summary}{dti}(object, ...)
+  \S4method{summary}{dwi}(object, ...)
 }
 \arguments{
-  \item{object}{ Object of class \code{"dti"}, \code{"dtiData"}, \code{"dtiTensor"}, or \code{"dtiIndices"}. }
+  \item{object}{ Object of class \code{"dti"}, \code{"dtiData"}, \code{"dtiTensor"}, \code{"dtiIndices"} or \code{"dwiQball"}. }
   \item{\dots}{ Additional arguments in \code{\dots} are passed to function \code{quantile}, e.g. argument \code{probs} may be specified here.}
 }
 \section{Methods}{
@@ -22,7 +23,7 @@
 
   \item{object = "ANY"}{ Generic function: see \code{\link[base]{summary}}. }
 
-  \item{object = "dti"}{  The function provides summary information for objects of class \code{"dti"}, \code{"dtiData"}, \code{"dtiTensor"} and \code{"dtiIndices"}. }
+  \item{object = "dwi"}{  The function provides summary information for objects of class \code{"dwi"}, \code{"dtiData"}, \code{"dtiTensor"} and \code{"dtiIndices"}. }
 }}
 \author{ 
   Karsten Tabelow \email{tabelow@wias-berlin.de}\cr 
@@ -32,6 +33,7 @@
   \code{\linkS4class{dtiIndices}}, ]
   \code{\linkS4class{dtiData}}, 
   \code{\linkS4class{dtiTensor}}
+  \code{\linkS4class{dwiQball}}
 }
 \keyword{ methods }
 \keyword{ utilities }

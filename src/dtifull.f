@@ -106,7 +106,10 @@ C     triangular location kernel
                            sij=dtidist2(th(1,i1,i2,i3),
      1                          th(1,jj1,jj2,jj3),bcov)*bii/lambda
                            if(sij.gt.1.d0) CYCLE
-                           wij=wij*(1.d0-sij)
+C  use Plateau kernel
+                           if(sij.gt.0.5d0) THEN
+                              wij=wij*2.d0*(1.d0-sij)
+                           END IF
                         END IF
                         ss2=ss2+wij*sigma2(jj1,jj2,jj3)
                         sw0=sw0+wij

@@ -10,11 +10,11 @@ dti.smooth <- function(object, ...) cat("No DTI smoothing defined for this class
 
 setGeneric("dti.smooth", function(object, ...) standardGeneric("dti.smooth"))
 
-setMethod("dti.smooth", "dtiData", function(object,hmax=5,hinit=NULL,lambda=20,
+setMethod("dti.smooth", "dtiData", function(object,hmax=5,hinit=NULL,lambda=20,tau=10,
                                             rho=1,graph=FALSE,slice=NULL,quant=.8,
-                                            minanindex=NULL,hsig=2.5,lseq=NULL, method="nonlinear",varmethod="residuals",rician=TRUE,niter=5,varmodel="local") {
+                                            minanindex=NULL,hsig=2.5,lseq=NULL, method="nonlinear",varmethod="residuals",rician=TRUE,niter=5,varmodel="local",result="Tensor") {
 switch(method,"linear" = dtilin.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minanindex,hsig,lseq,varmethod,varmodel),
-              "nonlinear" =  dtireg.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minanindex,hsig,lseq,varmethod,rician,niter,varmodel))
+              "nonlinear" =  dtireg.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minanindex,hsig,lseq,varmethod,rician,niter,varmodel,result))
 }
 )
 dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
@@ -291,10 +291,11 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
        }
   
   invisible(new("dtiTensor",
-                list( hmax = hmax),
+                list( hmax = hmax, ni=z$bi),
                 call = args,
                 D     = z$D,
                 th0   = th0,
+                gradient = object@gradient,
                 btb   = btb,
                 sigma = z$sigma2hat, 
                 scorr = scorr,

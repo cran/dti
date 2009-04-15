@@ -3,12 +3,16 @@
 #   this is also based on an a statistical penalty defined using log-likelihood difference
 #
 dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slice=NULL,quant=.8,
-                         minanindex=NULL,hsig=2.5,lseq=NULL,varmethod="residuals",rician=TRUE,niter=5,varmodel="local"){
+                         minanindex=NULL,hsig=2.5,lseq=NULL,varmethod="residuals",rician=TRUE,niter=5,varmodel="local",result="Tensor"){
 #
 #     lambda and lseq adjusted for alpha=0.2
 #
+  if(!is.null(object$ni)){
+     warning("DWI object has been smoothed already, smoothing omitted")
+     return(if(result=="Tensor") dtiTensor(object,method="nonlinear",varmethod=varmethod,varmodel=varmodel) else object)
+  }
   eps <- 1e-6
-  maxnw <- 1000
+  maxnw <- 10000
   if (graph) {
     adimpro <- require(adimpro)
     if (!adimpro) cat("No graphical output! Install package adimpro from CRAN!\n")
@@ -281,10 +285,13 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      lambda0 <- lambda 
      gc()
   }
+  dimsi <- dim(si)
   rm(si)
   gc()
+  if(result=="Tensor"){
   cat("prepare final dtiTensor object",date(),"\n")
-  invisible(new("dtiTensor",
+  } else   cat("prepare final smoothed dtiData object",date(),"\n")
+  if(result=="Tensor") invisible(new("dtiTensor",
                 list(s2rician=if(rician) z$sigma2r else NULL, ni=z$bi),
                 call = args,
                 D = z$D,
@@ -293,6 +300,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
                 scorr = scorr,
                 bw = h0,
                 mask = mask,
+                gradient = object@gradient,
                 btb   = btb,
                 hmax  = hmax,
                 ngrad = ngrad, # = dim(btb)[2]
@@ -307,6 +315,25 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
                 outlier = index,
                 scale = scale,
                 method= "nonlinear")
+            ) else invisible(new("dtiData",
+                list(s2rician=if(rician) z$sigma2r else NULL, ni=z$bi),
+                call = args,
+                si = aperm(array(as.integer(z$sihat),dimsi),c(2:4,1)),
+                sdcoef = sdcoef,
+                gradient = object@gradient,
+                btb    = btb,
+                ngrad  = ngrad, # = dim(btb)[2]
+                s0ind  = object@s0ind, # indices of s0 images
+                replind = object@replind, # replications in gradient design
+                ddim   = as.integer(ddim),
+                ddim0  = as.integer(ddim0),
+                xind  = xind,
+                yind  = yind,
+                zind  = zind,
+                voxelext = object@voxelext,
+                level  = object@level,
+                orientation = object@orientation ,
+                source= object@source)
             )
 }
 

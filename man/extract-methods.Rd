@@ -6,22 +6,26 @@
 \alias{extract,dtiData-method}
 \alias{extract,dtiIndices-method}
 \alias{extract,dtiTensor-method}
+\alias{extract,dwiQball-method}
 \alias{[-methods}
 \alias{[,ANY-method}
 \alias{[,dtiData-method}
 \alias{[,dtiIndices-method}
 \alias{[,dtiTensor-method}
+\alias{[,dwiQball-method}
 \title{ Methods for Function `extract' and `[' in Package `dti' }
 \description{
   The methods extract and/or compute specified statistics from object of class \code{"dtiData"}, \code{"dtiTensor"}, and \code{"dtiIndices"}. This can be restricted to a subset of voxel.
 }
 \usage{
-  \S4method{extract}{dtiData}(x, what="data", xind, yind, zind)
-  \S4method{extract}{dtiTensor}(x, what="tensor", xind, yind, zind)
-  \S4method{extract}{dtiIndices}(x, what=c("fa","andir"), xind, yind, zind)
+  \S4method{extract}{dtiData}(x, what="data", xind=TRUE, yind=TRUE, zind=TRUE)
+  \S4method{extract}{dtiTensor}(x, what="tensor", xind=TRUE, yind=TRUE, zind=TRUE)
+  \S4method{extract}{dtiIndices}(x, what=c("fa","andir"), xind=TRUE, yind=TRUE, zind=TRUE)
+  \S4method{extract}{dwiQball}(x, what="sphcoef", xind=TRUE, yind=TRUE, zind=TRUE)
   \S4method{[}{dtiData}(x, i, j, k, drop=FALSE)
   \S4method{[}{dtiTensor}(x, i, j, k, drop=FALSE)
   \S4method{[}{dtiIndices}(x, i, j, k, drop=FALSE)
+  \S4method{[}{dwiQball}(x, i, j, k, drop=FALSE)
 }
 \arguments{
   \item{x}{ Object of class \code{dti} }
@@ -45,6 +49,8 @@
   \item{x = "dtiIndices"}{ Returns an array containing the specified statistics, i.e. fractional anisotropy (fa), geodesic anisotropy (ga), mean diffusivity (md), main direction of anisotropy (andir) and/or shape parameters (bary), as specified in argument \code{what}. Information is extracted for voxel within the cube defined by \code{xind}, \code{yind}, and \code{zind}. }
 
   \item{x = "dtiTensor"}{ Returns an array containing the specified statistics, i.e. fractional anisotropy (fa), geodesic anisotropy (ga), mean diffusivity (md), eigenvalues (evalues), main direction of anisotropy (andir), the tensor (tensor) the estimated S0 image (s0) and/or the mask used to restrict computations (mask), as specified in argument \code{what}. Information is extracted for voxel within the  cube defined by arguments \code{xind}, \code{yind} and \code{zind}. }
+
+  \item{x = "dwiQball"}{ Returns an array containing the specified statistics,  the estimated coefficients with respect to the selected spherical harmonics basis, the estimated S0 image (s0) and/or the mask used to restrict computations (mask), as specified in argument \code{what}. Information is extracted for voxel within the  cube defined by arguments \code{xind}, \code{yind} and \code{zind}. }
 }
 }
 \value{
@@ -59,6 +65,7 @@
   \code{\linkS4class{dtiData}}, 
   \code{\linkS4class{dtiTensor}}, 
   \code{\linkS4class{dtiIndices}}  
+  \code{\linkS4class{dwiQball}}
 }
 \keyword{ methods }
 \keyword{ manip }

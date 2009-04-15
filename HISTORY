@@ -1,3 +1,7 @@
+2009-04-15 version 0.8-0
+  - much work done on visualization based on polyeders (faster)
+  - included visualization of ODF and related (new class dtiqball)
+
 2008-12-04 version 0.6-0
   - major update to include 3D visualization with rgl
   - included Rician bias correction
