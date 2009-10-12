@@ -20,7 +20,7 @@
 \section{Methods}{
 \describe{
 
-  \item{x = "ANY"}{ Generic function: see \code{\link[base]{show}}. }
+  \item{x = "ANY"}{ Generic function. }
 
   \item{x = "dti"}{ The function provides information on data dimensions, data source and existing slot-names for objects of class \code{"dti"}. }
 }}

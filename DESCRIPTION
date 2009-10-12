@@ -1,6 +1,6 @@
 Package: dti
-Version: 0.8-1
-Date: 2009-09-09
+Version: 0.8-2
+Date: 2009-10-12
 Title: DTI/DWI Analysis
 Author: Karsten Tabelow <tabelow@wias-berlin.de> Joerg Polzehl
         <polzehl@wias-berlin.de>
@@ -21,6 +21,6 @@ License: GPL (>= 2)
 Copyright: This package is Copyright (C) 2005-2009 Weierstrass
         Institute for Applied Analysis and Stochastics.
 URL: http://www.wias-berlin.de/projects/matheon_a3
-Packaged: Wed Sep 9 10:15:37 2009; polzehl
+Packaged: 2009-10-12 10:34:14 UTC; tabelow
 Repository: CRAN
-Date/Publication: 2009-09-09 18:42:26
+Date/Publication: 2009-10-12 10:42:20
