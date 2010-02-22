@@ -209,9 +209,9 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      dim(z$andirection) <- c(3,dimy[-1]) 
      if(any(is.na(z$th0))){
         indna <- is.na(z$th0)
-        cat("found ",sum(indna),"NA's\n")
+#        cat("found ",sum(indna),"NA's\n")
         z$th0[indna] <- th0[indna]
-        cat("th0",th0[indna])
+#        cat("th0",th0[indna])
         dim(z$D) <- dim(D) <- c(6,n1*n2*n3)
         z$D[,indna] <- D[,indna]
         dim(z$D) <- dim(D) <- c(6,n1,n2,n3)
@@ -227,7 +227,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      if(any(z$det[mask]>1e3*det95)){
         n <- n1*n2*n3
         indna <- (1:n)[z$det>1e3*det95]
-        cat("found ",length(indna),"voxel with extreme derterminat 's, keep initial estimates and do not use these voxel\n")
+#        cat("found ",length(indna),"voxel with extreme derterminat 's, keep initial estimates and do not use these voxel\n")
         z$th0[indna] <- th0[indna]
         dim(z$D) <- dim(D) <- c(6,n1*n2*n3)
         z$D[,indna] <- D[,indna]

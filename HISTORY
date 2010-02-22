@@ -1,3 +1,28 @@
+2010-1-28 version 0.9-0
+  - changed class definition (removed roix,roiy,roiz   added roimask)
+    new method  selectFibers  to select fibers with 
+    minimal length  minlength
+    crossing a region of interest given by roix, roiy, roiz or nroimask
+
+2009-12-18 version 0.9-0
+  - Muenster color scheme for FA maps (plot.dtiIndices) is method==6 now
+
+2009-12-15 version 0.9-0
+  - bugfix in dwiMixtensor(): use mfun3 for optim() case "Jian2"
+  - new method tracking() for class "dwiMixtensor"
+  - bugix in extract() for dwiMixtensor: now calculating what="andir" 
+
+2009-12-11 version 0.9-0
+  - introduce subsampling for fibre tracking, 
+  - rename xind to roix in show3d() function, 
+  - new rgl devices always with open3d() to have identical
+    frame orientation
+
+2009-07-28 version 0.9-0
+  - added fiber tracking using line propagation algorithm including 
+    rgl-visualization
+  - bugfix for ADC SH coeff ADC -log(si/s0) not -log(si) (usually negative!!)
+
 2009-04-15 version 0.8-0
   - much work done on visualization based on polyeders (faster)
   - included visualization of ODF and related (new class dtiqball)

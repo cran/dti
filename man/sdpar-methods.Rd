@@ -10,7 +10,7 @@ This function estimates the parameters of a piecewise linear model for
 the dependence between error standard deviation and mean. 
   }
 \usage{
-  \S4method{sdpar}{dtiData}(object,level=NULL,sdmethod="sd",interactive=TRUE)
+  \S4method{sdpar}{dtiData}(object,level=NULL,sdmethod="sd",interactive=TRUE,threshfactor=1)
 }
 \arguments{
 \item{object}{ An object of class \code{dtiData} }
@@ -18,6 +18,7 @@ the dependence between error standard deviation and mean.
 \item{sdmethod}{Method for estimating voxelwise standard deviations if replicates of zero weighted images are available, either \code{"sd"} or \code{"mad"}.}
 \item{interactive}{If \code{TRUE} a density of values in zero weighted images is plotted together with 
 the specification of the lower endpoint of the interval of linearity. A good choice of this point should correspond, if present, to the minimum between the first two modes of the density estimate. The value can be changed or accepted. If changed a new value for slot \code{lambda} is set. }
+\item{threshfactor}{Factor for threshold-value selected if function is run in interactive mode. May be used to correct results if automatic threshold selection fails.  }
 }
 \section{Methods}{
 \describe{

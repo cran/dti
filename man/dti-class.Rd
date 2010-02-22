@@ -3,8 +3,10 @@
 \alias{dwi-class}
 \alias{dtiData-class}
 \alias{dtiTensor-class}
+\alias{dwiMixtensor-class}
 \alias{dtiIndices-class}
 \alias{dwiQball-class}
+\alias{dwiFiber-class}
 \title{Class "dwi" }
 \description{ The family of \code{"dwi"} classes is used for Diffusion Weighted Imaging (DWI) data and, within the Diffusion Tensor Model (DTI), diffusion tenors and its indices. }
 \section{Objects from the Class}{
@@ -79,16 +81,49 @@ For class \code{"dwiQball"}:
     \item{ \code{outlier}: }{ Object of class \code{"numeric"}, index of voxel where physical constraints are not met, i.e. where the observed values in gradient images Si were larger than the corresponding S0 values. These are probably motion effects or registration errors. Values are replaced by the corresponding (mean) S0 values.}
     \item{\code{scale}:}{Numerical value corresponding to the 95\% quantile of the maximal eigenvalues of estimated tensors within the mask.
           Used for scaling in function \code{show3d.dwiQball}}
-    \item{ \code{what}: }{ Object of class \code{"character"}, either \code{"Qball"} or \code{"ADC"}. Indicates if the object contains coefficients of the orientation density function (Qball) or the apparent diffusion coefficient (ADC). Coefficients are computed with respect to spherical harmonics of the specified order.}
+    \item{ \code{what}: }{ Object of class \code{"character"}, \code{"ODF"}, \code{"wODF"}, \code{"aODF"} or \code{"ADC"}. Indicates if the object contains coefficients of the orientation density function (ODF (Descoteaux 2007), wODF (Sapiro(2009) or aODF) or the apparent diffusion coefficient (ADC). Coefficients are computed with respect to spherical harmonics of the specified order.}
 }
+For class \code{"dwiFiber"}:
+
+\describe{
+    \item{ \code{fibers}: }{ Object of class \code{"matrix"}, Matrix of fibers. The first three columns contain the coordinates of the track points, the last three columns the direction vectors for each of these points.} 
+    \item{ \code{startind}: }{Object of class \code{"integer"}, indices for the first dimension of \code{fibers} where
+                              coordinates for a new fiber start.}
+    \item{ \code{roix}: }{ Object of class \code{"integer"}, coordinate range of region of interest in x-direction } 
+    \item{ \code{roiy}: }{ Object of class \code{"integer"}, coordinate range of region of interest in x-direction } 
+    \item{ \code{roiz}: }{ Object of class \code{"integer"}, coordinate range of region of interest in x-direction } 
+    \item{ \code{method}: }{ Object of class \code{"character"}, fiber tracking method.} 
+    \item{ \code{minanindex}: }{ Object of class \code{"numeric"}, minimal fractional anisotropy index} 
+    \item{ \code{maxangle}: }{ Object of class \code{"numeric"}, maximal angle between fibres.} 
+}
+For class \code{"dwiMixtensor"}:
+
+\describe{
+    \item{ \code{ev}: }{ Object of class \code{"array"}, estimated eigenvalues, dimension \code{c(2,ddim)}} 
+    \item{ \code{mix}: }{ Object of class \code{"array"}, estimated mixture coefficients, dimension \code{c(nmix,ddim)}. \code{nmix} is the number of mixture components specified.} 
+    \item{ \code{orient}: }{ Object of class \code{"array"}, estimated tensor orientations, dimension \code{c(2,nmix,ddim)}} 
+    \item{ \code{th0}: }{ Object of class \code{"array"}, estimated intensities in S0 images, dimension \code{ddim}} 
+    \item{ \code{sigma}: }{ Object of class \code{"array"}, estimated error variances if \code{method=="linear"}, zero otherwise.} 
+    \item{ \code{scorr}: }{ Object of class \code{"numeric"}, estimated spatial correlations in coordinate directions} 
+    \item{ \code{bw}: }{ Object of class \code{"numeric"}, bandwidth for a Gaussian kernel that approximately creates the estimated spatial correlations. Needed for adjustments of critical values in the adaptive smoothing algorithm used in function \code{dti.smooth}} 
+    \item{ \code{mask}: }{ Object of class \code{"array"}, logical indicating the voxel where the tensor was estimated.} 
+    \item{ \code{hmax}: }{ Object of class \code{"numeric"}, maximal bandwidth in case of adaptive smoothing, 1 otherwise.} 
+    \item{ \code{outlier}: }{ Object of class \code{"numeric"}, index of voxel where physical constraints are not met, i.e. where the observed values in gradient images Si were larger than the corresponding S0 values. These are probably motion effects or registration errors. Values are replaced by the corresponding (mean) S0 values.}
+    \item{\code{scale}:}{Numerical value corresponding to the 95\% quantile of the maximal eigenvalues of estimated tensors within the mask.
+          Used for scaling in function \code{show3d.dtiTensor}}
+    \item{ \code{method}: }{ Object of class \code{"character"}, either \code{"mixtensor"} or \code{"Jian"}. Indicates the regression model used for estimating the tensors.}
+}
+
 }
 \section{Methods}{
-  Methods only operate on subclasses \code{"dtiData"}, \code{"dtiTensor"},  \code{"dtiIndices"} and \code{"dwiQball"}.
+  Methods only operate on subclasses \code{"dtiData"}, \code{"dtiTensor"},  \code{"dtiIndices"}, \code{"dwiQball"} and \code{"dwiFiber"}.
   \describe{
     \item{dti.smooth}{ Create estimates of diffusion tensors in each voxel using structural adaptive spatial smoothing. }
     \item{dtiTensor}{\code{signature(object = "dtiData")}: Create estimates of diffusion tensors in each voxel. }
     \item{dtiIndices}{\code{signature(object = "dtiTensor")}: Create estimates of diffusion tensors indices in each voxel. }
+    \item{tracking}{\code{signature(object = "dtiTensor")} or \code{signature(object = "dtiIndices")}: Fiber tracking. }
     \item{dtiQball}{\code{signature(object = "dtiData")}: Create estimates of ADC-parameters with respect to a sherical harmonics ortho-normal system. }
+    \item{show3d}{ Method for Function `show3d' in Package `dti'. }
     \item{plot}{ Method for Function `plot' in Package `dti'. }
     \item{print}{ Method for Function `print' in Package `dti'. }
     \item{summary}{ Method for Function `summary' in Package `dti'. }
@@ -103,9 +138,12 @@ For class \code{"dwiQball"}:
   \code{\link{readDWIdata}},
   \code{\link{sdpar-methods}},
   \code{\link{dtiTensor-methods}}, 
+  \code{\link{dwiMixtensor-methods}}, 
   \code{\link{dti.smooth-methods}},
   \code{\link{dtiIndices-methods}},
   \code{\link{dwiQball-methods}}, 
+  \code{\link{tracking-methods}},
+  \code{\link{show3d-methods}},
   \code{\link{plot-methods}},
   \code{\link{print-methods}},
   \code{\link{summary-methods}},

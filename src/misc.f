@@ -1,4 +1,4 @@
-      subroutine initdata(si,n1,n2,n3,nb,maxvalue)
+      subroutine initdat0(si,n1,n2,n3,nb,maxvalue)
 C
 C   set si()==0 for all voxel that have si-values <=0 or > maxvalue
 C
@@ -21,6 +21,25 @@ C
                      si(i1,i2,i3,k)=0.d0
                   END DO
                END IF
+            END DO
+         END DO
+      END DO
+      RETURN
+      END
+      subroutine initdata(si,n1,n2,n3,nb,maxvalue)
+C
+C   project all values to (1,maxvalue) to avoid infinite estimates
+C
+      integer n1,n2,n3,nb,maxvalue,si(n1,n2,n3,nb)
+      integer i1,i2,i3,k,sii
+      DO i1=1,n1
+         DO i2=1,n2
+            DO i3=1,n3
+               DO k=1,nb
+                  sii=si(i1,i2,i3,k)
+                  if(sii.le.0) si(i1,i2,i3,k)=1
+                  if(sii.gt.maxvalue) si(i1,i2,i3,k)=maxvalue
+               END DO
             END DO
          END DO
       END DO

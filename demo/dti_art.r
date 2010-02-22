@@ -42,14 +42,16 @@ bvec <- read.table(system.file("dat/b-directions.txt",package="dti"))
 #
 #  generate files containing the phantom- and noisy diffusion weighted images
 #
-a <- readline("Use phantom nr. 1 or 2 ? (1/2)?")
+a <- readline("Use phantom nr. 1, 2 or 3? (1/2/3)?")
 
-a <- if(a %in% c("1","2")) as.numeric(a) else 1
+a <- if(a %in% c("1","2","3")) as.numeric(a) else 1
+
 switch(a,source(system.file("rcode/generatedata.r",package="dti")),
-         source(system.file("rcode/generatedata2.r",package="dti")))
+         source(system.file("rcode/generatedata2.r",package="dti")),
+         source(system.file("rcode/generatedata3.r",package="dti")))
 # Read Phantom data 
 
-dt0obj <- dtiData(bvec,tmpfile1,mins0value=mins0value,ddim)
+dt0obj <- dtiData(bvec,tmpfile1,mins0value=mins0value,ddim,voxelext=c(1,1,2.5))
 dt0obj <- sdpar(dt0obj,interactive=FALSE)
 
 # Compute phantom tensors
@@ -62,7 +64,7 @@ dt0aniso <- dtiIndices(dt0)
 
 # Read noisy data 
 
-dtobj <- dtiData(bvec,tmpfile2,mins0value=mins0value,ddim)
+dtobj <- dtiData(bvec,tmpfile2,mins0value=mins0value,ddim,voxelext=c(1,1,2.5))
 dtobj <- sdpar(dtobj,interactive=FALSE)
 
 # Estimate tensors
@@ -136,9 +138,9 @@ cat("Estimated smoothed tensor in device",w3,"\n")
 z <- readline("Visualize smoothed estimated dtiIndex (Y/N) :")
 
 if(toupper(z)!="N"){
-w4<-show3d(dt0aniso,level=.3,center=c(20,20,13),lwd=2,FOV=1,windowRect = c(1, size+21, size, 2*size+20))
-w5<-show3d(dthat1aniso,level=.3,center=c(20,20,13),lwd=2,FOV=1,windowRect = c(size+11, size+21, 2*size+10, 2*size+20))
-w6<-show3d(dthat4aniso,level=.3,center=c(20,20,13),lwd=2,FOV=1,windowRect = c(2*size+21, size+21, 3*size+20, 2*size+20))
+w4<-show3d(dt0aniso,level=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(1, size+21, size, 2*size+20))
+w5<-show3d(dthat1aniso,level=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(size+11, size+21, 2*size+10, 2*size+20))
+w6<-show3d(dthat4aniso,level=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(2*size+21, size+21, 3*size+20, 2*size+20))
 mouseTrackball(dev=c(w4,w5,w6))
 mouseZoom(2,dev=c(w4,w5,w6))
 mouseFOV(3,dev=c(w4,w5,w6))

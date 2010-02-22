@@ -13,8 +13,28 @@ citEntry(entry = "Article",
 
   textVersion  =
   paste("Joerg Polzehl, Karsten Tabelow (2009).",
-        "Structural Adaptive Smoothing in Diffusion Tensor Imaging: The {R} Package {dti}.",
+        "Structural Adaptive Smoothing in Diffusion Tensor Imaging: The R Package dti.",
         "Journal of Statistical Software, 31(9), 1-23.",
         "URL http://www.jstatsoft.org/v31/i09/.")
 )
 
+citEntry(entry = "Article",
+         title = "Diffusion Tensor Imaging: Structural Adaptive Smoothing",
+         author = personList(as.person("Karsten Tabelow"), 
+	                     as.person("J\\\"org Polzehl"),
+	                     as.person("Vladimir Spokoiny"),
+                             as.person("Henning U. Voss")),
+         journal      = "NeuroImage",
+         year         = "2008",
+	 volume       = "39",
+	 number       = "4",
+	 pages        = "1763--1773",
+	 doi          = "10.1016/j.neuroimage.2007.10.024",
+         
+         textVersion = 
+         paste("Karsten Tabelow, Joerg Polzehl, Vladimir Spokoiny, Henning U. Voss (2008).", 
+               "Diffusion Tensor Imaging: Structural Adaptive Smoothing.",
+	       "NeuroImage, 39(4), 1763-1773.",
+	       "doi:10.1016/j.neuroimage.2007.10.024"),
+	 header = "For the underlying methods please cite:"
+)

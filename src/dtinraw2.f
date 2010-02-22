@@ -293,7 +293,6 @@ C  use Plateau kernel
                            if(sij.gt.0.5d0) THEN
                               wij=wij*2.d0*(1.d0-sij)
                            END IF
-C                           wij=wij*(1.d0-sij)
                         END IF
                         sw=sw+wij
                         sw2=sw2+wij*wij
@@ -327,12 +326,13 @@ C                              call intpr("nselect>nw",10,nselect,1)
                END DO                  
                if(rician.and.sw.gt.1.d0) THEN
                   ssigma2=0.d0
+C                  ns0=0
                   DO k=1,nb
                      if(sbind(k)) THEN
                         s2hat = swsi2(k)/sw-swsi(k)*swsi(k)
                         s2(k) = s2hat
                         ssigma2=ssigma2+s2hat
-                        ns0=ns0+1
+C                        ns0=ns0+1
                      END IF
                   END DO
                   s2hat = sw*sw/(sw*sw-sw2)*ssigma2/ns0

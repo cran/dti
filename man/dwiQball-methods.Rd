@@ -9,11 +9,11 @@
   The method estimates, in each voxel, the coefficients of an expansion of the apparent diffusion cefficient (ADC) with respect to a apherical harmonics  orthonormal system  from the DWI data contained in an object of class \code{"dtiData"}.
 }
 \usage{
-  \S4method{dwiQball}{dtiData}(object, what="Qball", order=4, lambda=0)
+  \S4method{dwiQball}{dtiData}(object, what="ODF", order=4, lambda=0)
 }
 \arguments{
   \item{object}{ Object of class \code{"dtiData"}}
-  \item{what}{ Determines quantity to estimate, either coefficients ot the orientation density function (ODF) (\code{what="Qball"} or the apparent diffusion 
+  \item{what}{ Determines quantity to estimate, coefficients ot the orientation density function (ODF) (\code{what="ODF"}, \code{what="wODF"}, \code{what="aODF"})  or the apparent diffusion 
   coefficient (ADC) (\code{what="ADC"}) with respect to spherical harmonics of the up to the specified order.  }
   \item{order}{ even integer: maximum order of the sperical harmonics expansion }
   \item{lambda}{ nonnegative regularization parameter. }

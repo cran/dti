@@ -7,7 +7,7 @@
 }
 \usage{
   dtiData(gradient, imagefile, ddim, xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, maxvalue = 10000, voxelext = c(1, 1, 1), orientation = c(1, 3, 5))
-  readDWIdata(gradient, dirlist, format, nslice, order = NULL, xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, maxvalue = 10000, voxelext = NULL, orientation = c(1, 3, 5))
+  readDWIdata(gradient, dirlist, format, nslice = NULL, order = NULL, xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, maxvalue = 10000, voxelext = NULL, orientation = c(1, 3, 5))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

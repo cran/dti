@@ -2,7 +2,7 @@ getsphericalharmonicseven <- function(order,theta,phi){
 #
 #   compute spherical harmonics
 #
-require(gsl)
+require(gsl,quietly = TRUE,warn.conflicts = FALSE)
 order <- as.integer(max(0,order))
 if(order%%2==1){
 warning("maximum order needs to be even, increase order by one")
@@ -26,6 +26,7 @@ z <- sqrt(2)*z*sin(m*phi)
 values[ind,] <- z
 }
 }
+detach(package:gsl)
 values
 }
 
@@ -54,5 +55,6 @@ values[l,] <- z
 l <- l+1
 }
 }
+detach(package:gsl)
 values
 }
