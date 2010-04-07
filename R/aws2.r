@@ -44,7 +44,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
                 si=integer(prod(ddim)*ngrad),
                 index=integer(prod(ddim)),
                 lindex=integer(1),
-                DUPL=FALSE,
+                DUP=FALSE,
                 PACKAGE="dti")[c("si","index","lindex")]
   si <- array(z$si,c(ddim,ngrad))
   index <- if(z$lindex>0) z$index[1:z$lindex] else numeric(0)

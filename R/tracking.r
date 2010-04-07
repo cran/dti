@@ -236,8 +236,9 @@ function(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP", minanindex=0.3
     indx <- rep(1:dimx, rep(subsample,dimx))
     indy <- rep(1:dimy, rep(subsample,dimy))
     indz <- rep(1:dimz, rep(subsample,dimz))
-    ex$fa <- ex$fa[indx, indy, indz]
+    ex$gfa <- ex$gfa[indx, indy, indz]
     ex$order <- ex$order[indx, indy, indz]
+    ex$mix <- ex$mix[,indx, indy, indz]
     ex$andir <- ex$andir[,,indx, indy, indz, drop=FALSE]
     dimx <- subsample*dimx
     dimy <- subsample*dimy

@@ -28,7 +28,7 @@ setMethod("dwiQball","dtiData",function(object,what="ODF",order=4,lambda=0){
                 si=integer(prod(ddim)*ngrad),
                 index=integer(prod(ddim)),
                 lindex=integer(1),
-                DUPL=FALSE,
+                DUP=FALSE,
                 PACKAGE="dti")[c("si","index","lindex")]
   si <- array(z$si,c(ddim,ngrad))
   index <- if(z$lindex>0) z$index[1:z$lindex] else numeric(0)

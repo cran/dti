@@ -406,7 +406,7 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
                     md=double(n1*n2*n3),
                     andir=double(3*n1*n2*n3),
                     ev=double(3*n1*n2*n3),
-                    DUPL=FALSE,
+                    DUP=FALSE,
                     PACKAGE="dti")[c("fa","ga","md","andir","ev")]
     if("fa" %in% what) z$fa <- array(erg$fa,c(n1,n2,n3))
     if("ga" %in% what) z$ga <- array(erg$ga,c(n1,n2,n3))
@@ -422,7 +422,7 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
                            as.integer(n3),
                            as.logical(x@mask),
                            ev=double(3*n1*n2*n3),
-                           DUPL=FALSE,
+                           DUP=FALSE,
                            PACKAGE="dti")$ev,c(3,n1,n2,n3))
       if("fa" %in% what) {
         dd <- apply(ev^2,2:4,sum)
@@ -449,7 +449,7 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
                                 as.integer(n3),
                                 as.logical(x@mask),
                                 andir=double(3*n1*n2*n3),
-                                DUPL=FALSE,
+                                DUP=FALSE,
                                 PACKAGE="dti")$andir,c(3,n1,n2,n3))
     }
   }

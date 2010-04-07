@@ -32,7 +32,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
                 si=integer(prod(ddim)*ngrad),
                 index=integer(prod(ddim)),
                 lindex=integer(1),
-                DUPL=FALSE,
+                DUP=FALSE,
                 PACKAGE="dti")[c("si","index","lindex")]
   si <- array(z$si,c(ddim,ngrad))
   index <- if(z$lindex>0) z$index[1:z$lindex] else numeric(0)
@@ -78,7 +78,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
                            as.integer(ddim[3]),
                            as.logical(mask),
                            ev=double(3*prod(ddim)),
-                           DUPL=FALSE,
+                           DUP=FALSE,
                            PACKAGE="dti")$ev,c(3,ddim))[1,,,]<1e-6
        if(sum(ind&mask)>0){
            D[c(1,4,6),ind&mask] <- 1e-6
@@ -167,7 +167,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
                        as.integer(ddim[3]),
                        as.logical(mask),
                        ev=double(3*prod(ddim)),
-                       DUPL=FALSE,
+                       DUP=FALSE,
                        PACKAGE="dti")$ev,c(3,ddim))
   scale <- quantile(ev[3,,,][mask],.95)
   cat("estimated scale information",date(),"\n")  
@@ -223,7 +223,7 @@ function(object, which) {
                 md=double(prod(object@ddim)),
                 andir=double(3*prod(object@ddim)),
                 bary=double(3*prod(object@ddim)),
-                DUPL=FALSE,
+                DUP=FALSE,
                 PACKAGE="dti")[c("fa","ga","md","andir","bary")]
 
   invisible(new("dtiIndices",

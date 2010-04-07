@@ -1,4 +1,4 @@
-tracking <- function(obj,  ...) cat("Selection of fibers is not implemented for this class:",class(obj),"\n")
+selectFibers <- function(obj,  ...) cat("Selection of fibers is not implemented for this class:",class(obj),"\n")
 
 setGeneric("selectFibers", function(obj,  ...) standardGeneric("selectFibers"))
 
@@ -62,7 +62,7 @@ if(!(is.null(roix)&&is.null(roiy)&&is.null(roiz)&&is.null(nroimask))){
                 as.integer(obj@ddim[3]),
                 as.double(obj@voxelext),
                 sizenf=integer(1),
-                DUPLICATE=FALSE,
+                DUP=FALSE,
                 PACKAGE="dti")[c("newfibers","sizenf")]
   if(z$sizenf>1) {
      fibers <- array(z$newfibers,dim(fibers))[1:z$sizenf,]

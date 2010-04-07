@@ -1,4 +1,5 @@
 #include "VectorList.h"
+#include <R.h>
 
 using namespace std;
 
@@ -44,7 +45,7 @@ void VectorList::add_list(VectorList &addL)
 {
 	if (addL.getLength() >= 2*minLength)
 	{
-		Vector *nan = new Vector(0., NAN, 0.);
+		Vector *nan = new Vector(0., R_NaN, 0.);
 		addL.add_at_start(*nan);
 		
 		int i;

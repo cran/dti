@@ -86,7 +86,7 @@ setMethod("show3d","dtiData", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,s
                         double(nn),#auxiliary 
                         integer(nn),#auxiliary 
                         polyradii=double(polyeder$nv*n),
-                        DUPL=FALSE,
+                        DUP=FALSE,
                         PACKAGE="dti")$polyradii,polyeder$nv,n)
      cat("newradii",dim(radii))
      show3dCdata(radii,polyeder,centers=tmean,minalpha=minalpha,scale=scale,...)
@@ -188,7 +188,7 @@ setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL
                     as.double(tens),
                     as.integer(n),
                     radii=double(n*polyeder$nv),
-                    DUPL=FALSE,
+                    DUP=FALSE,
                     PACKAGE="dti")$radii
   dim(radii) <- c(polyeder$nv,n)
   if(tolower(what)=="odf") normalize <- FALSE
@@ -285,7 +285,7 @@ setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=N
                     as.integer(dim(mix)[1]),
                     as.integer(n),
                     radii=double(n*polyeder$nv),
-                    DUPL=FALSE,
+                    DUP=FALSE,
                     PACKAGE="dti")$radii
   dim(radii) <- c(polyeder$nv,n)
 #  radii <- (radii+level)/(max(radii)+level)*scale
@@ -310,7 +310,7 @@ setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=N
                     as.integer(dim(mix)[1]),
                     as.integer(n),
                     andir=double(3*n*dim(mix)[1]),
-                    DUPL=FALSE,
+                    DUP=FALSE,
                     PACKAGE="dti")$andir,c(3,dim(mix)[1],n1,n2,n3))
   lcoord <- array(0,c(3,2*dim(mix)[1],n1,n2,n3))
   for(i in 1:dim(mix)[1]){
