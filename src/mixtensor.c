@@ -34,22 +34,22 @@ void paroforient(double *dir, double *angles)
   return;
 }
 
-inline int get_ind2d(int i, int j, int n1)
+static R_INLINE int get_ind2d(int i, int j, int n1)
 {
   return i + j*n1;
 }
 
-inline int get_ind3d(int i, int j, int k, int n1, int n2)
+static R_INLINE int get_ind3d(int i, int j, int k, int n1, int n2)
 {
   return i + j*n1 + k*n1*n2;
 }
 
-inline int get_ind4d(int i, int j, int k, int l, int n1, int n2, int n3)
+static R_INLINE int get_ind4d(int i, int j, int k, int l, int n1, int n2, int n3)
 {
   return i + j*n1 + k*n1*n2 + l*n1*n2*n3;
 }
 
-inline int get_ind5d(int i, int j, int k, int l, int m, int n1, int n2, int n3, int n4)
+static R_INLINE int get_ind5d(int i, int j, int k, int l, int m, int n1, int n2, int n3, int n4)
 {
   return i + j*n1 + k*n1*n2 + l*n1*n2*n3 + m*n1*n2*n3*n4;
 }
