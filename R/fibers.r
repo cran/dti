@@ -89,6 +89,7 @@ if(!(is.null(roix)&&is.null(roiy)&&is.null(roiz)&&is.null(nroimask))){
                 voxelext = obj@voxelext,
                 level = obj@level,
                 orientation = obj@orientation,
+                rotation = obj@rotation,
                 source = obj@source,
                 method = obj@method,
                 minanindex = obj@minanindex,

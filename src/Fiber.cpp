@@ -9,10 +9,10 @@ Fiber::Fiber()
 	length = 0;
 }
 
-Fiber::Fiber(Voxel* start)
+Fiber::Fiber(Voxel* set_start)
 {
-	this->start = start;
-	this->end   = start;
+	this->start = set_start;
+	this->end   = set_start;
 	length = 1;
 }
 

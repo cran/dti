@@ -6,8 +6,8 @@
   The functions create a \code{"dtiData"} object from Diffusion Weighted Data from medicial imaging files in a list of directories or from an imagefile, where the diffusion weighted data is given as 2-byte integer.
 }
 \usage{
-  dtiData(gradient, imagefile, ddim, xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, maxvalue = 10000, voxelext = c(1, 1, 1), orientation = c(1, 3, 5))
-  readDWIdata(gradient, dirlist, format, nslice = NULL, order = NULL, xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, maxvalue = 10000, voxelext = NULL, orientation = c(1, 3, 5))
+  dtiData(gradient, imagefile, ddim, xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, maxvalue = 10000, voxelext = c(1, 1, 1), orientation = c(0, 2, 5), rotation = diag(3))
+  readDWIdata(gradient, dirlist, format, nslice = NULL, order = NULL, xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, maxvalue = 10000, voxelext = NULL, orientation = c(0, 2, 5), rotation = diag(3))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -26,6 +26,7 @@
   \item{maxvalue}{ set voxel with values larger than \code{maxvalue} inactive }
   \item{voxelext}{ voxel extensions in coordinate directions }
   \item{orientation}{ orientations of data as coded in AFNI }
+  \item{rotation}{ optional rotation matrix for the coordinate system.}
 }
 \details{
   The function \code{dtiData} creates an object of class \code{"dtiData"} from an image file, where the diffusion weighted data is given as 2-byte integer.  This image file has to be prepared by the user.  Use \code{\link{writeBin}} to write out first all S0 images and than all Si images. The \code{gradient} should be created according to this order. Run the demo in order to have an example, how to do this!

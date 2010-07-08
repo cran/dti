@@ -21,15 +21,15 @@ Voxel::Voxel()
 	this->prev = NULL;
 }
 
-Voxel::Voxel(int x, int y, int z, int order, Vector& directions, double anisotropy)
+Voxel::Voxel(int x_in, int y_in, int z_in, int order_in, Vector& directions_in, double anisotropy_in)
 {
-	this->order = order;
+	this->order = order_in;
 	this->dir_index = 0;
-	this->directions = &directions;
-	this->anisotropy = anisotropy;
-	this->x = x;
-	this->y = y;
-	this->z = z;
+	this->directions = &directions_in;
+	this->anisotropy = anisotropy_in;
+	this->x = x_in;
+	this->y = y_in;
+	this->z = z_in;
 
 	this->position = Vector((double)this->x,(double)this->y,(double)this->z);
 	
@@ -83,15 +83,15 @@ Voxel* Voxel::getNext()			{return next;}
 Voxel* Voxel::getPrev()			{return prev;}
 
 /**  setters  **/
-void Voxel::setDir_Index(int dir_index)	{this->dir_index = dir_index;}
-void Voxel::setVisited(bool visited)	{this->visited = visited;}
-void Voxel::setStartable(bool startable){this->startable = startable;}
-void Voxel::setNext(Voxel *next)		{this->next = next;}
-void Voxel::setPrev(Voxel *prev)		{this->prev = prev;}
+void Voxel::setDir_Index(int set_dir_index)	{this->dir_index = set_dir_index;}
+void Voxel::setVisited(bool set_visited)	{this->visited = set_visited;}
+void Voxel::setStartable(bool set_startable){this->startable = set_startable;}
+void Voxel::setNext(Voxel *set_next)		{this->next = set_next;}
+void Voxel::setPrev(Voxel *set_prev)		{this->prev = set_prev;}
 
 /**  print-methode  **/
 void Voxel::print()
 {
-    return;
-//	printf("%d %d %d, visited = %d, aniso = %f\n", x, y, z, this->visited, this->anisotropy);
+  //    return;
+  //  Rprintf("%d %d %d, visited = %d, aniso = %f\n", x, y, z, this->visited, this->anisotropy);
 }

@@ -4,6 +4,9 @@
 #include <string>
 #include <sstream>
 #include <math.h>
+#include <R.h>
+#include <R_ext/Utils.h>
+#include <Rinternals.h>
 
 using namespace std;
 
@@ -31,7 +34,7 @@ class Vector
 		Vector(double, double, double);
 		Vector(double*, int);
 		
-//		~Vector();
+// 		~Vector();
 		
 		// print-method
 		void print();

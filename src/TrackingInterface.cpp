@@ -34,7 +34,7 @@ extern "C"{
 		
 		double *vals = tester->convertToDouble();
 		
-//		printf("length: %d\n", length);
+//		Rprintf("length: %d\n", length);
 	
 		delete tester;
 			
@@ -69,37 +69,59 @@ extern "C"{
 			        SEXP min_anisotropy,
 			        SEXP max_angle
 			       )
-	{
+	{		
 		SEXP retVec;
+
+//		Rprintf("retVec allociert\n");
+
 		int ii, length, nProtected = 0;
 		
 		// data_dir_num in Konstruktor
-		Converter converter(REAL(data_dir_coords), REAL(data_FA_values), INTEGER(data_order), *INTEGER(maxorder), *INTEGER(dim_x), *INTEGER(dim_y), *INTEGER(dim_z));
+		Converter *converter = new Converter(REAL(data_dir_coords), REAL(data_FA_values), INTEGER(data_order), *INTEGER(maxorder), *INTEGER(dim_x), *INTEGER(dim_y), *INTEGER(dim_z));
 		
+//		Rprintf("R-Daten konvertiert\n");
+
 		int marked[] = {*INTEGER(roi_x_s), *INTEGER(roi_x_e), *INTEGER(roi_y_s), *INTEGER(roi_y_e), *INTEGER(roi_z_s), *INTEGER(roi_z_e)};
 		
-		Fibertracking *tester = new Fibertracking(converter.getVoxels(), *INTEGER(dim_x), *INTEGER(dim_y), *INTEGER(dim_z), *REAL(voxelext_x), *REAL(voxelext_y), *REAL(voxelext_z), *REAL(min_anisotropy), *REAL(max_angle));
-		tester->findMarkedFibers(marked);
+		Fibertracking *tracks = new Fibertracking(converter->getVoxels(), *INTEGER(dim_x), *INTEGER(dim_y), *INTEGER(dim_z), *REAL(voxelext_x), *REAL(voxelext_y), *REAL(voxelext_z), *REAL(min_anisotropy), *REAL(max_angle));
+
+//		Rprintf("Fibertracking-Objekt angelegt\n");
+
+		tracks->findMarkedFibers(marked);
 		
-		length = tester->getLength();
+//		Rprintf("Fibertracking durchgefuehrt\n");
+
+		length = tracks->getLength();
 		
-		double *vals = tester->convertToDouble();
+		double *vals = tracks->convertToDouble();
 		
-//		printf("length: %d\n", length);
+//		Rprintf("verkettete Liste konvertiert mit laenge %d\n", length);
+
+//		Rprintf("length: %d\n", length);
 	
-		delete tester;
+		delete tracks;
 			
+//		Rprintf("delete tracks ausgefuehrt\n");
+
 		PROTECT(retVec = allocVector(REALSXP, length));
 		++nProtected;
-		
+
+//		Rprintf("Protect ausgefuehrt\n");
+
 		for (ii = 0; ii < length; ++ii)
 		{
 			REAL(retVec)[ii] = vals[ii];
 		}
 		
+//		Rprintf("umgeschrieben\n");
+
 		UNPROTECT(nProtected);
 		
+//		Rprintf("UNProtect ausgefuehrt\n");
+
 		delete vals;
+
+//		Rprintf("delete vals ausgefuehrt\n");
 		
 		return retVec;
 	}

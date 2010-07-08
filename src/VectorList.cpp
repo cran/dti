@@ -12,9 +12,9 @@ VectorList::VectorList()
 	num_nan = 0;
 }
 
-VectorList::VectorList(Vector &start)
+VectorList::VectorList(Vector &set_start)
 {
-	Vector *temp = new Vector(start);
+	Vector *temp = new Vector(set_start);
 	
 	this->start = temp;
 	this->end   = temp;
@@ -23,7 +23,7 @@ VectorList::VectorList(Vector &start)
 	length = 1;
 	this->minLength = 6;
 	
-	if (isnan(start.getComponents()[1]))
+	if (isnan(set_start.getComponents()[1]))
 	{
 		num_nan = 1;
 	}
@@ -31,8 +31,10 @@ VectorList::VectorList(Vector &start)
 
 //VectorList::~VectorList()
 //{
-//	delete start;
-//	delete end;
+//	while (this.length > 0)
+//	{
+//		this.del_at_start();
+//	}
 //}
 
 int VectorList::getLength()			{return length;}
@@ -57,7 +59,7 @@ void VectorList::add_list(VectorList &addL)
 	}
 	else
 	{
-//		printf("Fiber to short and will be ignored.\n");
+//		Rprintf("Fiber to short and will be ignored.\n");
 	}
 }
 
@@ -65,20 +67,20 @@ void VectorList::add_at_end(Vector &add)
 {
 	Vector *temp = new Vector(add.getComponents()[0], add.getComponents()[1], add.getComponents()[2]);
 	
-//	printf("\n################\n#  add_at_end  #\n################\n");
+//	Rprintf("\n################\n#  add_at_end  #\n################\n");
 //	
-//	printf("prev<-temp:\n");
+//	Rprintf("prev<-temp:\n");
 //	temp->getPrev()->print();
-//	printf("temp:\n");
+//	Rprintf("temp:\n");
 //	temp->print();
-//	printf("temp->next:\n");
+//	Rprintf("temp->next:\n");
 //	temp->getNext()->print();
 //	
-//	printf("=====================\n");
+//	Rprintf("=====================\n");
 //	
-//	printf("prev<-end:\n");
+//	Rprintf("prev<-end:\n");
 //	end->getPrev()->print();
-//	printf("end:\n");
+//	Rprintf("end:\n");
 //	end->print();
 	
 	if (end == NULL)
@@ -146,6 +148,8 @@ void VectorList::del_at_start()
 	}
 	else
 	{
+// 		Rprintf("%f, %f, %f\n", start->getComponents()[0],
+// 		start->getComponents()[1], start->getComponents()[2]);
 		delete start;
 	}
 	
@@ -159,7 +163,7 @@ void VectorList::print()
 		return;
 	}
 
-//	printf("========== Fiber start ==========\n");
+//	Rprintf("========== Fiber start ==========\n");
 	
 	Vector* aktuell = start;
 	
@@ -169,7 +173,7 @@ void VectorList::print()
 		aktuell = aktuell->getNext();
 	}
 
-//	printf("=========== Fiber  end ===========\n");	
+//	Rprintf("=========== Fiber  end ===========\n");	
 }
 
 void VectorList::print(int until)

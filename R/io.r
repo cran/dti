@@ -4,7 +4,7 @@
 #                                                              #
 ################################################################
 
-dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=0,mins0value=0,maxvalue=10000,voxelext=c(1,1,1),orientation=c(1,3,5)) {
+dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=0,mins0value=0,maxvalue=10000,voxelext=c(1,1,1),orientation=c(0,2,5),rotation=diag(3)) {
   args <- list(sys.call())
   if (any(sort((orientation)%/%2) != 0:2)) stop("invalid orientation \n")
   if (dim(gradient)[2]==3) gradient <- t(gradient)
@@ -31,15 +31,13 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
   dim(si) <- c(length(xind),length(yind),length(zind),ngrad)
   dimsi <- dim(si)
 
-#  si <- readBin(zz,"integer",prod(ddim)*ngrad,2,FALSE)
-#  close(zz)
   cat("Data successfully read",date(), "\n")
 
 #
 #   set correct orientation
 #
   xyz <- (orientation)%/%2+1
-  swap <- orientation-2*(orientation%/%2)
+  swap <- orientation%%2
   if(any(xyz!=1:3)) {
       abc <- 1:3
       abc[xyz] <- abc
@@ -98,7 +96,8 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
                 level  = level,
                 sdcoef = rep(0,4),
                 voxelext = voxelext,
-                orientation = as.integer(c(0,2,5)),
+                orientation = as.integer(c(0,2,5)), #   orientation set to radiological convention
+                rotation = rotation,
                 source = imagefile)
             )
 }
@@ -108,7 +107,7 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
 readDWIdata <- function(gradient, dirlist, format, nslice = NULL, order = NULL,
                         xind=NULL, yind=NULL, zind=NULL,
                         level=0, mins0value=0, maxvalue=10000,
-                        voxelext=NULL, orientation=c(1,3,5)) {
+                        voxelext=NULL, orientation=c(0,2,5), rotation=diag(3)) {
   # basic consistency checks
   args <- list(sys.call())
   if (!(format %in% c("DICOM","NIFTI","ANALYZE","AFNI")))
@@ -221,30 +220,30 @@ readDWIdata <- function(gradient, dirlist, format, nslice = NULL, order = NULL,
   cat("Data successfully read",date(), "\n")
 
   # redefine orientation
-#  xyz <- (orientation)%/%2+1
-#  swap <- orientation-2*(orientation%/%2)
-#  if(any(xyz!=1:3)) {
-#      abc <- 1:3
-#      abc[xyz] <- abc
-#      si <- aperm(si,c(abc,4))
-#      swap[xyz] <- swap
-#      voxelext[xyz] <- voxelext
-#      dimsi[xyz] <- dimsi[1:3]
-#      ddim[xyz] <- ddim[1:3]
-#      gradient[xyz,] <- gradient
-#  }
-#  if(swap[1]==1) {
-#      si <- si[dimsi[1]:1,,,] 
-#      gradient[1,] <- -gradient[1,]
-#      }
-#  if(swap[2]==1) {
-#      si <- si[,dimsi[2]:1,,]  
-#      gradient[2,] <- -gradient[2,]
-#      }
-#  if(swap[3]==0) {
-#      si <- si[,,dimsi[3]:1,]    
-#      gradient[3,] <- -gradient[3,]
-#      }
+  xyz <- (orientation)%/%2+1
+  swap <- orientation%%2
+  if(any(xyz!=1:3)) {
+      abc <- 1:3
+      abc[xyz] <- abc
+      si <- aperm(si,c(abc,4))
+      swap[xyz] <- swap
+      voxelext[xyz] <- voxelext
+      dimsi[xyz] <- dimsi[1:3]
+      ddim[xyz] <- ddim[1:3]
+      gradient[xyz,] <- gradient
+  }
+  if(swap[1]==1) {
+      si <- si[dimsi[1]:1,,,] 
+      gradient[1,] <- -gradient[1,]
+      }
+  if(swap[2]==1) {
+      si <- si[,dimsi[2]:1,,]  
+      gradient[2,] <- -gradient[2,]
+      }
+  if(swap[3]==0) {
+      si <- si[,,dimsi[3]:1,]    
+      gradient[3,] <- -gradient[3,]
+      }
   # orientation set to radiological convention
   si <- .Fortran("initdata",
                  si=as.integer(si),
@@ -280,6 +279,7 @@ readDWIdata <- function(gradient, dirlist, format, nslice = NULL, order = NULL,
                 sdcoef = rep(0,4),
                 voxelext = voxelext,
                 orientation = as.integer(c(0,2,5)),
+                rotation = rotation,
                 source = paste(dirlist,collapse="|"))
             )
 }
@@ -564,7 +564,9 @@ tensor2medinria <- function(obj, filename, xind=NULL, yind=NULL, zind=NULL) {
   if (is.null(xind)) xind <- 1:obj@ddim[1]
   if (is.null(yind)) yind <- 1:obj@ddim[2]
   if (is.null(zind)) zind <- 1:obj@ddim[3]
-
+  if (obj@orientation[1]==1) xind <- min(xind)+max(xind)-xind
+  if (obj@orientation[2]==3) yind <- min(yind)+max(yind)-yind
+  if (obj@orientation[3]==4) zind <- min(zind)+max(zind)-zind
   header <- list()
   header$dimension <- c(5,length(xind),length(yind),length(zind),1,6,0,0)
   header$pixdim <- c(-1, obj@voxelext[1:3], 0, 0, 0, 0)
@@ -609,6 +611,8 @@ medinria2tensor <- function(filename) {
                 yind  = 1:data$dim[2],
                 zind  = 1:data$dim[3],
                 voxelext = data$delta,
+                orientation = as.integer(c(0,2,5)),
+                rotation = diag(3),
                 scale = 1,
                 source= "unknown")
             )

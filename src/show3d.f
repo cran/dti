@@ -94,7 +94,7 @@ C
 C  calculate size of vertices for ellipses in show3d.tensor
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine mixtradi(vert,nv,ev,mex,ori,mix,ord,mo,nobj,radii)
+      subroutine mixtradi(vert,nv,ev,ori,mix,ord,mo,nobj,radii)
       implicit logical (a-z)
 C
 C     vert   vertices
@@ -110,9 +110,9 @@ C     radii  resulting radii of ODF
 C
       integer nv,nobj,mo,ord(nobj)
       real*8 vert(3,nv),ev(2,nobj),ori(2,mo,nobj),mix(mo,nobj),
-     1       radii(nv,nobj),mex
+     1       radii(nv,nobj)
       integer i,j,k
-      real*8 dotprod3,c12,sth,dir(3,5),fourpi,c12fp,z,utd,zk,e1,e2
+      real*8 dotprod3,c12,sth,dir(3,5),fourpi,c12fp,z,utd,zk,e1,e2,sm
 C     assumes maximum of 5 micxture components
       if(mo.gt.5) THEN
          call intpr("mo restricted to 5, is",18,mo,1)
@@ -121,21 +121,24 @@ C     assumes maximum of 5 micxture components
       fourpi = 12.566371d0
       DO j = 1,nobj
          e1 = ev(1,j)
-         e2 = max(e1/mex,ev(2,j))
+         e2 = ev(2,j)
 C   limit maximal excentricity to mex+1 for visualisation purposes
-         c12 = (e1+e2)/e1
-         c12fp = sqrt(e2*c12/fourpi)/e1
+         c12 = e1/(e1+e2)
+         c12fp = sqrt(e2/(e1+e2))/fourpi
+         sm = 1.d0
+C   calculate weight for order 0 component in sm
          DO k = 1,ord(j)
+            sm = sm - mix(k,j)
             sth = sin(ori(1,k,j))
             dir(1,k) = sth*cos(ori(2,k,j))
             dir(2,k) = sth*sin(ori(2,k,j))
             dir(3,k) = cos(ori(1,k,j))
          END DO
          DO i = 1,nv
-            z = 0.d0
+            z = sm
             DO k = 1,ord(j)
                utd = dotprod3(dir(1,k),vert(1,i))
-               zk = c12-utd*utd
+               zk = 1.d0-c12*utd*utd
                z  = z + mix(k,j)/sqrt(zk*zk*zk)
             END DO
             radii(i,j) = z*c12fp

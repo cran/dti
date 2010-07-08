@@ -138,9 +138,9 @@ cat("Estimated smoothed tensor in device",w3,"\n")
 z <- readline("Visualize smoothed estimated dtiIndex (Y/N) :")
 
 if(toupper(z)!="N"){
-w4<-show3d(dt0aniso,level=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(1, size+21, size, 2*size+20))
-w5<-show3d(dthat1aniso,level=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(size+11, size+21, 2*size+10, 2*size+20))
-w6<-show3d(dthat4aniso,level=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(2*size+21, size+21, 3*size+20, 2*size+20))
+w4<-show3d(dt0aniso,falevel=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(1, size+21, size, 2*size+20))
+w5<-show3d(dthat1aniso,falevel=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(size+11, size+21, 2*size+10, 2*size+20))
+w6<-show3d(dthat4aniso,falevel=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(2*size+21, size+21, 3*size+20, 2*size+20))
 mouseTrackball(dev=c(w4,w5,w6))
 mouseZoom(2,dev=c(w4,w5,w6))
 mouseFOV(3,dev=c(w4,w5,w6))
@@ -148,6 +148,21 @@ cat("True FA in device",w4,"\n")
 cat("Estimated FA in device",w5,"\n")
 cat("Estimated smoothed FA in device",w6,"\n")
 }
+
+z <- readline("Visualize fiber tracking results (Y/N) :")
+
+if(toupper(z)!="N"){
+w7 <- show3d(tracking(dt0),FOV=1,windowRect = c(1, size+21, size, 2*size+20))
+w8 <- show3d(tracking(dthat1),FOV=1,windowRect = c(size+11, size+21, 2*size+10, 2*size+20))
+w9 <- show3d(tracking(dthat4),FOV=1,windowRect = c(2*size+21, size+21, 3*size+20, 2*size+20))
+mouseTrackball(dev=c(w7,w8,w9))
+mouseZoom(2,dev=c(w7,w8,w9))
+mouseFOV(3,dev=c(w7,w8,w9))
+cat("Fibers obtained from true tensors in device",w7,"\n")
+cat("Fibers obtained from estimated tensors in device",w8,"\n")
+cat("Fibers obtained from estimated smoothed tensors in device",w9,"\n")
+}
+
 
 z <- readline("End of demo, remove created objects (Y/N) :")
 

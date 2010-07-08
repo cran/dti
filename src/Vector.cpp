@@ -23,7 +23,7 @@ Vector::Vector(double x, double y, double z)
 	input[0] = x;
 	input[1] = y;
 	input[2] = z;
-	
+
 	this->components = input;
 	this->n = 3;
 }
@@ -34,32 +34,30 @@ Vector::Vector(double* d_input, int length)
 	this->components = d_input;
 }
 
-//Vector::~Vector()
-//{
-//	delete components;
-//	delete prev;
-//	delete next;
-//}
+// Vector::~Vector()
+// {
+// 	delete components;
+// }
 
 void Vector::print()
 {
 	if (this == NULL)
 	{
-//		printf("Vector is NULL\n");
+//		Rprintf("Vector is NULL\n");
 		return;
 	}
 	
-//	printf(" _   _ \n");	
+//	Rprintf(" _   _ \n");	
 		
 	for (int i = 0; i < this->n; i++)
 	{
 		if (i == n-1)
 		{
-//			printf("|_%f_|\n", this->components[i]);
+//			Rprintf("|_%f_|\n", this->components[i]);
 		}
 		else
 		{
-//			printf("| %f |\n", this->components[i]);
+//			Rprintf("| %f |\n", this->components[i]);
 		}
 	}
 }
@@ -70,8 +68,8 @@ int Vector::getN()				{return n;}
 Vector* Vector::getNext()		{return next;}
 Vector* Vector::getPrev()		{return prev;}
 
-void Vector::setNext(Vector *next)		{this->next = next;}
-void Vector::setPrev(Vector *prev)		{this->prev = prev;}
+void Vector::setNext(Vector *set_next)		{this->next = set_next;}
+void Vector::setPrev(Vector *set_prev)		{this->prev = set_prev;}
 
 double Vector::norm(Vector& v)
 {
@@ -87,13 +85,24 @@ double Vector::norm(Vector& v)
 
 Vector& Vector::operator /(double d)
 {
+        int nan_counter = 0;
+
 	static Vector out(this->n);
 	
 	for (int i = 0; i < out.n; i++)
 	{
 		out.components[i] = (this->components[i] / d);
+		if (isnan(out.components[i]))
+		{
+		      nan_counter++;
+		}
 	}
 	
+	if (nan_counter == out.n)
+	{
+//	        Rprintf("Illigal argument 'd'.\n");
+	}
+
 	return out;
 }
 
@@ -113,7 +122,8 @@ double Vector::operator *(Vector& v2)
 {
 	if (this->n != v2.n)
 	{
-		cout << "error in multiplication: vectors must have the same length!" << endl;
+//	        Rprintf("error in multiplication: vectors must have the same length!\n");
+
 		return 0.;
 	}
 	else
@@ -133,7 +143,7 @@ Vector& Vector::operator +(Vector& v2)
 {
 	if (this->n != v2.n)
 	{
-		cout << "error in addition: vectors must have the same length!" << endl;
+//	  Rprintf("error in addition: vectors must have the same length!\n");
 		
 		Vector * out = NULL;
 		return *out;
@@ -156,7 +166,7 @@ Vector& Vector::operator -(Vector& v2)
 {
 	if (this->n != v2.n)
 	{
-		cout << "error in addition: vectors must have the same length!" << endl;
+//	  Rprintf("error in addition: vectors must have the same length!\n");
 		
 		static Vector out;
 		return out;
@@ -178,7 +188,7 @@ Vector& Vector::cross(Vector& v2)
 {
 	if (this->n != v2.n)
 	{
-		cout << "error im cross product: vectors must have the same length!" << endl;
+//	  Rprintf("error im cross product: vectors must have the same length!\n");
 		
 		static Vector out;
 		return out;

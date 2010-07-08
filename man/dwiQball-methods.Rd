@@ -9,7 +9,7 @@
   The method estimates, in each voxel, the coefficients of an expansion of the apparent diffusion cefficient (ADC) with respect to a apherical harmonics  orthonormal system  from the DWI data contained in an object of class \code{"dtiData"}.
 }
 \usage{
-  \S4method{dwiQball}{dtiData}(object, what="ODF", order=4, lambda=0)
+  \S4method{dwiQball}{dtiData}(object, what="wODF", order=4, lambda=0)
 }
 \arguments{
   \item{object}{ Object of class \code{"dtiData"}}

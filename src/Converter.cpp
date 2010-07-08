@@ -8,13 +8,17 @@ Voxel& Converter::getVoxels()
 
 Converter::Converter(double* data_dir_coords, double* data_FA_values, int dim_x, int dim_y, int dim_z)
 {
-//	printf("%d, %d, %d\n", dim_x, dim_y, dim_z);
+//	Rprintf("%d, %d, %d\n", dim_x, dim_y, dim_z);
 	
 	voxels = new Voxel[dim_x*dim_y*dim_z];
-	
-//	printf("converting doubles to Voxels...\n");
+
+//	Rprintf("voxels angelegt\n");
+
+//	Rprintf("converting doubles to Voxels...\n");
 
 	Vector *dir;
+
+//	Rprintf("temp. Richtungsvektor angelegt\n");
     
 	double dir_x, dir_y, dir_z, FA;
 	int i = 0, j = 0, k = 0, num_vector = 0, counter = 0;
@@ -41,17 +45,17 @@ Converter::Converter(double* data_dir_coords, double* data_FA_values, int dim_x,
 	    }
     }
 
-//    printf("Converted %d Voxels.\n", counter);
+//     Rprintf("Converted %d Voxels.\n", counter);
 }
 
 
 Converter::Converter(double* data_dir_coords, double* data_FA_values, int* data_order, int maxorder, int dim_x, int dim_y, int dim_z)
 {
-//	printf("%d, %d, %d\n", dim_x, dim_y, dim_z);
+//	Rprintf("%d, %d, %d\n", dim_x, dim_y, dim_z);
 	
 	voxels = new Voxel[dim_x*dim_y*dim_z];
-	
-//	printf("converting doubles to Voxels...\n");
+
+//	Rprintf("converting doubles to Voxels...\n");
 
 	double dir_x, dir_y, dir_z, FA;
 	int i = 0, j = 0, k = 0, l = 0, num_vector = 0, counter = 0, order = 0;
@@ -66,7 +70,7 @@ Converter::Converter(double* data_dir_coords, double* data_FA_values, int* data_
 		   		order = data_order[i + j * dim_x + k * dim_x * dim_y];
 		   		
 		   		Vector *dir = new Vector[order];
-		   		
+
 		   		for (l = 0; l < order; l++)
 		   		{
 			   		dir_x = data_dir_coords[num_vector];num_vector++;
@@ -78,14 +82,12 @@ Converter::Converter(double* data_dir_coords, double* data_FA_values, int* data_
 				
 		   		num_vector += (maxorder - order)*3;
 		   				   		
-				Voxel v(i, j, k, order, *dir, FA);
-				
-				voxels[i + j * dim_x + k * dim_x * dim_y] = v;
-				
+				voxels[i + j * dim_x + k * dim_x * dim_y] = *new Voxel(i, j, k, order, *dir, FA);
+
 				counter++;
 		   	}
 	    }
     }
 
-//    printf("Converted %d Voxels.\n", counter);
+//     Rprintf("Converted %d Voxels.\n", counter);
 }

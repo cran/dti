@@ -15,9 +15,19 @@ setMethod("tracking","dtiTensor", function(obj, roix=NULL, roiy=NULL, roiz=NULL,
   args <- c(obj@call,args)
   imethod <- switch(method, "LINEPROP" = 1,
                            1)
+
   dimx <- obj@ddim[1]
   dimy <- obj@ddim[2]
   dimz <- obj@ddim[3]
+  if(obj@orientation[1]==1||obj@orientation[2]==3||obj@orientation[3]==4){
+     xind <- if (obj@orientation[1]==1) dimx:1 else 1:dimx 
+     yind <- if (obj@orientation[2]==3) dimy:1 else 1:dimy 
+     zind <- if (obj@orientation[3]==4) dimz:1 else 1:dimz 
+     if (!is.null(roix) & obj@orientation[1]==1) roix <- dimx+1-roix
+     if (!is.null(roiy) & obj@orientation[2]==3) roiy <- dimy+1-roiy
+     if (!is.null(roiz) & obj@orientation[3]==4) roiz <- dimz+1-roiz
+     obj <- obj[xind,yind,zind]
+  }
   if (is.null(roix)) roix <- 1:dimx
   if (is.null(roiy)) roiy <- 1:dimy
   if (is.null(roiz)) roiz <- 1:dimz
@@ -97,7 +107,8 @@ setMethod("tracking","dtiTensor", function(obj, roix=NULL, roiy=NULL, roiz=NULL,
                 zind  = obj@zind,
                 voxelext = obj@voxelext,
                 level = obj@level,
-                orientation = obj@orientation,
+                orientation = as.integer(c(0,2,5)),
+                rotation = obj@rotation,
                 source = obj@source,
                 method = method,
                 minanindex = minanindex,
@@ -116,6 +127,15 @@ setMethod("tracking","dtiIndices", function(obj, roix=NULL, roiy=NULL, roiz=NULL
   dimx <- obj@ddim[1]
   dimy <- obj@ddim[2]
   dimz <- obj@ddim[3]
+  if(obj@orientation[1]==1||obj@orientation[2]==3||obj@orientation[3]==4){
+     xind <- if (obj@orientation[1]==1) dimx:1 else 1:dimx 
+     yind <- if (obj@orientation[2]==3) dimy:1 else 1:dimy 
+     zind <- if (obj@orientation[3]==4) dimz:1 else 1:dimz 
+     if (!is.null(roix) & obj@orientation[1]==1) roix <- dimx+1-roix
+     if (!is.null(roiy) & obj@orientation[2]==3) roiy <- dimy+1-roiy
+     if (!is.null(roiz) & obj@orientation[3]==4) roiz <- dimz+1-roiz
+     obj <- obj[xind,yind,zind]
+  }
   if (is.null(roix)) roix <- 1:dimx
   if (is.null(roiy)) roiy <- 1:dimy
   if (is.null(roiz)) roiz <- 1:dimz
@@ -194,7 +214,8 @@ setMethod("tracking","dtiIndices", function(obj, roix=NULL, roiy=NULL, roiz=NULL
                 zind  = obj@zind,
                 voxelext = obj@voxelext,
                 level = obj@level,
-                orientation = obj@orientation,
+                orientation = as.integer(c(0,2,5)),
+                rotation = obj@rotation,
                 source = obj@source,
                 method = method,
                 minanindex = minanindex,
@@ -214,6 +235,16 @@ function(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP", minanindex=0.3
   dimx <- obj@ddim[1]
   dimy <- obj@ddim[2]
   dimz <- obj@ddim[3]
+  if(obj@orientation[1]==1||obj@orientation[2]==3||obj@orientation[3]==4){
+     xind <- if (obj@orientation[1]==1) dimx:1 else 1:dimx 
+     yind <- if (obj@orientation[2]==3) dimy:1 else 1:dimy 
+     zind <- if (obj@orientation[3]==4) dimz:1 else 1:dimz 
+     if (!is.null(roix) & obj@orientation[1]==1) roix <- dimx+1-roix
+     if (!is.null(roiy) & obj@orientation[2]==3) roiy <- dimy+1-roiy
+     if (!is.null(roiz) & obj@orientation[3]==4) roiz <- dimz+1-roiz
+     obj <- obj[xind,yind,zind]
+     cat("orientation",obj@orientation,"\n")
+  }
   if (is.null(roix)) roix <- 1:dimx
   if (is.null(roiy)) roiy <- 1:dimy
   if (is.null(roiz)) roiz <- 1:dimz
@@ -251,6 +282,7 @@ function(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP", minanindex=0.3
     roize <- roize*subsample
   }
   maxorder <- dim(ex$andir)[2]
+  gc()
   
   dd <- .Call("interface_tracking_mixtensor",
               as.double(ex$andir), # dim = c(3, maxorder, dimx, dimy, dimz)
@@ -296,7 +328,8 @@ function(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP", minanindex=0.3
                 zind  = obj@zind,
                 voxelext = obj@voxelext,
                 level = obj@level,
-                orientation = obj@orientation,
+                orientation = as.integer(c(0,2,5)),
+                rotation = obj@rotation,
                 source = obj@source,
                 method = method,
                 minanindex = minanindex,

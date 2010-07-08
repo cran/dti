@@ -24,7 +24,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
     sdcoef <- sdpar(object,interactive=FALSE)@sdcoef
   }
   z <- .Fortran("outlier",
-                as.integer(object@si),
+                as.double(object@si),
                 as.integer(prod(ddim)),
                 as.integer(ngrad),
                 as.logical((1:ngrad)%in%s0ind),
@@ -193,6 +193,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
                 voxelext = object@voxelext,
                 level = object@level,
                 orientation = object@orientation,
+                rotation = object@rotation,
                 source = object@source,
                 outlier = index,
                 scale = scale,
@@ -241,6 +242,7 @@ function(object, which) {
                 ddim0 = object@ddim0,
                 voxelext = object@voxelext,
                 orientation = object@orientation,
+                rotation = object@rotation,
                 xind  = object@xind,
                 yind  = object@yind,
                 zind  = object@zind,

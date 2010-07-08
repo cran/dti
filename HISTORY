@@ -1,3 +1,9 @@
+2010-07-08 version 0.9-2
+  - method dwiMixtensor for tensor mixture models
+  - coherent handling of orientation information
+  - fiber tracking for tensor mixture models (experimental)
+  - new demo mixtens_art for tensor mixture models
+
 2010-04-07 version 0.9-1
   - alternative dwiMixtensor implementation using partial nonlinear models
   - bugfix in c++ code 
@@ -48,3 +54,4 @@
 2008-01-21 version 0.4-0
 
   - plot() on dtiIndices has new argument view for axial, sagittal, coronal view
+

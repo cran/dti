@@ -8,7 +8,7 @@ show3d <- function(obj,  ...) cat("3D Visualization not implemented for this cla
 
 setGeneric("show3d", function(obj,  ...) standardGeneric("show3d"))
 
-setMethod("show3d","dtiData", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,scale=.5,bgcolor="black",add=FALSE,maxobjects=729,what="ADC",minalpha=1,nn=1,normalize=FALSE,box=FALSE,title=FALSE,...){
+setMethod("show3d","dtiData", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,quant=.8,scale=.4,bgcolor="black",add=FALSE,maxobjects=729,what="ADC",minalpha=1,nn=1,normalize=FALSE,box=FALSE,title=FALSE,...){
   if(!require(rgl)) stop("Package rgl needs to be installed for 3D visualization")
   if(is.null(nx)) nx <- obj@ddim[1]
   if(is.null(ny)) ny <- obj@ddim[2]
@@ -30,6 +30,9 @@ setMethod("show3d","dtiData", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,s
   xind <- xind[xind>0&xind<=obj@ddim[1]]
   yind <- yind[yind>0&yind<=obj@ddim[2]]
   zind <- zind[zind>0&zind<=obj@ddim[3]]
+  if (obj@orientation[1]==1) xind <- min(xind)+max(xind)-xind
+  if (obj@orientation[2]==3) yind <- min(yind)+max(yind)-yind
+  if (obj@orientation[3]==4) zind <- min(zind)+max(zind)-zind
   n1 <- length(xind)
   n2 <- length(yind)
   n3 <- length(zind)
@@ -62,7 +65,7 @@ setMethod("show3d","dtiData", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,s
      radii <- sweep(radii,2,minradii,"-")
      radii <- sweep(radii,2,maxradii-minradii,"/")*sscale
   } else {
-     radii <- radii/max(radii)*sscale
+     radii <- radii/quantile(apply(radii,2,max),quant)*sscale
   }
   gradient <- obj@gradient[,-obj@s0ind]
   if(!add) {
@@ -106,7 +109,7 @@ setMethod("show3d","dtiData", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,s
 
 ##############
 
-setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,method=1,falevel=0.3,level=0,scale=.5,bgcolor="black",add=FALSE,subdivide=2,maxobjects=729,what="tensor",minalpha=.25,normalize=NULL,box=FALSE,title=FALSE,...){
+setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,method=1,falevel=.3,level=0,quant=.8,scale=.4,bgcolor="black",add=FALSE,subdivide=2,maxobjects=729,what="tensor",odfscale=3,minalpha=.25,normalize=NULL,box=FALSE,title=FALSE,...){
   if(!require(rgl)) stop("Package rgl needs to be installed for 3D visualization")
   if(!exists("icosa0")) data("polyeders")
   if(subdivide<0||subdivide>4) subdivide <- 3
@@ -130,6 +133,9 @@ setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL
   xind <- xind[xind>0&xind<=obj@ddim[1]]
   yind <- yind[yind>0&yind<=obj@ddim[2]]
   zind <- zind[zind>0&zind<=obj@ddim[3]]
+  if (obj@orientation[1]==1) xind <- min(xind)+max(xind)-xind
+  if (obj@orientation[2]==3) yind <- min(yind)+max(yind)-yind
+  if (obj@orientation[3]==4) zind <- min(zind)+max(zind)-zind
   n1 <- length(xind)
   n2 <- length(yind)
   n3 <- length(zind)
@@ -199,11 +205,21 @@ setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL
      radii <- sweep(radii,2,maxradii-minradii,"/")*scale
   } else {
     if (tolower(what)=="odf"){
-     mradii <- apply(radii,2,mean)
-     radii <- sweep(radii,2,mradii,"/")+level
-     radii <- radii/max(radii)*scale
+#
+#   use a sphere of radius level as baseline for the ODF
+#
+        radii <- radii+level
+#
+#   to display results in a form that the volumes are comparable,
+#   need volume elements around vertices that have volume proportional to radii,
+#   i.e. a radial extension of radii^(1/3)
+#   odfscale = 1 corresponds to using radii directly for ODF-values
+#   values inbetween are possible
+#
+        radii <- radii^(1/odfscale)
+        radii <- radii/quantile(apply(radii,2,max),quant)*scale
      } else {
-     radii <- (radii+level)/(max(radii)+level)*scale
+     radii <- (radii+level)/(quantile(apply(radii,2,max),quant)+level)*scale
      }
   }
   if(!add) {
@@ -227,7 +243,7 @@ setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL
   invisible(rgl.cur())
 })
 
-setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,level=0,scale=.45,bgcolor="black",add=FALSE,subdivide=3,maxobjects=729,what="ODF",maxexcent=10,minalpha=1,lwd=3,box=FALSE,title=FALSE,...){
+setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,falevel=.3,level=0,quant=.8,scale=.4,bgcolor="black",add=FALSE,subdivide=3,maxobjects=729,what="ODF",odfscale=3,minalpha=1,lwd=3,box=FALSE,title=FALSE,...){
   if(!require(rgl)) stop("Package rgl needs to be installed for 3D visualization")
   if(!exists("icosa0")) data("polyeders")
   if(subdivide<0||subdivide>4) subdivide <- 3
@@ -251,6 +267,9 @@ setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=N
   xind <- xind[xind>0&xind<=obj@ddim[1]]
   yind <- yind[yind>0&yind<=obj@ddim[2]]
   zind <- zind[zind>0&zind<=obj@ddim[3]]
+  if (obj@orientation[1]==1) xind <- min(xind)+max(xind)-xind
+  if (obj@orientation[2]==3) yind <- min(yind)+max(yind)-yind
+  if (obj@orientation[3]==4) zind <- min(zind)+max(zind)-zind
   n1 <- length(xind)
   n2 <- length(yind)
   n3 <- length(zind)
@@ -266,39 +285,59 @@ setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=N
   order <- obj@order
   ev <- obj@ev
   mix <- obj@mix
+  maxorder <- dim(mix)[1]
   orient <- obj@orient
   tmean <- array(0,c(3,n1,n2,n3))
   tmean[1,,,] <- xind*vext[1]
   tmean[2,,,] <- outer(rep(1,n1),yind)*vext[2]
   tmean[3,,,] <- outer(rep(1,n1),outer(rep(1,n2),zind))*vext[3]
   mask <- obj@mask
+  gfa <- extract(obj,"gfa")$gfa
+  dim(gfa) <- dim(mask)
+  dim(ev) <- c(2,n)
+  dim(tmean) <- c(3,n)
+  dim(orient) <- c(dim(orient)[1:2],n)
+  dim(mix) <- c(dim(mix)[1],n)
+  if(falevel>0){
+    indpos <- (1:n)[(gfa>falevel)&mask]
+    ev <- ev[,indpos]
+    tmean <- tmean[,indpos]
+    orient <- orient[,,indpos]
+    mix <- mix[,indpos]
+    order <- order[indpos]
+    gfa <- gfa[indpos]
+    n <- length(indpos)
+  }
   polyeder <- switch(subdivide+1,icosa0,icosa1,icosa2,icosa3,icosa4)
   if(toupper(what) %in% c("ODF","BOTH")){
   radii <- .Fortran("mixtradi",
                     as.double(polyeder$vertices),
                     as.integer(polyeder$nv),
                     as.double(ev),
-                    as.double(maxexcent-1),
                     as.double(orient),
                     as.double(mix),
                     as.integer(order),
-                    as.integer(dim(mix)[1]),
+                    as.integer(maxorder),
                     as.integer(n),
                     radii=double(n*polyeder$nv),
                     DUP=FALSE,
                     PACKAGE="dti")$radii
   dim(radii) <- c(polyeder$nv,n)
-#  radii <- (radii+level)/(max(radii)+level)*scale
 #
-#   display in a form that the volumes are comparable,
-#   i.e. that the mean radii are constant
+#   use a sphere of radius level as baseline for the ODF
 #
-  mradii <- apply(radii,2,mean)
-  radii <- sweep(radii,2,mradii,"/")+level
-  radii <- radii/max(radii)*scale
+  radii <- radii+level
+#
+#   to display results in a form that the volumes are comparable,
+#   need volume elements around vertices that have volume proportional to radii,
+#   i.e. a radial extension of radii^(1/3)
+#   odfscale = 1 corresponds to using radii directly for ODF-values
+#   values inbetween are possible
+#
+  radii <- radii^(1/odfscale)
+  radii <- radii/quantile(apply(radii,2,max),quant)*scale
   }
   if(toupper(what) %in% c("AXIS","BOTH")){
-   gfa <- extract(obj,"gfa")$gfa
    colors <- rainbow(1024,end=2/3,gamma=1.2)
    ranger <- range(gfa)
    ind <- 1024-(gfa-ranger[1])/(ranger[2]-ranger[1])*1023
@@ -307,17 +346,17 @@ setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=N
                     as.double(orient),
                     as.double(mix),
                     as.integer(order),
-                    as.integer(dim(mix)[1]),
+                    as.integer(maxorder),
                     as.integer(n),
                     andir=double(3*n*dim(mix)[1]),
                     DUP=FALSE,
                     PACKAGE="dti")$andir,c(3,dim(mix)[1],n1,n2,n3))
-  lcoord <- array(0,c(3,2*dim(mix)[1],n1,n2,n3))
+  lcoord <- array(0,c(3,2*dim(mix)[1],n))
   for(i in 1:dim(mix)[1]){
-       lcoord[,2*i-1,,,] <-  andir[,i,,,]*scale+tmean[,,,]
-       lcoord[,2*i,,,] <-  -andir[,i,,,]*scale+tmean[,,,]
+       lcoord[,2*i-1,] <-  andir[,i,]*scale+tmean
+       lcoord[,2*i,] <-  -andir[,i,]*scale+tmean
      }          
-     dim(lcoord) <- c(3,2*dim(mix)[1]*n1*n2*n3)
+     dim(lcoord) <- c(3,2*dim(mix)[1]*n)
   }
   dim(tmean) <- c(3,n)
   if(!add) {
@@ -353,6 +392,9 @@ setMethod("show3d","dtiIndices",function(obj, index="FA", nx=NULL, ny=NULL, nz=N
   xind <- xind[xind>0&xind<=obj@ddim[1]]
   yind <- yind[yind>0&yind<=obj@ddim[2]]
   zind <- zind[zind>0&zind<=obj@ddim[3]]
+  if (obj@orientation[1]==1) xind <- min(xind)+max(xind)-xind
+  if (obj@orientation[2]==3) yind <- min(yind)+max(yind)-yind
+  if (obj@orientation[3]==4) zind <- min(zind)+max(zind)-zind
   n1 <- length(xind)
   n2 <- length(yind)
   n3 <- length(zind)
@@ -403,7 +445,7 @@ setMethod("show3d","dtiIndices",function(obj, index="FA", nx=NULL, ny=NULL, nz=N
 
 ##############
 
-setMethod("show3d","dwiQball", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,level=0,scale=0.5,bgcolor="black",add=FALSE,subdivide=3,maxobjects=729,minalpha=1,box=FALSE,title=FALSE,...){
+setMethod("show3d","dwiQball", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,level=0,quant=.8,scale=.4,odfscale=3,bgcolor="black",add=FALSE,subdivide=3,maxobjects=729,minalpha=1,box=FALSE,title=FALSE,...){
   if(!require(rgl)) stop("Package rgl needs to be installed for 3D visualization")
   if(!exists("icosa0")) data("polyeders")
   if(subdivide<0||subdivide>4) subdivide <- 3
@@ -427,6 +469,9 @@ setMethod("show3d","dwiQball", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,
   xind <- xind[xind>0&xind<=obj@ddim[1]]
   yind <- yind[yind>0&yind<=obj@ddim[2]]
   zind <- zind[zind>0&zind<=obj@ddim[3]]
+  if (obj@orientation[1]==1) xind <- min(xind)+max(xind)-xind
+  if (obj@orientation[2]==3) yind <- min(yind)+max(yind)-yind
+  if (obj@orientation[3]==4) zind <- min(zind)+max(zind)-zind
   n1 <- length(xind)
   n2 <- length(yind)
   n3 <- length(zind)
@@ -448,14 +493,23 @@ setMethod("show3d","dwiQball", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,
   polyeder <- switch(subdivide+1,icosa0,icosa1,icosa2,icosa3,icosa4)
   sphdesign <- design.spheven(obj@order,polyeder$vertices,obj@lambda)$design
   radii <- t(sphdesign)%*%sphcoef
-#  radii[radii<0] <- 0
-  minradii <- pmin(0,apply(radii,2,min))
-  radii <- sweep(radii,2,minradii,"-")
+  radii <- array(pmax(0,radii),dim(radii))
 #  avoid negative ODF's, otherwise scaling by volume produces
 #  strange results
   mradii <- apply(radii,2,mean)
+#
+#   rescale and use a sphere of radius level as baseline for the ODF
+#
   radii <- sweep(radii,2,mradii,"/")+level
-  radii <- radii/max(radii)*scale
+#
+#   to display results in a form that the volumes are comparable,
+#   need volume elements around vertices that have volume proportional to radii,
+#   i.e. a radial extension of radii^(1/3)
+#   odfscale = 1 corresponds to using radii directly for ODF-values
+#   values inbetween are possible
+#
+  radii <- radii^(1/odfscale)
+  radii <- radii/quantile(apply(radii,2,max),quant)*scale
   if(!add) {
      open3d()
      par3d(...)
@@ -544,6 +598,54 @@ show3dTens <- function(radii,polyeder,centers=NULL,colors=NULL,alpha=1,...){
 #############
 
 show3dData <- function(radii,vertices,centers=NULL,minalpha=1,...){
+#
+#   use gradients directly
+#
+   if(is.null(centers)){
+      centers <- matrix(0,3,1)
+      n <- 1
+   } else {
+      dcenters <- dim(centers)
+      if(length(dcenters)!=2 || dcenters[1]!=3) stop("centers needs to be NULL or a matrix 
+      with dimension (3,n)")
+      n <- dcenters[2]
+   }
+   maxradii <- apply(radii,2,max)
+   alpha <- minalpha+(1-minalpha)*sweep(radii,2,maxradii,"/")
+   colors <- rgb(abs(vertices[1,]),abs(vertices[2,]),abs(vertices[3,]))
+   if(length(alpha)!=n){
+      nc <- length(alpha)
+      nnc <- n%/%nc+1
+      alpha <- rep(alpha,nnc)[1:n]
+   }
+   nv <- dim(vertices)[2]
+   lines <- array(0,c(2,3,n,nv))
+   vertices <- array(vertices,c(3,nv,n))
+   colors <- matrix(colors,nv,n)
+   ind1 <- rep(1:(n*nv),rep(2,n*nv))
+   if(length(radii)!=nv*n) stop("wrong length of radii, needs to be 
+             dim(vertices)[2]*dim(centers)[2]")
+   vertices0 <- sweep(vertices,2:3,radii,"*")
+   vertices <- sweep(.9*vertices0,c(1,3),centers,"+")
+   lines[1,,,] <- aperm(vertices,c(1,3,2))
+   vertices <- sweep(vertices0,c(1,3),centers,"+")
+   lines[2,,,] <- aperm(vertices,c(1,3,2))
+   colors <- array(colors,c(nv,n))
+#   rgl.lines(lines[,1,,],lines[,2,,],lines[,3,,],color=t(colors)[ind1],lwd=1)
+   rgl.lines(lines[,1,,],lines[,2,,],lines[,3,,],lwd=1)
+   rgl.points(vertices[1,,],vertices[2,,],vertices[3,,],color=colors,size=4)
+   vertices <- sweep(-.9*vertices0,c(1,3),centers,"+")
+   lines[1,,,] <- aperm(vertices,c(1,3,2))
+   vertices <- sweep(-vertices0,c(1,3),centers,"+")
+   lines[2,,,] <- aperm(vertices,c(1,3,2))
+#   rgl.lines(lines[,1,,],lines[,2,,],lines[,3,,],color=t(colors)[ind1],lwd=1)
+   rgl.lines(lines[,1,,],lines[,2,,],lines[,3,,],lwd=1)
+   rgl.points(vertices[1,,],vertices[2,,],vertices[3,,],color=colors,size=4)
+}
+
+#############
+
+show3dData0 <- function(radii,vertices,centers=NULL,minalpha=1,...){
    if(is.null(centers)){
       centers <- matrix(0,3,1)
       n <- 1
@@ -576,7 +678,6 @@ show3dData <- function(radii,vertices,centers=NULL,minalpha=1,...){
    rgl.triangles(vertices[1,indices],vertices[2,indices],vertices[3,indices],
                  color=colors[indices],alpha=alpha[indices],...)
 }
-
 #############
 
 show3dCdata <- function(radii,polyeder,centers=NULL,minalpha=1,scale=.5,...){
@@ -610,7 +711,7 @@ show3dCdata <- function(radii,polyeder,centers=NULL,minalpha=1,scale=.5,...){
 #############
 
 show3dODF <- function(radii,polyeder,centers=NULL,minalpha=1,...){
-   if(is.null(centers)){
+   if(is.null(centers)||length(centers)==3){
       centers <- matrix(0,3,1)
       n <- 1
    } else {

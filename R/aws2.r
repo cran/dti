@@ -36,7 +36,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
   ddim <- object@ddim
   sdcoef <- object@sdcoef
   z <- .Fortran("outlier",
-                as.integer(object@si),
+                as.double(object@si),
                 as.integer(prod(ddim)),
                 as.integer(ngrad),
                 as.logical((1:ngrad)%in%s0ind),
@@ -311,6 +311,8 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
                 yind  = yind,
                 zind  = zind,
                 voxelext = object@voxelext,
+                orientation = object@orientation,
+                rotation = object@rotation,
                 source= object@source,
                 outlier = index,
                 scale = scale,
@@ -332,7 +334,8 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
                 zind  = zind,
                 voxelext = object@voxelext,
                 level  = object@level,
-                orientation = object@orientation ,
+                orientation = object@orientation,
+                rotation = object@rotation,
                 source= object@source)
             )
 }

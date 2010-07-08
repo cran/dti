@@ -50,9 +50,11 @@ C
 C   replace physically meaningless Si values by mean S0
 C
       implicit logical(a-z)
-      integer n,nb,si(n,nb),ls0,sinew(n,nb),ind(n),lind
+      integer n,nb,ls0,sinew(n,nb),ind(n),lind
+      real*8 si(n,nb)
       logical s0ind(nb)
-      integer i,j,s0,ls0m1
+      integer i,j,ls0m1
+      real*8 s0
       logical changed
       ls0m1=ls0-1
       lind=0
