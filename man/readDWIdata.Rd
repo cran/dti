@@ -6,8 +6,13 @@
   The functions create a \code{"dtiData"} object from Diffusion Weighted Data from medicial imaging files in a list of directories or from an imagefile, where the diffusion weighted data is given as 2-byte integer.
 }
 \usage{
-  dtiData(gradient, imagefile, ddim, xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, maxvalue = 10000, voxelext = c(1, 1, 1), orientation = c(0, 2, 5), rotation = diag(3))
-  readDWIdata(gradient, dirlist, format, nslice = NULL, order = NULL, xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, maxvalue = 10000, voxelext = NULL, orientation = c(0, 2, 5), rotation = diag(3))
+dtiData(gradient, imagefile, ddim, xind = NULL, yind = NULL, zind = NULL, 
+        level = 0, mins0value = 0, maxvalue = 10000, voxelext = c(1, 1, 1), 
+        orientation = c(0, 2, 5), rotation = diag(3))
+readDWIdata(gradient, dirlist, format, nslice = NULL, order = NULL, 
+        xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, 
+        maxvalue = 10000, voxelext = NULL, orientation = c(0, 2, 5), 
+        rotation = diag(3))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

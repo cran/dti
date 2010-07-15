@@ -46,6 +46,8 @@ setMethod("tracking","dtiTensor", function(obj, roix=NULL, roiy=NULL, roiz=NULL,
 
   andir <- dtind@andir
   fa <- dtind@fa
+  rm(dtind)
+  gc()
 
   if ((subsample != as.integer(subsample)) | (subsample < 1)) subsample <- 1
   if (subsample > 1) {

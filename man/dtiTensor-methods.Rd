@@ -9,7 +9,8 @@
   The method estimates, in each voxel, the diffusion tensor from the DWI data contained in an object of class \code{"dtiData"}.
 }
 \usage{
-  \S4method{dtiTensor}{dtiData}(object, method="nonlinear", varmethod="replicates", varmodel="local")
+  \S4method{dtiTensor}{dtiData}(object, method="nonlinear", varmethod="replicates", 
+                                varmodel="local")
 }
 \arguments{
   \item{object}{ Object of class \code{"dtiData"}}

@@ -1,3 +1,7 @@
+2010-07-15 version 0.9-2.1
+  - removed dependency on OMP
+  - some changes in documentation
+
 2010-07-08 version 0.9-2
   - method dwiMixtensor for tensor mixture models
   - coherent handling of orientation information

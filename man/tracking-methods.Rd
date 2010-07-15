@@ -14,10 +14,14 @@
   The function provides fiber tracking of \code{"dtiTensor"}, \code{"dtiIndices"}, and \code{"dwiMixtensor"} objects.
 }
 \usage{
-  \S4method{tracking}{dtiTensor}(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP", minanindex=0.3, maxangle=30, subsample = 1)
-  \S4method{tracking}{dtiIndices}(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP", minanindex=0.3, maxangle=30, subsample = 1)
-  \S4method{tracking}{dwiMixtensor}(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP", minanindex=0.3, maxangle=30, subsample = 1)
-  \S4method{selectFibers}{dwiFiber}(obj, roix=NULL, roiy=NULL, roiz=NULL, nroimask=NULL, minlength=1)
+\S4method{tracking}{dtiTensor}(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP",
+                    minanindex=0.3, maxangle=30, subsample = 1)
+\S4method{tracking}{dtiIndices}(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP",
+                    minanindex=0.3, maxangle=30, subsample = 1)
+\S4method{tracking}{dwiMixtensor}(obj, roix=NULL, roiy=NULL, roiz=NULL, method="LINEPROP",
+                    minanindex=0.3, maxangle=30, subsample = 1)
+\S4method{selectFibers}{dwiFiber}(obj, roix=NULL, roiy=NULL, roiz=NULL, nroimask=NULL, 
+                    minlength=1)
 }
 \arguments{
 \item{obj}{ An object of class \code{"dtiTensor"}, \code{"dtiIndices"}, or \code{"dwiMixtensor"} for tracking() and \code{"dwiFiber"} for selectFiber().}

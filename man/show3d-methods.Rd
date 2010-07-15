@@ -14,19 +14,25 @@
   The function provides 3D visualization of \code{"dtiData"}, \code{"dtiTensor"}, \code{"dwiQball"} and \code{"dtiIndices"} objects using the \code{"rgl"}-package. Functionality of the rgl-package allows to rotate and zoom the displayed object.
 }
 \usage{
-  \S4method{show3d}{dtiData}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, quant=.8, scale=.4, bgcolor="black", 
-add=FALSE, maxobjects=729, what="ADC", minalpha=1, nn=1, normalize=FALSE, box=FALSE, title=FALSE, \dots)
-  \S4method{show3d}{dtiTensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, falevel=.3, 
-level=0, quant=.8, scale=.4, bgcolor="black", add=FALSE, subdivide=2, maxobjects=729, what="tensor", 
-odfscale = 3, minalpha=.25, normalize=NULL, box=FALSE, title=FALSE,\dots)
-  \S4method{show3d}{dtiIndices}(obj, index="FA", nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, 
-falevel=0, bgcolor="black", add=FALSE, lwd=1, box=FALSE, title=FALSE, \dots)
-  \S4method{show3d}{dwiMixtensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, falevel=.3, level=0, quant=.8, scale=.4, 
-bgcolor="black", add=FALSE, subdivide=3, maxobjects=729, what="ODF", odfscale=3, minalpha=1, 
-lwd=3, box=FALSE, title=FALSE, \dots) 
- \S4method{show3d}{dwiQball}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, level=0, quant=.8, scale=0.4, 
- odfscale=3, bgcolor="black", add=FALSE, subdivide=3, maxobjects=729, minalpha=1, box=FALSE, title=FALSE, \dots)
-  \S4method{show3d}{dwiFiber}(obj, add=FALSE, bgcolor="black", box=FALSE, title=FALSE, lwd=1, \dots)
+\S4method{show3d}{dtiData}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, quant=.8, scale=.4,
+         bgcolor="black", add=FALSE, maxobjects=729, what="ADC", 
+         minalpha=1, nn=1, normalize=FALSE, box=FALSE, title=FALSE, \dots)
+\S4method{show3d}{dtiTensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, falevel=.3, 
+         level=0, quant=.8, scale=.4, bgcolor="black", add=FALSE, 
+         subdivide=2, maxobjects=729, what="tensor", odfscale = 3, 
+         minalpha=.25, normalize=NULL, box=FALSE, title=FALSE,\dots)
+\S4method{show3d}{dtiIndices}(obj, index="FA", nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, 
+         falevel=0, bgcolor="black", add=FALSE, lwd=1, box=FALSE, 
+         title=FALSE, \dots)
+\S4method{show3d}{dwiMixtensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, falevel=.3, level=0,           
+         quant=.8, scale=.4, bgcolor="black", add=FALSE, 
+         subdivide=3, maxobjects=729, what="ODF", odfscale=3, 
+         minalpha=1, lwd=3, box=FALSE, title=FALSE, \dots) 
+\S4method{show3d}{dwiQball}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, level=0, quant=.8,                 
+         scale=0.4, odfscale=3, bgcolor="black", add=FALSE, 
+         subdivide=3, maxobjects=729, minalpha=1, box=FALSE, 
+         title=FALSE, \dots)
+\S4method{show3d}{dwiFiber}(obj, add=FALSE, bgcolor="black", box=FALSE, title=FALSE, lwd=1, \dots)
 }
 \arguments{
 \item{obj}{ An object of class \code{dtiTensor} or \code{dtiIndices} }
@@ -41,7 +47,9 @@ lwd=3, box=FALSE, title=FALSE, \dots)
 \item{maxobjects}{Maximal size of data cube (in voxel) to display}
 \item{minalpha}{Minimum value for transparency.}
 \item{nn}{Number of nearest neighbors used for interpolation onto a regular polyeder.}
-\item{normalize}{If \code{TRUE} normalize values (project to interval (0,1) within each voxel). For tensor objects \code{normalize=NULL} specifies a default depending on the content of argument what (\code{normalize <- switch(tolower(what),"tensor"=FALSE,"adc"=TRUE)}).}
+\item{normalize}{If \code{TRUE} normalize values (project to interval (0,1) within each voxel). For tensor objects \code{normalize=NULL} specifies a default depending on the content of argument what 
+
+(\code{normalize <- switch(tolower(what),"tensor"=FALSE,"adc"=TRUE)}).}
 \item{box}{Logical, add a bounding box.}
 \item{title}{Either a character string specifying a title or a logical. If \code{title==TRUE} a default title characterizing the type of plot is generated. }
 \item{method}{\code{method==1} and \code{method==2} specify two different color schemes for directional FA-maps.}

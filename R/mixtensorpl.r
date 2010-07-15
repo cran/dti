@@ -122,7 +122,7 @@ paroforient <- function(dir){
   c(theta, phi)
 }
 
-getsiind2 <- function(si,mask,grad,theta1,maxcomp=3,maxc=.866,nguess=100){
+getsiind2 <- function(si,mask,grad,th,maxcomp=3,maxc=.866,nguess=100){
 # assumes dim(grad) == c(ngrad,3)
 # assumes dim(si) == c(n1,n2,n3,ngrad)
 # SO removed
@@ -130,8 +130,8 @@ ngrad <- dim(grad)[1]
 nsi <- dim(si)[4]
 dgrad <- matrix(abs(grad%*%t(grad)),ngrad,ngrad)
 dgrad <- dgrad/max(dgrad)
-egrad <- exp(-theta1*dgrad^2)
 isample <- selisample(ngrad,maxcomp,nguess,dgrad,maxc)
+nth <- length(th)
 #
 #  eliminate configurations with close directions 
 #
@@ -146,29 +146,32 @@ siind <- .Fortran("getsiin2",
          as.integer(dim(si)[2]),
          as.integer(dim(si)[3]),
          as.integer(maxcomp),
-         as.double(egrad),
+         as.double(dgrad),
+         as.double(th),
+         as.integer(nth),
+         double(ngrad*ngrad),
          as.integer(isample),
          as.integer(nguess),
          double(nsi),
          double(nsi*(maxcomp+1)),
-         siind=integer((maxcomp+1)*prod(dim(si)[-4])),
+         siind=integer((maxcomp+2)*prod(dim(si)[-4])),
          krit=double(prod(dim(si)[1:3])),
-         as.integer(maxcomp+1),
+         as.integer(maxcomp+2),
          as.logical(mask),
          PACKAGE="dti")[c("siind","krit")]
-array(siind$siind,c(maxcomp+1,dim(si)[-4]))
+array(siind$siind,c(maxcomp+2,dim(si)[-4]))
 }
 
 dwiMixtensor <- function(object, ...) cat("No dwiMixtensor calculation defined for this class:",class(object),"\n")
 
 setGeneric("dwiMixtensor", function(object,  ...) standardGeneric("dwiMixtensor"))
 
-setMethod("dwiMixtensor","dtiData",function(object, maxcomp=3,  p=40, method="mixtensor", reltol=1e-6, maxit=5000,ngc=1000, optmethod="BFGS", nguess=25*maxcomp^2,penalty="BIC"){
+setMethod("dwiMixtensor","dtiData",function(object, maxcomp=3,  p=40, method="mixtensor", reltol=1e-6, maxit=5000,ngc=1000, optmethod="BFGS", nguess=50*maxcomp^2,penalty="BIC"){
 #
 #  uses  S(g)/s_0 = w_0 exp(-l_1) +\sum_{i} w_i exp(-l_2-(l_1-l_2)(g^T d_i)^2)
 #
   pen <- 1e2
-  theta <- 2.5
+  theta <- .5
   maxc <- .866
   args <- sys.call(-1)
   args <- c(object@call,args)
@@ -225,14 +228,19 @@ setMethod("dwiMixtensor","dtiData",function(object, maxcomp=3,  p=40, method="mi
                PACKAGE="dti")$lev,c(2,ddim))
   mlev <- median(lev[2,,,][mask])
   theta <- theta*mlev
-  cat("using theta=",theta,"\n")
+  minth <- .2*theta
+  maxth <- 1.4*theta
+  nth <- 7
+  th <- seq(minth,maxth,length=nth)
+  cat("using theta=",th,"\n")
 #
 #   determine initial estimates for orientations 
 #
   cat("Start search for initial directions at",date(),"\n")
   data("polyeders")
 #  siind <- getsiind2(siq,mask,grad,theta,maxcomp,maxc=maxc,nguess=nguess)
-  siind <- getsiind2(siq,mask,t(icosa3$vertices),theta,maxcomp,maxc=maxc,nguess=nguess)
+  siind <- getsiind2(siq,mask,t(icosa3$vertices),th,maxcomp,maxc=maxc,nguess=nguess)
+  print(table(siind[2,,,]))
  cat("End search for initial values at",date(),"\n")
   order <- array(0,ddim)
 #  logarithmic eigen values
@@ -251,13 +259,13 @@ setMethod("dwiMixtensor","dtiData",function(object, maxcomp=3,  p=40, method="mi
      mc0 <- maxcomp
      ord <- mc0+1
 #     for(j in 1:mc0) orient[,j,i1,i2,i3] <- paroforient(grad[siind[j+1,i1,i2,i3],])
-     for(j in 1:mc0) orient[,j,i1,i2,i3] <- paroforient(icosa3$vertices[,siind[j+1,i1,i2,i3]])
+     for(j in 1:mc0) orient[,j,i1,i2,i3] <- paroforient(icosa3$vertices[,siind[j+2,i1,i2,i3]])
 #
 #   these are the gradient vectors corresponding to minima in spherical coordinates
 #
      if(method=="mixtensor"){
      par <- numeric(2*mc0+1)
-     par[1] <- theta#*lev[2,i1,i2,i3]/mlev
+     par[1] <- th[siind[2,i1,i2,i3]]#*lev[2,i1,i2,i3]/mlev
 #
 #  these is an initial estimate for the eigen-value parameter
 #

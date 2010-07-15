@@ -250,7 +250,7 @@ C
 C
 C __________________________________________________________________
 C
-      subroutine getsiin2(si,ngrad,n1,n2,n3,m,
+      subroutine getsiin2(si,ngrad,n1,n2,n3,m,dgrad,th,nth,
      1         egrad,isample,ntry,sms,z,siind,mval,ns,mask)
 C
 C  compute diagnostics for initial estimates in siind
@@ -259,7 +259,8 @@ C
 C  si     - array of si-values
 C  m      - model order
 C  maxc   - maximum of cos(angle between directions)
-C  exgrad - exp(-theta1*dgrad^2) 
+C  th     - theta1
+C  egrad - exp(-theta1*dgrad^2) 
 C  isample - guesses for gradient directions
 C  ntry   - number of guesses
 C  sms    - copies of si
@@ -267,51 +268,75 @@ C  z      - array for design matrix corresponding to guesses
 C  siind  - array of indices (output)
 C  ns     - m+1
 C  mask   - mask
+C  mval   - aktual best risk
 C
 C  restricted to ngrad<=1000 and m <=10
 C
       implicit logical (a-z)
-      integer n1,n2,n3,ngrad,ns,siind(ns,n1,n2,n3),m,ntry,
+      integer n1,n2,n3,ngrad,ns,siind(ns,n1,n2,n3),m,ntry,nth,
      1       isample(m,ntry)
-      real*8 si(ngrad,n1,n2,n3),sms(ngrad),
+      real*8 si(ngrad,n1,n2,n3),sms(ngrad),dgrad(ngrad,ngrad),th(nth),
      1       egrad(ngrad,ngrad),z(ngrad,ns),mval(n1,n2,n3)
       logical mask(n1,n2,n3)
-      integer i1,i2,i3,k,ibest,mode,ind(10),l
-      real*8 w(1000),krit,work1(1000),work2(10),erg
+      integer i1,i2,i3,k,ibest,mode,ind(10),l,j
+      real*8 w(1000),krit,work1(1000),work2(10),erg,thj
       DO i1=1,n1
          DO i2=1,n2
             DO i3=1,n3
-               if(mask(i1,i2,i3)) THEN
-C  now search for minima of sms (or weighted sms
-                  ibest=1
-                  krit=1e10
-                  DO k=1,ntry
-                     call dcopy(ngrad,si(1,i1,i2,i3),1,sms,1)
-                     DO l=1,m
-                  call dcopy(ngrad,egrad(1,isample(l,k)),1,z(1,l),1)
-                     END DO
-        call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
-                     IF(mode.gt.1) THEN
-                        call intpr("mode",4,mode,1)
-                        call intpr("isample",7,isample(1,k),m)
-                     ELSE 
-                        IF(erg.lt.krit) THEN
-                           krit=erg
-                           ibest=k
-                        END IF  
-                     END IF
-                  END DO
-                  siind(1,i1,i2,i3)=m
-                  DO l=1,m
-                     siind(l+1,i1,i2,i3)=isample(l,ibest)
-                  END DO
-                  mval(i1,i2,i3)=krit
-               ELSE
+               mval(i1,i2,i3)=1e10
+               if(.not.mask(i1,i2,i3)) THEN
                   siind(1,i1,i2,i3)=-1
                   mval(i1,i2,i3)=0
                END IF
             END DO
          END DO
+      END DO
+      DO j=1,nth
+         thj=th(j)
+         egrad(1,1)=dexp(-thj*dgrad(1,1)*dgrad(1,1))
+         DO k=2,ngrad
+            egrad(k,k)=dexp(-thj*dgrad(k,k)*dgrad(k,k))
+            DO l=1,k-1
+               egrad(k,l)=dexp(-thj*dgrad(k,l)*dgrad(k,l))
+               egrad(l,k)=egrad(k,l)
+            END DO
+         END DO
+         DO i1=1,n1
+            DO i2=1,n2
+               DO i3=1,n3
+                  if(mask(i1,i2,i3)) THEN
+C  now search for minima of sms (or weighted sms
+                     ibest=0
+                     krit=mval(i1,i2,i3)
+                     DO k=1,ntry
+                        call dcopy(ngrad,si(1,i1,i2,i3),1,sms,1)
+                        DO l=1,m
+                 call dcopy(ngrad,egrad(1,isample(l,k)),1,z(1,l),1)
+                        END DO
+        call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
+                        IF(mode.gt.1) THEN
+                           call intpr("mode",4,mode,1)
+                           call intpr("isample",7,isample(1,k),m)
+                        ELSE 
+                           IF(erg.lt.krit) THEN
+                              krit=erg
+                              ibest=k
+                           END IF  
+                        END IF
+                     END DO
+                     if(ibest.gt.0) THEN
+                        siind(1,i1,i2,i3)=m
+                        siind(2,i1,i2,i3)=j
+                        DO l=1,m
+                           siind(l+2,i1,i2,i3)=isample(l,ibest)
+                        END DO
+                        mval(i1,i2,i3)=krit
+                     END IF
+                  END IF
+               END DO
+            END DO
+         END DO
+C         call dblepr("mval",4,mval,216)
       END DO
       RETURN
       END
