@@ -4,11 +4,9 @@ importFrom(graphics,plot)
 importFrom(fmri,read.NIFTI,write.NIFTI)
 importFrom(adimpro,make.image,show.image)
 importFrom(rgl,rgl.lines,open3d,plot3d,rgl.bg)
-exportClasses("dwi","dtiData","dtiTensor","dtiIndices","dwiQball","dwiMixtensor")
+exportClasses("dwi","dtiData","dtiTensor","dtiIndices","dwiQball","dwiMixtensor","dwiFiber")
 exportMethods("show","plot","print","summary","dti.smooth","dtiTensor","dtiIndices","dwiQball","dwiMixtensor")
-exportMethods("extract","show3d","tracking","selectFibers")
+exportMethods("extract","show3d","tracking","selectFibers","reduceFibers")
 export(dtiData,readDWIdata)
 export(tensor2medinria,medinria2tensor)
 exportMethods("sdpar")
-
-

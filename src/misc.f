@@ -83,6 +83,7 @@ C
             ind(lind)=i
          END IF
       END DO
+      call rchkusr()
       RETURN
       END
       subroutine mcorrlag(res,mask,n1,n2,n3,nv,sigma,mean,scorr,lag)
@@ -261,7 +262,7 @@ C     first find pixel close to (i1,i2) with segm(j1,j2)=0
       END DO
       if(.not.segm(i1,i2,i3)) THEN
          final=.FALSE.
-         DO k=1,n1
+         DO k=1,max(n1,n2,n3)
             DO l1=-k,k
                DO l2=-k,k
                   DO l3=-k,k

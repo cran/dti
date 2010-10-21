@@ -4,7 +4,7 @@
 #                                                              #
 ################################################################
 
-dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=0,mins0value=0,maxvalue=10000,voxelext=c(1,1,1),orientation=c(0,2,5),rotation=diag(3)) {
+dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=0,mins0value=0,maxvalue=32000,voxelext=c(1,1,1),orientation=c(0,2,5),rotation=diag(3)) {
   args <- list(sys.call())
   if (any(sort((orientation)%/%2) != 0:2)) stop("invalid orientation \n")
   if (dim(gradient)[2]==3) gradient <- t(gradient)
@@ -12,7 +12,7 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
   ngrad <- dim(gradient)[2]
   s0ind <- (1:ngrad)[apply(abs(gradient),2,max)==0] 
   if (!(file.exists(imagefile))) stop("Image file does not exist")
-  cat("Start Data reading",date(), "\n")
+  cat("Start Data reading",format(Sys.time()), "\n")
   zz <- file(imagefile,"rb")
 #  si now contains all images (S_0 and S_I), ngrad includes 
 #  number of zero gradients
@@ -31,7 +31,7 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
   dim(si) <- c(length(xind),length(yind),length(zind),ngrad)
   dimsi <- dim(si)
 
-  cat("Data successfully read",date(), "\n")
+  cat("Data successfully read",format(Sys.time()), "\n")
 
 #
 #   set correct orientation
@@ -77,7 +77,7 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
   ddim0 <- as.integer(ddim)
   ddim <- as.integer(dim(si)[1:3])
 
-  cat("Create auxiliary statistics",date(), " \n")
+  cat("Create auxiliary statistics",format(Sys.time()), " \n")
   rind <- replind(gradient)
   
   invisible(new("dtiData",
@@ -106,7 +106,7 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
 
 readDWIdata <- function(gradient, dirlist, format, nslice = NULL, order = NULL,
                         xind=NULL, yind=NULL, zind=NULL,
-                        level=0, mins0value=0, maxvalue=10000,
+                        level=0, mins0value=0, maxvalue=32000,
                         voxelext=NULL, orientation=c(0,2,5), rotation=diag(3)) {
   # basic consistency checks
   args <- list(sys.call())
@@ -151,7 +151,7 @@ readDWIdata <- function(gradient, dirlist, format, nslice = NULL, order = NULL,
     filelist <- filelist[order]
   }
   # read all DICOM files
-  cat("Start reading data",date(), "\n")
+  cat("Start reading data",format(Sys.time()), "\n")
   si <- numeric()
   cat("\n")
   ddim <- NULL
@@ -217,7 +217,7 @@ readDWIdata <- function(gradient, dirlist, format, nslice = NULL, order = NULL,
   cat("\n")
   dim(si) <- c(length(xind),length(yind),length(zind),ngrad)
   dimsi <- dim(si)
-  cat("Data successfully read",date(), "\n")
+  cat("Data successfully read",format(Sys.time()), "\n")
 
   # redefine orientation
   xyz <- (orientation)%/%2+1
@@ -259,7 +259,7 @@ readDWIdata <- function(gradient, dirlist, format, nslice = NULL, order = NULL,
   ddim0 <- as.integer(ddim)
   ddim <- as.integer(dim(si)[1:3])
 
-  cat("Create auxiliary statistics",date(), " \n")
+  cat("Create auxiliary statistics",format(Sys.time()), " \n")
   rind <- replind(gradient)
 
   invisible(new("dtiData",
@@ -362,7 +362,7 @@ function(x){
     cat("  Dimension            :", paste(x@ddim, collapse="x"), "\n")
     cat("  Number of Gradients  :", paste(x@ngrad, collapse="x"), "\n")
     cat("  Source-Filename      :", x@source, "\n")
-    cat("  Minimum FA  :", x@minanindex, "\n")
+    cat("  Minimum FA  :", x@minfa, "\n")
     cat("  Maximum angle :", x@maxangle , "\n")
     cat("  Slots                :\n")
     print(slotNames(x))
@@ -426,7 +426,7 @@ function(object){
     cat("  Dimension            :", paste(object@ddim, collapse="x"), "\n")
     cat("  Number of Gradients  :", paste(object@ngrad, collapse="x"), "\n")
     cat("  Source-Filename      :", object@source, "\n")
-    cat("  Minimum FA  :", object@minanindex, "\n")
+    cat("  Minimum FA  :", object@minfa, "\n")
     cat("  Maximum angle :", object@maxangle , "\n")
     cat("  Slots                :\n")
     print(slotNames(object))
@@ -487,8 +487,10 @@ function(object, ...){
     cat("  mean variance         :", paste(signif(mean(object@sigma[object@mask]),3), collapse="x"), "\n")
     cat("  hmax                  :", paste(object@hmax, collapse="x"), "\n")
     if(length(object@outlier)>0) cat("  Number of outliers    :", paste(length(object@outlier), collapse="x"), "\n")
-    cat("  Numbers od mixture components:",table(object@order[object@mask]),"\n") 
-    cat("\n")
+    nofmc <- table(object@order[object@mask])
+    cat("  Numbers of mixture components:") 
+    cat(paste(names(nofmc),": ",nofmc,"  ",sep=""))
+    cat("\n\n")
     invisible(NULL)
 })
 setMethod("summary", "dwiQball",
@@ -541,12 +543,13 @@ function(object){
     cat("  Dimension             :", paste(object@ddim, collapse="x"), "\n")
     cat("  Number of Gradients   :", paste(object@ngrad, collapse="x"), "\n")
     cat("  Voxel extensions      :", paste(object@voxelext, collapse="x"), "\n")
-    cat("  Minimum FA  :", object@minanindex, "\n")
+    cat("  Minimum FA  :", object@minfa, "\n")
     cat("  Maximum angle :", object@maxangle , "\n")
     cat("  Number of fibers :", length(object@startind), "\n")
     cat("  Quantiles of fiber lengths:\n")
-    print(quantile(diff(c(object@startind,dim(object@fibers)[1]+1))/2))
-    cat("  Total number of line segments :", dim(object@fibers)[1]/2,"\n")
+    print(quantile(diff(c(object@startind,dim(object@fibers)[1]+1)-2)))
+    cat("  Total number of line segments :", dim(object@fibers)[1]-length(object@startind),"\n")
+#  linesegments in one fiber = length(fiber - 1)
     cat("\n")
     invisible(NULL)
 })

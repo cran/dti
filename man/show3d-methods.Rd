@@ -17,14 +17,15 @@
 \S4method{show3d}{dtiData}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, quant=.8, scale=.4,
          bgcolor="black", add=FALSE, maxobjects=729, what="ADC", 
          minalpha=1, nn=1, normalize=FALSE, box=FALSE, title=FALSE, \dots)
-\S4method{show3d}{dtiTensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, falevel=.3, 
-         level=0, quant=.8, scale=.4, bgcolor="black", add=FALSE, 
+\S4method{show3d}{dtiTensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, minfa=.3, mask=NULL, fibers=FALSE, 
+         maxangle=30,level=0, quant=.8, scale=.4, bgcolor="black", add=FALSE, 
          subdivide=2, maxobjects=729, what="tensor", odfscale = 3, 
          minalpha=.25, normalize=NULL, box=FALSE, title=FALSE,\dots)
 \S4method{show3d}{dtiIndices}(obj, index="FA", nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, 
-         falevel=0, bgcolor="black", add=FALSE, lwd=1, box=FALSE, 
+         minfa=0, bgcolor="black", add=FALSE, lwd=1, box=FALSE, 
          title=FALSE, \dots)
-\S4method{show3d}{dwiMixtensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, falevel=.3, level=0,           
+\S4method{show3d}{dwiMixtensor}(obj, nx=NULL, ny=NULL, nz=NULL, 
+         center=NULL, minfa=.3, minorder = 1, mineo=1, fibers=FALSE, maxangle=30, level=0,           
          quant=.8, scale=.4, bgcolor="black", add=FALSE, 
          subdivide=3, maxobjects=729, what="ODF", odfscale=3, 
          minalpha=1, lwd=3, box=FALSE, title=FALSE, \dots) 
@@ -53,7 +54,12 @@
 \item{box}{Logical, add a bounding box.}
 \item{title}{Either a character string specifying a title or a logical. If \code{title==TRUE} a default title characterizing the type of plot is generated. }
 \item{method}{\code{method==1} and \code{method==2} specify two different color schemes for directional FA-maps.}
-\item{falevel}{Minimal FA value for dtiTensor objects and Minimal gFA for dwiMixtensor objects.}
+\item{minfa}{Minimal FA value for dtiTensor objects and for dwiMixtensor objects.}
+\item{mask}{additional mask for dtiTensor objects.}
+\item{minorder}{Minimal order for dwiMixtensor objects.}
+\item{mineo}{Minimal effective order for dwiMixtensor objects.}
+\item{fibers}{If \code{TRUE} show fibers starting in voxel with \code{fa>=minfa}, \code{order>=minorder} and \code{eorder>=mineo}, the last two effective for dwiMixtensor objects only.}
+\item{maxangle}{argument for fibertracking}
 \item{level}{Radius of sphere used as support for ODF visualisation}
 \item{subdivide}{Level of subdivisions for meshing, level \code{0:4} correspond to use of
 \code{c(12,42,162,642,2562)} vertices per tensor, respectively.}

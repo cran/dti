@@ -2,7 +2,7 @@ selectFibers <- function(obj,  ...) cat("Selection of fibers is not implemented 
 
 setGeneric("selectFibers", function(obj,  ...) standardGeneric("selectFibers"))
 
-setMethod("selectFibers","dwiFiber", function(obj, roix=NULL, roiy=NULL, roiz=NULL, nroimask=NULL, minlength=1)
+setMethod("selectFibers","dwiFiber", function(obj, roix=NULL, roiy=NULL, roiz=NULL, mask=NULL, minlength=1)
 {
 #)
 #     extract fiber information and descriptions
@@ -10,66 +10,71 @@ setMethod("selectFibers","dwiFiber", function(obj, roix=NULL, roiy=NULL, roiz=NU
   args <- sys.call(-1)
   args <- c(obj@call,args)
   fibers <- obj@fibers
+  fiberstart <- obj@startind
+  fiberlength <- diff(c(fiberstart,dim(fibers)[1]+1))
   if(minlength>1){
 #
 #   eliminate fibers shorter than minlength
 #
-  fiberstart <- obj@startind
-  fiberlength <- diff(c(fiberstart,dim(fibers)[1]+1))/2
   remove <- (1:length(fiberstart))[fiberlength<minlength]
   if(length(remove)>0){
      inda <- fiberstart[remove]
      inde <- c(fiberstart,dim(fibers)[1]+1)[remove+1]-1
      fibers <- fibers[-c(mapply(":",inda,inde),recursive=TRUE),]
+     fiberlength <- fiberlength[-remove]
+     fiberstart <- c(0,cumsum(fiberlength))[1:length(fiberlength)]+1
   }
   }
-  fiberstart <- ident.fibers(fibers)
-  fiberlength <- diff(c(fiberstart,dim(fibers)[1]+1))/2
   roimask <- as.integer(obj@roimask)
   mroimask <- max(roimask)
   if(mroimask>127){
      warning("Recursive use of regions of interest is limited to 7")
-     roix <- NULL
-     roimask <- NULL
+     return(obj)
   }
-#  if((!(is.null(roix)||is.null(roiy)||is.null(roiz))&&is.null(nroimask))){
-if(!(is.null(roix)&&is.null(roiy)&&is.null(roiz)&&is.null(nroimask))){
+if(!(is.null(roix)&&is.null(roiy)&&is.null(roiz)&&is.null(mask))){
 #
 #    no region of interest specified otherwise
 #
-  if(is.null(nroimask)){ 
-     nroimask <- array(0,obj@ddim)
+  if(is.null(mask)){ 
+     mask <- array(0,obj@ddim)
      if(is.null(roix)) roix <- 1:obj@ddim[1]
      if(is.null(roiy)) roiy <- 1:obj@ddim[2]
      if(is.null(roiz)) roiz <- 1:obj@ddim[3]
-     nroimask[roix,roiy,roiz] <- 1
+     mask[roix,roiy,roiz] <- 1
+  }
+  if(is.null(roimask)){ 
+     roimask <- array(0,obj@ddim)
+     if(is.null(roix)) roix <- 1:obj@ddim[1]
+     if(is.null(roiy)) roiy <- 1:obj@ddim[2]
+     if(is.null(roiz)) roiz <- 1:obj@ddim[3]
+     roimask[roix,roiy,roiz] <- 1
   }
   lnewmask <- as.integer(log(mroimask,2))+1
-  roimask[nroimask>0] <- roimask[nroimask>0]+2^lnewmask
-  cat("dimension of roimask",dim(roimask),"\n")
+  roimask[mask>0] <- roimask[mask>0]+2^lnewmask
   z <- .Fortran("roifiber",
                 as.double(fibers),
                 newfibers=double(prod(dim(fibers))),#new fibers
                 as.integer(dim(fibers)[1]),
                 integer(3*max(fiberlength)),#array for fiber in vcoord
                 as.integer(max(fiberlength)),# maximum fiberlength
-                as.integer(fiberstart),
+                start=as.integer(fiberstart),
                 as.integer(fiberlength),
                 as.integer(length(fiberstart)),#number of fibers
-                as.logical(nroimask>0),#roi
+                as.logical(mask>0),#roi
                 as.integer(obj@ddim[1]),
                 as.integer(obj@ddim[2]),
                 as.integer(obj@ddim[3]),
                 as.double(obj@voxelext),
                 sizenf=integer(1),
-                DUP=FALSE,
-                PACKAGE="dti")[c("newfibers","sizenf")]
+                nfiber=integer(1),
+                DUP=TRUE,
+                PACKAGE="dti")[c("newfibers","sizenf","start","nfiber")]
   if(z$sizenf>1) {
      fibers <- array(z$newfibers,dim(fibers))[1:z$sizenf,]
+     fiberstart <- z$start[1:z$nfiber]
   }  else {
      warning("No fibers found, return original")
   }
-  fiberstart <- ident.fibers(fibers)
   }
   invisible(new("dwiFiber",
                 call  = args,
@@ -92,46 +97,105 @@ if(!(is.null(roix)&&is.null(roiy)&&is.null(roiz)&&is.null(nroimask))){
                 rotation = obj@rotation,
                 source = obj@source,
                 method = obj@method,
-                minanindex = obj@minanindex,
+                minfa = obj@minfa,
                 maxangle = obj@maxangle)
             )
 })
 
+reduceFibers <- function(obj,  ...) cat("Selection of fibers is not implemented for this class:",class(obj),"\n")
 
+setGeneric("reduceFibers", function(obj,  ...) standardGeneric("reduceFibers"))
 
-
+setMethod("reduceFibers","dwiFiber", function(obj, maxdist=1, ends=TRUE)
+{
+   obj <- sort.fibers(obj)
+   fibers <- obj@fibers[,1:3]
+   nsegm <- dim(fibers)[1]
+   startf <- obj@startind
+   endf <- c(startf[-1]-1,nsegm)
+   nfibers <- length(startf)
+   if(ends){
+   keep <- .Fortran("reducefe",
+                    as.double(t(fibers)),
+                    as.integer(nsegm),
+                    as.integer(startf),
+                    as.integer(endf),
+                    as.integer(nfibers),
+                    keep=logical(nfibers),
+                    as.double(maxdist),
+                    DUP=FALSE,
+                    PACKAGE="dti")$keep
+    } else {
+   keep <- .Fortran("reducefi",
+                    as.double(t(fibers)),
+                    as.integer(nsegm),
+                    as.integer(startf),
+                    as.integer(endf),
+                    as.integer(nfibers),
+                    keep=logical(nfibers),
+                    as.double(maxdist),
+                    DUP=FALSE,
+                    PACKAGE="dti")$keep
+    } 
+    startf <- startf[keep]
+    endf <- endf[keep]
+    ind <- rep(startf,endf-startf+1)+sequence(endf-startf+1)-1
+    obj@fibers <- obj@fibers[ind,]
+    obj@startind <- as.integer(c(0,cumsum(endf-startf+1))[1:length(startf)]+1)
+    obj
+}
+)
 
 ident.fibers <- function(mat){
 #
 #  Identify indices in mat where a new fiber starts
 #
    dd <- dim(mat)
-   if(dd[2]!=6){
+   if(dd[2]!=3){
       warning("Incorrect dimensions for fiber array")
    }
    dd <- dd[1]
-   mat <- mat[,1:3]
-   dim(mat) <- c(2,dd/2,3)
-   dmat <- mat[2,-(dd/2),]-mat[1,-1,]
-   fiberends <- (1:(dd/2-1))[apply(dmat^2,1,sum)>0]
-   c(0,fiberends)*2+1
+   z <- .Fortran("fibersta",
+                 as.double(mat),
+                 as.integer(dd/2),
+                 fiberstarts=integer(dd/2),#thats more the maximum needed
+                 nfibers=integer(1),
+                 DUP=FALSE,
+                 PACKAGE="dti")[c("fiberstarts","nfibers")]
+   z$fiberstarts[1:z$nfibers]
 }
 
-reduce.fibers <- function(mat){
-   dd <- dim(mat)
+sort.fibers <- function(obj){
 #
-#  clean up fiber description in dd
-#  removes instances in dd that are either redundant or would not show up on display
+#  sort fiber array such that longest fibers come first
 #
-   if(dd[2]!=6){
-      warning("Incorrect dimensions for fiber array")
-   }
-   dd <- dd[1]
-   dim(mat) <- c(2,dd/2,6)
-   dmat <- mat[1,,1:3]-mat[2,,1:3]
-   remove <- apply(dmat^2,1,sum)==0
-   if(sum(remove)>0) warning(paste("Found ",sum(remove)," instances, where begin and end of a line segment coincide"))
-   mat <- mat[,!remove,]
-   dim(mat) <- c(2*dim(mat)[2],6)
-   mat
-}
+   fibers <- obj@fibers
+   nfs <- dim(fibers)[1]
+   starts <- obj@startind
+   ends <- c(starts[-1]-1,nfs)
+   fiberlength <- diff(c(starts,nfs+1))
+   of <- order(fiberlength,decreasing=TRUE)
+   ind <-  rep(starts[of],ends[of]-starts[of]+1)+sequence(ends[of]-starts[of]+1)-1
+   obj@fibers <- obj@fibers[ind,]
+   obj@startind <- as.integer(c(0,cumsum(ends[of]-starts[of]+1))[1:length(starts)]+1)
+   obj
+} 
+
+  compactFibers <- function(fibers,startind){
+  n <- dim(fibers)[1]
+  endind <- c(startind[-1]-1,n)
+  ind <- 1:n
+  ind <- ind[ind%%2==1 | ind%in%endind]
+  list(fibers=fibers[ind,],startind=(startind-1)/2+1:length(startind))
+  }
+
+  expandFibers <- function(fibers,startind){
+  n <- dim(fibers)[1]
+  endind <- c(startind[-1]-1,n)
+  ind <- rep(2,max(endind))
+  ind[startind] <- 1
+  ind[endind] <- 1
+  ind <-  rep(startind,2*(endind-startind))+rep(sequence((endind-startind)+1)-1,ind)
+  startind[-1] <- startind[-1]+cumsum(diff(startind)-2)
+  list(fibers=fibers[ind,],startind=startind)
+  }

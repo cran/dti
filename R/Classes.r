@@ -199,7 +199,7 @@ setClass("dwiFiber",
                          startind = "integer",
                          roimask = "raw",
                          method = "character",
-                         minanindex = "numeric",
+                         minfa = "numeric",
                          maxangle   = "numeric"),
          contains=c("list","dwi"),
          validity=function(object){

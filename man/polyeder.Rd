@@ -15,13 +15,13 @@
 }
 \usage{icosax}
 \format{a list with components 
-    \itemize{
-       \item{vertices}{array of dimension \code{c(3,nv)} containing cartesian coordinate of the \code{nv} vertices.}
-       \item{indices}{Indices of vertices that define surface triangles of the polyeder.}
-       \item{edges}{Indices of vertices that define edges of the polyeder.}
-       \item{nv}{number of vertices}
-       \item{ne}{number of edges}
-       \item{ni}{number of triangles}
+    \enumerate{
+       \item vertices - array of dimension \code{c(3,nv)}. containing cartesian coordinate of the \code{nv} vertices.
+       \item indices - Indices of vertices that define surface triangles of the polyeder.
+       \item edges - Indices of vertices that define edges of the polyeder.
+       \item nv - number of vertices
+       \item ne - number of edges
+       \item ni - number of triangles
     }
 }
 \keyword{datasets}

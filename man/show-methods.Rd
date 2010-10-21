@@ -11,20 +11,21 @@
 \title{ Methods for Function `show' in Package `dti' }
 \description{
   The function provides information on data dimensions, data source and existing slot-names for objects of class \code{"dti"}, \code{"dtiData"},
- \code{"dtiTensor"}, \code{"dwiMixtensor"}, \code{"dtiIndices"} or \code{"dwiQball"}.
+ \code{"dtiTensor"}, \code{"dwiMixtensor"}, \code{"dtiIndices"}, \code{"dwiQball"} or \code{"dwiFiber"}
 }
 \usage{
   \S4method{show}{dti}(object)
 }
 \arguments{
-  \item{object}{ Object of class \code{dtiIndices}, \code{dtiData} or \code{dtiTensor}}
+  \item{object}{ Object of class \code{dtiIndices}, \code{dtiData}, \code{dtiTensor}, \code{dwiMixtensor}, \code{dwiQball} or \code{dwiFiber}}
 }
 \section{Methods}{
 \describe{
 
   \item{x = "ANY"}{ Generic function. }
 
-  \item{x = "dti"}{ The function provides information on data dimensions, data source and existing slot-names for objects of class \code{"dti"}. }
+  \item{x = "dti"}{ The function provides information on data dimensions, data source and existing slot-names for objects of class \code{"dti"}
+                    and classes that extent \code{"dti"}. }
 }}
 \author{ 
   Karsten Tabelow \email{tabelow@wias-berlin.de}\cr 

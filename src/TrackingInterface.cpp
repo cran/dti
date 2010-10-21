@@ -9,8 +9,8 @@
 using namespace std;
 
 extern "C"{
-
-	SEXP interface_tracking(SEXP data_dir_coords, SEXP data_FA_values,
+	SEXP interface_tracking(SEXP data_dir_coords, SEXP data_FA_values, 
+                                SEXP data_mask,
 			        SEXP dim_x, SEXP dim_y, SEXP dim_z,
 			        SEXP roi_x_s, SEXP roi_x_e,
 			        SEXP roi_y_s, SEXP roi_y_e,
@@ -23,7 +23,7 @@ extern "C"{
 		SEXP retVec;
 		int ii, length, nProtected = 0;
 		
-		Converter converter(REAL(data_dir_coords), REAL(data_FA_values), *INTEGER(dim_x), *INTEGER(dim_y), *INTEGER(dim_z));
+		Converter converter(REAL(data_dir_coords), REAL(data_FA_values), INTEGER(data_mask), *INTEGER(dim_x), *INTEGER(dim_y), *INTEGER(dim_z));
 		
 		int marked[] = {*INTEGER(roi_x_s), *INTEGER(roi_x_e), *INTEGER(roi_y_s), *INTEGER(roi_y_e), *INTEGER(roi_z_s), *INTEGER(roi_z_e)};
 		
@@ -58,7 +58,7 @@ extern "C"{
 
 	SEXP interface_tracking_mixtensor(
 					SEXP data_dir_coords, SEXP data_order, 
-					SEXP data_FA_values,
+					SEXP data_FA_values, SEXP data_mask,
 					SEXP data_mix, 
 					SEXP maxorder, 
 			        SEXP dim_x, SEXP dim_y, SEXP dim_z,
@@ -77,7 +77,7 @@ extern "C"{
 		int ii, length, nProtected = 0;
 		
 		// data_dir_num in Konstruktor
-		Converter *converter = new Converter(REAL(data_dir_coords), REAL(data_FA_values), INTEGER(data_order), *INTEGER(maxorder), *INTEGER(dim_x), *INTEGER(dim_y), *INTEGER(dim_z));
+		Converter *converter = new Converter(REAL(data_dir_coords), REAL(data_FA_values), INTEGER(data_mask), INTEGER(data_order), *INTEGER(maxorder), *INTEGER(dim_x), *INTEGER(dim_y), *INTEGER(dim_z));
 		
 //		Rprintf("R-Daten konvertiert\n");
 

@@ -57,14 +57,14 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
   L <- -diag(lord*(lord+1))
   # now switch for different cases
   if (what=="ODF") {
-     cat("Data transformation started ",date(),"\n")
+     cat("Data transformation started ",format(Sys.time()),"\n")
      dim(s0) <- dim(si) <- NULL
      si[is.na(si)] <- 0
      si[(si == Inf)] <- 0
      si[(si == -Inf)] <- 0
      dim(si) <- c(prod(ddim),ngrad0)
      si <- t(si)
-     cat("Data transformation completed ",date(),"\n")
+     cat("Data transformation completed ",format(Sys.time()),"\n")
 
      # get SH design matrix ...
      z <- design.spheven(order,object@gradient[,-s0ind],lambda)
@@ -73,9 +73,9 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
      # include FRT(SH) -> P_l(0)
      sicoef <- z$matrix%*% si
      sphcoef <- plzero(order)%*%sicoef
-     cat("Estimated coefficients for ODF (order=",order,") ",date(),"\n")
+     cat("Estimated coefficients for ODF (order=",order,") ",format(Sys.time()),"\n")
   } else if (what=="wODF") {
-     cat("Data transformation started ",date(),"\n")
+     cat("Data transformation started ",format(Sys.time()),"\n")
      dim(s0) <- dim(si) <- NULL
      si <- si/s0
      si[is.na(si)] <- 0
@@ -86,7 +86,7 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
      si[(si == -Inf)] <- 0
      dim(si) <- c(prod(ddim),ngrad0)
      si <- t(si)
-     cat("Data transformation completed ",date(),"\n")
+     cat("Data transformation completed ",format(Sys.time()),"\n")
 
      # get SH design matrix ...
      z <- design.spheven(order,object@gradient[,-s0ind],lambda)
@@ -99,9 +99,9 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
      coef0 <- sphcoef[1,]
      sphcoef[1,] <- 1/2/sqrt(pi)
      sphcoef[-1,] <- sphcoef[-1,]/8/pi
-     cat("Estimated coefficients for wODF (order=",order,") ",date(),"\n")
+     cat("Estimated coefficients for wODF (order=",order,") ",format(Sys.time()),"\n")
   } else if (what=="aODF") {
-     cat("Data transformation started ",date(),"\n")
+     cat("Data transformation started ",format(Sys.time()),"\n")
      dim(s0) <- dim(si) <- NULL
      si <- si/s0
      si[is.na(si)] <- 0
@@ -112,7 +112,7 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
      si[(si == -Inf)] <- 0
      dim(si) <- c(prod(ddim),ngrad0)
      si <- t(si)
-     cat("Data transformation completed ",date(),"\n")
+     cat("Data transformation completed ",format(Sys.time()),"\n")
 
      # get SH design matrix ...
      z <- design.spheven(order,object@gradient[,-s0ind],lambda)
@@ -121,9 +121,9 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
      # include FRT(SH) -> P_l(0)
      sicoef <- z$matrix%*% si
      sphcoef <- plzero(order)%*%sicoef
-     cat("Estimated coefficients for aODF (order=",order,") ",date(),"\n")
+     cat("Estimated coefficients for aODF (order=",order,") ",format(Sys.time()),"\n")
   } else { #  what == "ADC" 
-     cat("Data transformation started ",date(),"\n")
+     cat("Data transformation started ",format(Sys.time()),"\n")
      dim(s0) <- dim(si) <- NULL
      si <- si/s0
      si[is.na(si)] <- 0
@@ -135,13 +135,13 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
      si[(si == -Inf)] <- 0
      dim(si) <- c(prod(ddim),ngrad0)
      si <- t(si)
-     cat("Data transformation completed ",date(),"\n")
+     cat("Data transformation completed ",format(Sys.time()),"\n")
 
      # get SH design matrix ...
      z <- design.spheven(order,object@gradient[,-s0ind],lambda)
      # ... and estimate coefficients of SH series of ADC
      sphcoef <- sicoef <- z$matrix%*% si
-     cat("Estimated coefficients for ADC expansion in spherical harmonics (order=",order,") ",date(),"\n")
+     cat("Estimated coefficients for ADC expansion in spherical harmonics (order=",order,") ",format(Sys.time()),"\n")
   }
   res <- si - t(z$design) %*% sicoef
   rss <- res[1,]^2
@@ -160,7 +160,7 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
   sphcoef[,!mask] <- 0
   dim(sphcoef) <- dim(varcoef) <- c((order+1)*(order+2)/2,ddim)
   dim(res) <- c(ngrad0,ddim)
-  cat("Variance estimates generated ",date(),"\n")
+  cat("Variance estimates generated ",format(Sys.time()),"\n")
   th0 <- array(s0,object@ddim)
   th0[!mask] <- 0
   gc()
@@ -180,7 +180,7 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
                    PACKAGE="dti",DUP=FALSE)$scorr
   dim(scorr) <- lags
   scorr[is.na(scorr)] <- 0
-  cat("estimated spatial correlations",date(),"\n")
+  cat("estimated spatial correlations",format(Sys.time()),"\n")
   cat("first order  correlation in x-direction",signif(scorr[2,1,1],3),"\n")
   cat("first order  correlation in y-direction",signif(scorr[1,2,1],3),"\n")
   cat("first order  correlation in z-direction",signif(scorr[1,1,2],3),"\n")
@@ -189,7 +189,7 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
   bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.2,.2,.2),
   upper=c(3,3,3),lag=lags,data=scorr)$par
   bw[bw <= .25] <- 0
-  cat("estimated corresponding bandwidths",date(),"\n")
+  cat("estimated corresponding bandwidths",format(Sys.time()),"\n")
   invisible(new("dwiQball",
                 call  = args,
                 order = as.integer(order),

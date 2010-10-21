@@ -125,7 +125,8 @@ icosa1 <- refine.polyeder(icosa0)
 icosa2 <- refine.polyeder(icosa1)
 icosa3 <- refine.polyeder(icosa2)
 icosa4 <- refine.polyeder(icosa3)
-save(icosa0,icosa1,icosa2,icosa3,icosa4,file="polyeders.rda",compress = TRUE)
+icosa5 <- refine.polyeder(icosa4)
+save(icosa0,icosa1,icosa2,icosa3,icosa4,icosa5,file="polyeders.rda",compress = TRUE)
 #
 #  the file "polyeders.rda" needs to be copied to dti/data/
 #

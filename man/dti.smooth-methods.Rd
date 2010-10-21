@@ -11,7 +11,7 @@
 }
 \usage{
 \S4method{dti.smooth}{dtiData}(object, hmax=5, hinit=NULL, lambda=20, tau=10, rho=1, 
-         graph=FALSE,slice=NULL, quant=.8, minanindex=NULL, hsig=2.5, 
+         graph=FALSE,slice=NULL, quant=.8, minfa=NULL, hsig=2.5, 
          lseq=NULL, method="nonlinear", varmethod="residuals", rician=TRUE, 
          niter=5, varmodel="local",result="Tensor")
  }
@@ -24,8 +24,8 @@
   \item{rho}{Regularization parameter for anisotropic vicinities (default 1)}
   \item{graph}{"logical": Visualize intermediate results (default FALSE)}
   \item{slice}{slice number, determines the slice used in visualization}
-  \item{quant}{determines \code{minanindex} as corresponding quantile of FA if \code{is.null(minanindex)} }
-  \item{minanindex}{minimal anisotropy index to use in visualization}
+  \item{quant}{determines \code{minfa} as corresponding quantile of FA if \code{is.null(minfa)} }
+  \item{minfa}{minimal anisotropy index (FA) to use in visualization}
   \item{hsig}{bandwidth for presmoothing of variance estimates}
   \item{lseq}{ sequence of correction factors for \code{lambda}}
   \item{method}{ Method for tensor estimation. May be \code{"linear"}, \code{"nonlinear"}}

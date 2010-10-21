@@ -11,8 +11,8 @@
 }
 \usage{
 \S4method{dwiMixtensor}{dtiData}(object, maxcomp=3,  p=40, method="mixtensor", reltol=1e-6,
-          maxit=5000, ngc=1000, optmethod="BFGS",nguess=50*maxcomp^2,
-          penalty="BIC")
+          maxit=5000, ngc=1000, optmethod="BFGS",nguess=100*maxcomp^2,
+          msc="BIC")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -27,8 +27,8 @@
    \code{optmethod="Nelder-Mead"}, \code{optmethod="BFGS"} using analytic gradients
    will be added}
    \item{nguess}{number of guesses in search for initial estimates}
-   \item{penalty}{Criterion used to select the order of the mixture model, either
-   \code{BIC} or \code{AIC}}
+   \item{msc}{Criterion used to select the order of the mixture model, either
+   \code{BIC} (Bayes Information Criterion) \code{AIC} (Akaike Information Criterion) or \code{AICC} ((Bias-)Corrected Akaike Information Criterion)}
    }
 \details{
   The method estimates, in each voxel, a mixture of radial symmetric tensors from the DWI data contained in an object of class \code{"dtiData"}. The number of mixture components is selected depending on the data, with a maximum number of components specified by \code{maxcomp}. 

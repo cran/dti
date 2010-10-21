@@ -3,7 +3,7 @@
 #   this is also based on an a statistical penalty defined using log-likelihood difference
 #
 dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slice=NULL,quant=.8,
-                         minanindex=NULL,hsig=2.5,lseq=NULL,varmethod="residuals",rician=TRUE,niter=5,varmodel="local",result="Tensor"){
+                         minfa=NULL,hsig=2.5,lseq=NULL,varmethod="residuals",rician=TRUE,niter=5,varmodel="local",result="Tensor"){
 #
 #     lambda and lseq adjusted for alpha=0.2
 #
@@ -122,7 +122,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      img[img<rg[1]]<-rg[1]
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dyz: min",signif(min(z$D[5,,,][mask]),3),"max",signif(max(z$D[5,,,][mask]),3)))
-     andir2.image(z,slice,quant=quant,minanindex=minanindex,xaxt="n",yaxt="n")
+     andir2.image(z,slice,quant=quant,minfa=minfa,xaxt="n",yaxt="n")
      title(paste("Directions (h=1), slice",slice))
      ni <- array(1,dimy[-1])*as.integer(mask)
      show.image(make.image((65535*ni/max(ni))[,,slice]),xaxt="n",yaxt="n")
@@ -271,7 +271,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      img[img<rg[1]]<-rg[1]
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dyz: min",signif(min(z$D[5,,,][mask]),3),"max",signif(max(z$D[5,,,][mask]),3)))
-     andir2.image(z,slice,quant=quant,minanindex=minanindex,xaxt="n",yaxt="n")
+     andir2.image(z,slice,quant=quant,minfa=minfa,xaxt="n",yaxt="n")
      title(paste("Directions (h=",signif(hakt,3),"), slice",slice))
      ni<-z$bi[,,slice]*mask[,,slice]
      show.image(make.image(65535*ni/max(ni)),xaxt="n",yaxt="n")
@@ -289,8 +289,8 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
   rm(si)
   gc()
   if(result=="Tensor"){
-  cat("prepare final dtiTensor object",date(),"\n")
-  } else   cat("prepare final smoothed dtiData object",date(),"\n")
+  cat("prepare final dtiTensor object",format(Sys.time()),"\n")
+  } else   cat("prepare final smoothed dtiData object",format(Sys.time()),"\n")
   if(result=="Tensor") invisible(new("dtiTensor",
                 list(s2rician=if(rician) z$sigma2r else NULL, ni=z$bi),
                 call = args,

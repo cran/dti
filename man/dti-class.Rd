@@ -94,7 +94,7 @@ For class \code{"dwiFiber"}:
     \item{ \code{roiy}: }{ Object of class \code{"integer"}, coordinate range of region of interest in x-direction } 
     \item{ \code{roiz}: }{ Object of class \code{"integer"}, coordinate range of region of interest in x-direction } 
     \item{ \code{method}: }{ Object of class \code{"character"}, fiber tracking method.} 
-    \item{ \code{minanindex}: }{ Object of class \code{"numeric"}, minimal fractional anisotropy index} 
+    \item{ \code{minfa}: }{ Object of class \code{"numeric"}, minimal fractional anisotropy index} 
     \item{ \code{maxangle}: }{ Object of class \code{"numeric"}, maximal angle between fibres.} 
 }
 For class \code{"dwiMixtensor"}:

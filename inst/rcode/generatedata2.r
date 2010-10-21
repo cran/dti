@@ -4,7 +4,7 @@
 #
 #
 bvec <- t(bvec)
-btb <- matrix(0,6,ngrad+1)
+btb <- matrix(0,6,dim(bvec)[2])
 btb[1,] <- bvec[1,]*bvec[1,]
 btb[4,] <- bvec[2,]*bvec[2,]
 btb[6,] <- bvec[3,]*bvec[3,]
@@ -79,7 +79,7 @@ createdata.dti <- function(file,dtensor,btb,s0,sigma,level=250){
 
 #   create phantom - object
 tmpfile1 <- tempfile("S_all")
-createdata.dti(tmpfile1,dtiso,btb,s0,0)
+createdata.dti(tmpfile1,dtiso,btb,s0,0.5)
 
 
 # create noisy data

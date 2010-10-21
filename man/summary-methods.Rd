@@ -17,7 +17,7 @@
   \S4method{summary}{dwi}(object, ...)
 }
 \arguments{
-  \item{object}{ Object of class \code{"dti"}, \code{"dtiData"}, \code{"dtiTensor"}, \code{"dwiMixtensor"}, \code{"dtiIndices"} or \code{"dwiQball"}. }
+  \item{object}{ Object of class \code{"dti"}, \code{"dtiData"}, \code{"dtiTensor"}, \code{"dwiMixtensor"}, \code{"dtiIndices"},  \code{"dwiQball"} or \code{"dwiFiber"}. }
   \item{\dots}{ Additional arguments in \code{\dots} are passed to function \code{quantile}, e.g. argument \code{probs} may be specified here.}
 }
 \section{Methods}{

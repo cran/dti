@@ -14,11 +14,15 @@ setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive
     warning("sdmethod needs to be either 'sd' or 'mad'")
     return(object)
   }
-  if(is.null(level)) level <- object@level
+  if(prod(object@ddim)==1){
+    warning("you need more than one voxel to model variances")
+    return(object)
+  }
+  level0 <- if(is.null(level)) object@level else max(0,level)
   s0ind<-object@s0ind
   s0 <- object@si[,,,s0ind]
   ls0ind <- length(s0ind)
-  A0 <- level
+  A0 <- level0
   if(ls0ind>1) {
     dim(s0) <- c(prod(object@ddim),ls0ind)
     s0mean <- s0%*%rep(1/ls0ind,ls0ind)
@@ -70,6 +74,7 @@ setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive
       }
     }
   } else {
+    if(is.null(level)){
     ddim <- object@ddim
     indx1 <- trunc(0.4*ddim[1]):trunc(0.6*ddim[1])
     indy1 <- trunc(0.4*ddim[2]):trunc(0.6*ddim[2])
@@ -85,12 +90,27 @@ setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive
 #  A0a provides a guess for a threshold based on upper quantiles of intensities
 #  in cubes located at the edges (probably only containing noise
     level <- A0 <- min(A0a,A0b)*threshfactor
+  } 
   }
   # determine parameters for linear relation between standard deviation and mean
   if(ls0ind>1) {
     s0sd <- apply(s0,1,sdmethod)
     ind <- s0mean>A0&s0mean<A1
+    if(length(ind)<2){
+         warning("you need more than one voxel to model variances choice of A0/A1 to restrictive")
+         return(object)
+         }
     sdcoef <- coefficients(lm(s0sd[ind]~s0mean[ind]))
+    if(sdcoef[1]<0){
+       sdcoef <- numeric(2)
+       sdcoef[1] <- .25  # this is an arbitrary (small) value to avaoid zero variances
+       sdcoef[2] <- coefficients(lm(s0sd[ind]~s0mean[ind]-1))
+       }
+    if(sdcoef[2]<0){
+       sdcoef <- numeric(2)
+       sdcoef[1] <- max(0.25,mean(s0sd[ind]))
+       sdcoef[2] <- 0
+       }
   } else {
     sdcoef <- awslinsd(s0,hmax=5,mask=NULL,A0=A0,A1=A1)$vcoef
   }
@@ -328,6 +348,10 @@ setMethod("[","dtiIndices",function(x, i, j, k, drop=FALSE){
   if (is.logical(i)) ddimi <- x@ddim[1] else ddimi <- length(i)
   if (is.logical(j)) ddimj <- x@ddim[2] else ddimj <- length(j)
   if (is.logical(k)) ddimk <- x@ddim[3] else ddimk <- length(k)
+  swap <- rep(FALSE,3)
+  if (!is.logical(i)) swap[1] <- i[1] > i[length(i)]
+  if (!is.logical(j)) swap[2] <- j[1] > j[length(j)]
+  if (!is.logical(k)) swap[3] <- k[1] > k[length(k)]
   orientation <- x@orientation
   gradient <- x@gradient
   btb <- x@btb
@@ -459,8 +483,8 @@ setMethod("extract","dtiData",function(x, what="data", xind=TRUE, yind=TRUE, zin
   z <- list(NULL)
   if("gradient" %in% what) z$gradient <- x@gradient
   if("btb" %in% what) z$btb <- x@btb
-  if("s0" %in% what) z$S0 <- x@si[,,,x@s0ind,drop=FALSE]
-  if("sb" %in% what) z$Si <- x@si[,,,-x@s0ind,drop=FALSE]
+  if("s0" %in% what) z$s0 <- x@si[,,,x@s0ind,drop=FALSE]
+  if("sb" %in% what) z$sb <- x@si[,,,-x@s0ind,drop=FALSE]
   if("siq" %in% what) {
      S0 <- x@si[,,,x@s0ind,drop=FALSE]
      Si <- x@si[,,,-x@s0ind,drop=FALSE]
@@ -507,12 +531,12 @@ setMethod("extract","dwiMixtensor",function(x, what="andir", xind=TRUE, yind=TRU
      andir[3,] <- cos(orient[1,])
      z$andir <- array(andir,c(3,dim(x@orient)[-1]))
      }
-  if("s0" %in% what) z$S0 <- x@S0
+  if("s0" %in% what) z$s0 <- x@S0
   if("mask" %in% what) z$mask <- x@mask
-  if("gfa" %in% what){
-      gfa <- x@ev[1,,,]/sqrt((x@ev[1,,,]+x@ev[2,,,])^2+2*x@ev[2,,,]^2)
-      gfa[x@order==0] <- 0
-      z$gfa <- gfa
+  if("fa" %in% what){
+      fa <- x@ev[1,,,]/sqrt((x@ev[1,,,]+x@ev[2,,,])^2+2*x@ev[2,,,]^2)
+      fa[x@order==0] <- 0
+      z$fa <- fa
     }
   if("eorder" %in% what) {
      maxorder <- dim(x@mix)[1]
@@ -618,7 +642,7 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
 ##############
 
 setMethod("extract","dtiIndices",function(x, what=c("fa","andir"), xind=TRUE, yind=TRUE, zind=TRUE){
-  what <- tolower(what) 
+  what <- tolower(what)
   swap <- rep(FALSE,3)
   if(is.numeric(xind)) swap[1] <- xind[1]>xind[length(xind)]
   if(is.numeric(yind)) swap[2] <- yind[1]>yind[length(yind)]

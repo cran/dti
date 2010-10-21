@@ -6,7 +6,7 @@ Voxel& Converter::getVoxels()
 	return *voxels;
 }
 
-Converter::Converter(double* data_dir_coords, double* data_FA_values, int dim_x, int dim_y, int dim_z)
+Converter::Converter(double* data_dir_coords, double* data_FA_values, int* mask, int dim_x, int dim_y, int dim_z)
 {
 //	Rprintf("%d, %d, %d\n", dim_x, dim_y, dim_z);
 	
@@ -22,6 +22,7 @@ Converter::Converter(double* data_dir_coords, double* data_FA_values, int dim_x,
     
 	double dir_x, dir_y, dir_z, FA;
 	int i = 0, j = 0, k = 0, num_vector = 0, counter = 0;
+	bool startable = false;
 	
     for (k = 0; k < dim_z; k++)
     {
@@ -33,13 +34,15 @@ Converter::Converter(double* data_dir_coords, double* data_FA_values, int dim_x,
 		   		dir_y = data_dir_coords[num_vector];num_vector++;
 		   		dir_z = data_dir_coords[num_vector];				num_vector++;
 		   		FA 	  =  data_FA_values[i + j * dim_x + k * dim_x * dim_y];
+				startable = (mask[i + j * dim_x + k * dim_x * dim_y] == 0) ? false : true;
 		   		
 				dir = new Vector(dir_x, dir_y, dir_z);
 				
 				Voxel v(i, j, k, 1, *dir, FA);
 				
 				voxels[i + j * dim_x + k * dim_x * dim_y] = v;
-				
+				voxels[i + j * dim_x + k * dim_x * dim_y].setStartable(startable);
+
 				counter++;
 		   	}
 	    }
@@ -49,7 +52,7 @@ Converter::Converter(double* data_dir_coords, double* data_FA_values, int dim_x,
 }
 
 
-Converter::Converter(double* data_dir_coords, double* data_FA_values, int* data_order, int maxorder, int dim_x, int dim_y, int dim_z)
+Converter::Converter(double* data_dir_coords, double* data_FA_values, int* mask, int* data_order, int maxorder, int dim_x, int dim_y, int dim_z)
 {
 //	Rprintf("%d, %d, %d\n", dim_x, dim_y, dim_z);
 	
@@ -59,6 +62,7 @@ Converter::Converter(double* data_dir_coords, double* data_FA_values, int* data_
 
 	double dir_x, dir_y, dir_z, FA;
 	int i = 0, j = 0, k = 0, l = 0, num_vector = 0, counter = 0, order = 0;
+	bool startable = false;
 	
     for (k = 0; k < dim_z; k++)
     {
@@ -68,6 +72,7 @@ Converter::Converter(double* data_dir_coords, double* data_FA_values, int* data_
 		   	{
 		   		FA 	  = data_FA_values[i + j * dim_x + k * dim_x * dim_y];
 		   		order = data_order[i + j * dim_x + k * dim_x * dim_y];
+				startable = (mask[i + j * dim_x + k * dim_x * dim_y] == 0) ? false : true;
 		   		
 		   		Vector *dir = new Vector[order];
 
@@ -83,6 +88,7 @@ Converter::Converter(double* data_dir_coords, double* data_FA_values, int* data_
 		   		num_vector += (maxorder - order)*3;
 		   				   		
 				voxels[i + j * dim_x + k * dim_x * dim_y] = *new Voxel(i, j, k, order, *dir, FA);
+				voxels[i + j * dim_x + k * dim_x * dim_y].setStartable(startable);
 
 				counter++;
 		   	}

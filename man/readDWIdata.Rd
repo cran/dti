@@ -7,11 +7,11 @@
 }
 \usage{
 dtiData(gradient, imagefile, ddim, xind = NULL, yind = NULL, zind = NULL, 
-        level = 0, mins0value = 0, maxvalue = 10000, voxelext = c(1, 1, 1), 
+        level = 0, mins0value = 0, maxvalue = 32000, voxelext = c(1, 1, 1), 
         orientation = c(0, 2, 5), rotation = diag(3))
 readDWIdata(gradient, dirlist, format, nslice = NULL, order = NULL, 
         xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, 
-        maxvalue = 10000, voxelext = NULL, orientation = c(0, 2, 5), 
+        maxvalue = 32000, voxelext = NULL, orientation = c(0, 2, 5), 
         rotation = diag(3))
 }
 %- maybe also 'usage' for other objects documented here.

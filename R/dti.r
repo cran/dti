@@ -56,12 +56,12 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
      ttt[(ttt == -Inf)] <- 0
      dim(ttt) <- c(prod(ddim),ngrad0)
      ttt <- t(ttt)
-     cat("Data transformation completed ",date(),"\n")
+     cat("Data transformation completed ",format(Sys.time()),"\n")
 
      btbsvd <- svd(object@btb[,-s0ind])
      solvebtb <- btbsvd$u %*% diag(1/btbsvd$d) %*% t(btbsvd$v)
      D <- solvebtb%*% ttt
-     cat("Diffusion tensors generated ",date(),"\n")
+     cat("Diffusion tensors generated ",format(Sys.time()),"\n")
 
      res <- ttt - t(object@btb[,-s0ind]) %*% D
      rss <- res[1,]^2
@@ -86,7 +86,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
        }
      dim(D) <- c(6,ddim)
      dim(res) <- c(ngrad0,ddim)
-     cat("Variance estimates generated ",date(),"\n")
+     cat("Variance estimates generated ",format(Sys.time()),"\n")
      th0 <- array(s0,object@ddim)
      th0[!mask] <- 0
      gc()
@@ -102,7 +102,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
      }
      mask <- s0 > object@level
      mask <- connect.mask(mask)
-     cat("start nonlinear regression",date(),"\n")
+     cat("start nonlinear regression",format(Sys.time()),"\n")
      z <- .Fortran("nlrdtirg",
                 as.integer(si),
                 as.integer(ngrad),
@@ -120,7 +120,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
                 rss=double(prod(ddim)),
                 double(ngrad),
                 PACKAGE="dti",DUP=FALSE)[c("th0","D","res","rss")]
-     cat("successfully completed nonlinear regression ",date(),"\n")
+     cat("successfully completed nonlinear regression ",format(Sys.time()),"\n")
      dim(z$th0) <- ddim
      dim(z$D) <- c(6,ddim)
      dim(z$res) <- c(ngrad,ddim)
@@ -150,7 +150,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
                    PACKAGE="dti",DUP=FALSE)$scorr
   dim(scorr) <- lags
   scorr[is.na(scorr)] <- 0
-  cat("estimated spatial correlations",date(),"\n")
+  cat("estimated spatial correlations",format(Sys.time()),"\n")
   cat("first order  correlation in x-direction",signif(scorr[2,1,1],3),"\n")
   cat("first order  correlation in y-direction",signif(scorr[1,2,1],3),"\n")
   cat("first order  correlation in z-direction",signif(scorr[1,1,2],3),"\n")
@@ -159,7 +159,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
   bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.2,.2,.2),
   upper=c(3,3,3),lag=lags,data=scorr)$par
   bw[bw <= .25] <- 0
-  cat("estimated corresponding bandwidths",date(),"\n")
+  cat("estimated corresponding bandwidths",format(Sys.time()),"\n")
   ev <- array(.Fortran("dti3Dev",
                        as.double(D),
                        as.integer(ddim[1]),
@@ -170,7 +170,7 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
                        DUP=FALSE,
                        PACKAGE="dti")$ev,c(3,ddim))
   scale <- quantile(ev[3,,,][mask],.95)
-  cat("estimated scale information",date(),"\n")  
+  cat("estimated scale information",format(Sys.time()),"\n")  
   invisible(new("dtiTensor",
                 call  = args,
                 D     = D,

@@ -47,21 +47,21 @@
 
   \item{x = "ANY"}{ Returns a warning for \code{extract}. Generic funtion for \code{"["} returns an object of same class with data clipped to the indices specified in arguments \code{i}, \code{j} and \code{k}.}
 
-  \item{x = "dtiData"}{ Extraction of squared gradient matrix (btb) or of S0 (S0), Sb (Sb) or all images (Si) restricted to the cube defined by arguments \code{i}, \code{j} and \code{k}.}
+  \item{x = "dtiData"}{ Extraction of squared gradient matrix \code{"btb"} or of S0 \code{"s0"}, Sb \code{"sb"}, Si/mean(SO) \code{"siq"} or all images \code{"data"} restricted to the cube defined by arguments \code{i}, \code{j} and \code{k}.}
 
-  \item{x = "dtiIndices"}{ Returns an array containing the specified statistics, i.e. fractional anisotropy (fa), geodesic anisotropy (ga), mean diffusivity (md), main direction of anisotropy (andir) and/or shape parameters (bary), as specified in argument \code{what}. Information is extracted for voxel within the cube defined by \code{xind}, \code{yind}, and \code{zind}. }
+  \item{x = "dtiIndices"}{ Returns an array containing the specified statistics, i.e. fractional anisotropy \code{"fa"}, geodesic anisotropy \code{"ga"}, mean diffusivity \code{"md"}, main direction of anisotropy \code{"andir"} and/or shape parameters \code{"bary"}, as specified in argument \code{what}. Information is extracted for voxel within the cube defined by \code{xind}, \code{yind}, and \code{zind}. }
 
-  \item{x = "dtiTensor"}{ Returns a list with component names corresponding to \code{what} containing the specified statistics, i.e. fractional anisotropy (fa), geodesic anisotropy (ga), mean diffusivity (md), eigenvalues (evalues), main direction of anisotropy (andir), the tensor (tensor) the estimated S0 image (s0) and/or the mask used to restrict computations (mask), as specified in argument \code{what}. Information is extracted for voxel within the  cube defined by arguments \code{xind}, \code{yind} and \code{zind}. }
+  \item{x = "dtiTensor"}{ Returns a list with component names corresponding to \code{what} containing the specified statistics, i.e. fractional anisotropy \code{"fa"}, geodesic anisotropy \code{"ga"}, mean diffusivity \code{"md"}, eigenvalues \code{"evalues"}, main direction of anisotropy \code{"andir"}, the tensor \code{"tensor"} the estimated S0 image \code{"s0"} and/or the mask used to restrict computations \code{"mask"}, as specified in argument \code{what}. Information is extracted for voxel within the  cube defined by arguments \code{xind}, \code{yind} and \code{zind}. }
 
-  \item{x = "dwiMixtensor"}{ Returns a list with component names corresponding to \code{what} containing the specified statistics. Possible values for \code{what} are \code{"order"} (number of mixture components), \code{"ev"} (eigenvalues), \code{"mix"} (mixture weights), \code{"andir"} (main directions of diffusion),
-  \code{"gfa"} (generalized FA index), \code{"S0"} (the estimated S0 image) and \code{mask} (the mask used to restrict computations).  Information is extracted for voxel within the  cube defined by arguments \code{xind}, \code{yind} and \code{zind}. }
+  \item{x = "dwiMixtensor"}{ Returns a list with component names corresponding to \code{what} containing the specified statistics. Possible values for \code{what} are \code{"order"} (estimated number of mixture components), \code{"eorder"} effective order), \code{"ev"} (eigenvalues), \code{"mix"} (mixture weights), \code{"andir"} (main directions of diffusion), 
+  \code{"fa"} (FA index), \code{"s0"} (the estimated S0 image) and \code{mask} (the mask used to restrict computations).  Information is extracted for voxel within the  cube defined by arguments \code{xind}, \code{yind} and \code{zind}. }
 
-  \item{x = "dwiQball"}{ Returns an array containing the specified statistics,  the estimated coefficients with respect to the selected spherical harmonics basis, the estimated S0 image (s0) and/or the mask used to restrict computations (mask), as specified in argument \code{what}. Information is extracted for voxel within the  cube defined by arguments \code{xind}, \code{yind} and \code{zind}. }
+  \item{x = "dwiQball"}{ Returns an array containing the specified statistics,  the estimated coefficients with respect to the selected spherical harmonics basis \code{"sphcoef"}, the estimated S0 image \code{"s0"} and/or the mask used to restrict computations \code{"mask"}, as specified in argument \code{what}. Information is extracted for voxel within the  cube defined by arguments \code{xind}, \code{yind} and \code{zind}. }
 }
 }
 \value{
   For function \code{extract} a list with components carrying the names of the options specified in
-  argument \code{what}.  For indexing function, the cutted object.
+  argument \code{what}.  For code{"["} the cutted object.
 }
 \author{ 
   Karsten Tabelow \email{tabelow@wias-berlin.de}\cr 

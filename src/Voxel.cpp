@@ -15,7 +15,7 @@ Voxel::Voxel()
 	this->anisotropy = 0.;
 	
 	this->visited = false;
-	this->startable = true;
+	this->startable = false;
 	
 	this->next = NULL;
 	this->prev = NULL;
@@ -34,7 +34,7 @@ Voxel::Voxel(int x_in, int y_in, int z_in, int order_in, Vector& directions_in, 
 	this->position = Vector((double)this->x,(double)this->y,(double)this->z);
 	
 	visited = false;
-	startable = true;
+	startable = false;
 	
 	next = NULL;
 	prev = NULL;

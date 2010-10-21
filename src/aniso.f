@@ -369,6 +369,60 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
+C    Compute subset of DTI-Indices for a volume
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine dtieigen(D,n1,n2,n3,mask,fa,ev,adir)
+      implicit logical (a-z)
+      integer n1,n2,n3
+      logical mask(n1,n2,n3)
+      real*8 D(6,n1,n2,n3),fa(n1,n2,n3),ev(3,n1,n2,n3),
+     1       adir(3,2,n1,n2,n3)
+      integer i1,i2,i3,ierr
+      real*8 lambda(3),evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
+      DO i1=1,n1
+         DO i2=1,n2
+            DO i3=1,n3
+            if(mask(i1,i2,i3)) THEN
+               call eigen3(D(1,i1,i2,i3),lambda,evec,ierr)
+               ev(1,i1,i2,i3)=lambda(3)
+               ev(2,i1,i2,i3)=lambda(2)
+               ev(3,i1,i2,i3)=lambda(1)
+               a1=lambda(1)
+               a2=lambda(2)
+               a3=lambda(3)
+               trc=(a1+a2+a3)/3.d0
+               adir(1,1,i1,i2,i3)=evec(1,3)
+               adir(2,1,i1,i2,i3)=evec(2,3)
+               adir(3,1,i1,i2,i3)=evec(3,3)
+               adir(1,2,i1,i2,i3)=evec(1,2)
+               adir(2,2,i1,i2,i3)=evec(2,2)
+               adir(3,2,i1,i2,i3)=evec(3,2)
+               d1=a1-trc
+               d2=a2-trc
+               d3=a3-trc
+               dd=a1*a1+a2*a2+a3*a3
+               IF(dd.gt.1.d-12) THEN
+               fa(i1,i2,i3)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
+               ELSE
+               fa(i1,i2,i3)=0.d0
+               ENDIF
+            ELSE
+               fa(i1,i2,i3)=0.d0
+               adir(1,1,i1,i2,i3)=1.d0
+               adir(2,1,i1,i2,i3)=0.d0
+               adir(3,1,i1,i2,i3)=0.d0
+               adir(1,2,i1,i2,i3)=0.d0
+               adir(2,2,i1,i2,i3)=1.d0
+               adir(3,2,i1,i2,i3)=0.d0
+            END IF
+            END DO
+         END DO
+      END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
 C    Compute DTI-Indices for a volume
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

@@ -12,14 +12,14 @@ setGeneric("dti.smooth", function(object, ...) standardGeneric("dti.smooth"))
 
 setMethod("dti.smooth", "dtiData", function(object,hmax=5,hinit=NULL,lambda=20,tau=10,
                                             rho=1,graph=FALSE,slice=NULL,quant=.8,
-                                            minanindex=NULL,hsig=2.5,lseq=NULL, method="nonlinear",varmethod="residuals",rician=TRUE,niter=5,varmodel="local",result="Tensor") {
-switch(method,"linear" = dtilin.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minanindex,hsig,lseq,varmethod,varmodel),
-              "nonlinear" =  dtireg.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minanindex,hsig,lseq,varmethod,rician,niter,varmodel,result))
+                                            minfa=NULL,hsig=2.5,lseq=NULL, method="nonlinear",varmethod="residuals",rician=TRUE,niter=5,varmodel="local",result="Tensor") {
+switch(method,"linear" = dtilin.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minfa,hsig,lseq,varmethod,varmodel),
+              "nonlinear" =  dtireg.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minfa,hsig,lseq,varmethod,rician,niter,varmodel,result))
 }
 )
 dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
                                             rho=1,graph=FALSE,slice=NULL,quant=.8,
-                                            minanindex=NULL,hsig=2.5,lseq=NULL,varmethod="residuals",varmodel="local"){
+                                            minfa=NULL,hsig=2.5,lseq=NULL,varmethod="residuals",varmodel="local"){
 #
 #     lambda and lseq adjusted for alpha=0.2
 #
@@ -147,7 +147,7 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
      img[img>rg[2]]<-rg[2]
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dyz: min",signif(min(z$D[5,,,][mask]),3),"max",signif(max(z$D[5,,,][mask]),3)))
-     andir2.image(z,slice,quant=quant,minanindex=minanindex,xaxt="n",yaxt="n")
+     andir2.image(z,slice,quant=quant,minfa=minfa,xaxt="n",yaxt="n")
      title(paste("Directions (h=1), slice",slice))
      ni<-array(1,dimy[-1])*as.integer(mask)
      show.image(make.image((65535*ni/max(ni))[,,slice]),xaxt="n",yaxt="n")
@@ -254,7 +254,7 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
      img[img<rg[1]]<-rg[1]
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dyz: min",signif(min(z$D[5,,,][mask]),3),"max",signif(max(z$D[5,,,][mask]),3)))
-     andir2.image(z,slice,quant=quant,minanindex=minanindex,xaxt="n",yaxt="n")
+     andir2.image(z,slice,quant=quant,minfa=minfa,xaxt="n",yaxt="n")
      title(paste("Directions (h=",signif(hakt,3),"), slice",slice))
      ni<-(z$bi[,,slice]*if(wlse) z$sigma2hat[,,slice] else 1)*mask[,,slice]
      show.image(make.image(65535*ni/max(ni)),xaxt="n",yaxt="n")

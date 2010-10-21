@@ -1,4 +1,4 @@
-tdatamixtens <- function(w,th,alpha,beta,grad,sigma){
+tdatamixtens <- function(w,th,alpha,beta,grad,sigma,ns0){
 #  
 #  w  - matrix of wghts (m+1,n1,n2,n3)
 #  th - ev-parameters (2,n1,n2,n3) lambda1 = th[1]+th[2]
@@ -14,7 +14,7 @@ if(any(dim(th)!=c(2,ddim))) return("wrong dimension of th")
 if(any(dim(alpha)!=c(m,ddim))) return("wrong dimension of alpha")
 if(any(dim(beta)!=c(m,ddim))) return("wrong dimension of beta")
 if(any(dim(grad)!=c(3,ngrad))) return("wrong dimension of grad")
-sb <- array(0,c(ddim,ngrad+1))
+sb <- array(0,c(ddim,ngrad))
 d <- array(0,c(3,m,ddim))
 sal <- sin(alpha)
 cal <- cos(alpha)
@@ -24,27 +24,27 @@ d[1,,,,] <- sal*cbe
 d[2,,,,] <- sal*sbe
 d[3,,,,] <- cal
 el1 <- exp(-th[1,,,]-th[2,,,])
-sb[,,,1] <- rnorm(prod(ddim),10000,10)
-for(i in 1:ngrad){
-   sb[,,,i+1] <- w[1,,,]*el1
+s0 <- array(10000,ddim)
+for(i in 1:ns0) sb[,,,i] <- s0
+for(i in (ns0+1):ngrad){
+   sb[,,,i] <- w[1,,,]*el1
    for(j in 1:m){
       dg <- d[1,j,,,]*grad[1,i]+d[2,j,,,]*grad[2,i]+d[3,j,,,]*grad[3,i]
-      sb[,,,i+1] <- sb[,,,i+1]+w[j+1,,,]*exp(-th[2,,,]-th[1,,,]*dg^2)
+      sb[,,,i] <- sb[,,,i]+w[j+1,,,]*exp(-th[2,,,]-th[1,,,]*dg^2)
    }
-   sb[,,,i+1] <- sb[,,,i+1]*sb[,,,1]
+   sb[,,,i] <- sb[,,,i]*s0
 }
-sb <- sqrt(rnorm(sb,sb,sigma*sb[,,,1])^2+rnorm(sb,0,sigma*sb[,,,1])^2)
-dim(sb) <- c(ddim,ngrad+1)
-grad <- cbind(rep(0,3),grad)
+sb <- sqrt(rnorm(sb,sb,sigma*s0)^2+rnorm(sb,0,sigma*s0)^2)
+dim(sb) <- c(ddim,ngrad)
 ddim0 <- ddim
 invisible(new("dtiData",
                 call = args,
                 si     = sb,
                 gradient = grad,
                 btb    = create.designmatrix.dti(grad),
-                ngrad  = as.integer(ngrad+1), # = dim(btb)[2]
-                s0ind  = as.integer(1), # indices of S_0 images
-                replind = 1:(ngrad+1),
+                ngrad  = as.integer(ngrad), # = dim(btb)[2]
+                s0ind  = as.integer(1:ns0), # indices of S_0 images
+                replind = as.integer(c(rep(1,ns0),(ns0+1):ngrad)),
                 ddim   = ddim,
                 ddim0  = ddim0,
                 xind   = 1:ddim[1],
@@ -58,7 +58,7 @@ invisible(new("dtiData",
                 source = "artificial")
             )
 }
-truemixtens <- function(w,th,alpha,beta,grad,sigma){
+truemixtens <- function(w,th,alpha,beta,grad,sigma,ns0){
 #  
 #  w  - matrix of wghts (m+1,n1,n2,n3)
 #  th - ev-parameters (2,n1,n2,n3) lambda1 = th[1]+th[2]
@@ -96,9 +96,9 @@ orient[2,,,,] <- beta
                 hmax   = 1,
                 gradient = grad,
                 btb    = create.designmatrix.dti(grad),
-                ngrad  = as.integer(ngrad+1), # = dim(btb)[2]
-                s0ind  = as.integer(1),
-                replind = 1:(ngrad+1),
+                ngrad  = as.integer(ngrad), # = dim(btb)[2]
+                s0ind  = as.integer(1:ns0),
+                replind = as.integer(c(rep(1,ns0),(ns0+1):ngrad)),
                 ddim   = ddim,
                 ddim0  = ddim0,
                 xind   = 1:ddim[1],

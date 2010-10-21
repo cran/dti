@@ -22,7 +22,7 @@ if (toupper(a) == "N") {
 
 a <- readline("Provide standard deviation in K-space (default: 2400, example in Neuroimage paper: 1600):")
 
-sigma <- if(!is.null(a)) as.numeric(a) else 2400
+sigma <- if(a!="") as.numeric(a) else 2400
 if( is.na(sigma)) sigma <- 2400
 
 
@@ -36,8 +36,18 @@ ddim <- c(64,64,26)
 ngrad <- 25
 factor <- 2.5
 
+ngrad <- readline("Provide number of gradients (default: 21 minimum: 6  maximum: 162):")
+
+ngrad <- if(ngrad!="") as.numeric(ngrad) else 21
+if(is.na(ngrad)) ngrad <- 21
+ngrad <- max(6,min(162,ngrad))
+ns0 <- max(1,(ngrad+10)%/%20) 
+
+cat("Using ",ns0," S0  and ",ngrad,"diffusion weighted images\n")
 # read the gradient data, these are 25 gradient directions + one non-zero weighted
-bvec <- read.table(system.file("dat/b-directions.txt",package="dti"))
+# bvec <- read.table(system.file("dat/b-directions.txt",package="dti"))
+data(optgradients)
+bvec <- rbind(matrix(0,ns0,3),t(optgrad[[ngrad-5]]))
 
 #
 #  generate files containing the phantom- and noisy diffusion weighted images
@@ -81,7 +91,7 @@ a <- readline("Provide bandwidth for adaptive smoothing (default 4)")
 hmax <- if(!is.null(a)) as.numeric(a) else 4
 if( is.na(hmax) || hmax<1) hmax <- 4
 
-dthat4 <- dti.smooth(dtobj,hmax=hmax,graph=TRUE,lambda=lambda,minanindex=0,slice=15,rho=rho,lseq=NULL,method=method)
+dthat4 <- dti.smooth(dtobj,hmax=hmax,graph=TRUE,lambda=lambda,minfa=0,slice=15,rho=rho,lseq=NULL,method=method)
 
 # Compute indices of estimated smoothed tensors 
 
@@ -138,9 +148,9 @@ cat("Estimated smoothed tensor in device",w3,"\n")
 z <- readline("Visualize smoothed estimated dtiIndex (Y/N) :")
 
 if(toupper(z)!="N"){
-w4<-show3d(dt0aniso,falevel=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(1, size+21, size, 2*size+20))
-w5<-show3d(dthat1aniso,falevel=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(size+11, size+21, 2*size+10, 2*size+20))
-w6<-show3d(dthat4aniso,falevel=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(2*size+21, size+21, 3*size+20, 2*size+20))
+w4<-show3d(dt0aniso,minfa=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(1, size+21, size, 2*size+20))
+w5<-show3d(dthat1aniso,minfa=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(size+11, size+21, 2*size+10, 2*size+20))
+w6<-show3d(dthat4aniso,minfa=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(2*size+21, size+21, 3*size+20, 2*size+20))
 mouseTrackball(dev=c(w4,w5,w6))
 mouseZoom(2,dev=c(w4,w5,w6))
 mouseFOV(3,dev=c(w4,w5,w6))

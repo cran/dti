@@ -127,7 +127,7 @@ thcorr3D <- function(bw,lag=rep(5,3)){
   scorr
 }
 
-andir2.image <- function(dtobject,slice=1,method=1,quant=0,minanindex=NULL,show=TRUE,xind=NULL,yind=NULL,...){
+andir2.image <- function(dtobject,slice=1,method=1,quant=0,minfa=NULL,show=TRUE,xind=NULL,yind=NULL,...){
   if(!("dti" %in% class(dtobject))) stop("Not an dti-object")
   if(is.null(dtobject$anindex)) stop("No anisotropy index yet")
   adimpro <- require(adimpro)
@@ -142,7 +142,7 @@ andir2.image <- function(dtobject,slice=1,method=1,quant=0,minanindex=NULL,show=
   anindex[anindex>1]<-0
   anindex[anindex<0]<-0
   dim(andirection)<-c(3,prod(dimg))
-  if(is.null(minanindex)) minanindex <- quantile(anindex,quant)
+  if(is.null(minfa)) minfa <- quantile(anindex,quant)
   if(method==1) {
     andirection[1,] <- abs(andirection[1,])
     andirection[2,] <- abs(andirection[2,])
@@ -154,7 +154,7 @@ andir2.image <- function(dtobject,slice=1,method=1,quant=0,minanindex=NULL,show=
     andirection[3,] <- (1+andirection[3,])/2
   }
   andirection <- t(andirection)
-  andirection <- andirection*as.vector(anindex)*as.numeric(anindex>minanindex)
+  andirection <- andirection*as.vector(anindex)*as.numeric(anindex>minfa)
   dim(andirection)<-c(dimg,3)
   if(adimpro) {
     andirection <- make.image(andirection)
@@ -166,16 +166,16 @@ andir2.image <- function(dtobject,slice=1,method=1,quant=0,minanindex=NULL,show=
   invisible(andirection)
 } 
 
-andir.image <- function(anindex,andirection,quant=0,minanindex=NULL){
+andir.image <- function(anindex,andirection,quant=0,minfa=NULL){
   dimg <- dim(anindex)
   anindex[anindex>1]<-0
   anindex[anindex<0]<-0
   dim(andirection)<-c(3,prod(dimg))
-  if(is.null(minanindex)) minanindex <- quantile(anindex,quant)
+  if(is.null(minfa)) minfa <- quantile(anindex,quant)
   andirection[1,] <- abs(andirection[1,])
   andirection[2,] <- abs(andirection[2,])
   andirection[3,] <- abs(andirection[3,])
-  andirection <- t(andirection)*as.vector(anindex)*as.numeric(anindex>minanindex)
+  andirection <- t(andirection)*as.vector(anindex)*as.numeric(anindex>minfa)
   dim(andirection)<-c(dimg,3)
   show.image(make.image(andirection))
   invisible(NULL)

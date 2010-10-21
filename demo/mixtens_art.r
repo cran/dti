@@ -1,7 +1,19 @@
 cat("Demo for mix-tensor models\n")
 set.seed(1)
 source(system.file("rcode/gen_mixtens.r",package="dti"))
-grad <- t(read.table(system.file("dat/hardi-grad.txt",package="dti")))
+ngrad <- readline("Provide number of gradients (default: 136 minimum: 6  maximum: 162):")
+
+ngrad <- if(ngrad!="") as.numeric(ngrad) else 136
+if(is.na(ngrad)) ngrad <- 136
+ngrad <- max(6,min(162,ngrad))
+ns0 <- max(1,(ngrad+10)%/%20) 
+
+cat("Using ",ns0," S0  and ",ngrad,"diffusion weighted images\n")
+# read the gradient data, these are 25 gradient directions + one non-zero weighted
+# bvec <- read.table(system.file("dat/b-directions.txt",package="dti"))
+data(optgradients)
+grad <- cbind(matrix(0,3,ns0),optgrad[[ngrad-5]])
+# grad <- t(read.table(system.file("dat/hardi-grad.txt",package="dti")))
 n <- readline("size of data cube (n x n x n) (default n=6)") 
 
 if (!is.null(n)) n <- as.numeric(n) else n <- 6
@@ -9,13 +21,13 @@ if(is.na(n)) n <- 6 else n <- as.integer(min(10,max(1,n)))
 
 snr <- readline("signal-noise-ratio (default 50)") 
 
-if (!is.null(snr)) snr <- as.numeric(snr) else snr <- 50
-if(is.na(snr)) snr <- 50 else snr <- max(10,min(1000,snr))
+snr <- if (snr!="") snr <- as.numeric(snr) else 50
+if(is.na(snr)) snr <- 50 
 sigma <- 1/snr
 
 scenario <- readline("select scenario \n 1: varying directions (default)
                                       \n 2: varying mixtures
-                                      \n 3: varying gfa
+                                      \n 3: varying fa
                                       \n 4: homogeneous")
 
 if (is.null(scenario)) scenario <- 1 else scenario <- as.numeric(scenario)
@@ -76,16 +88,17 @@ for(i in 1:n) mix[2,i,,] <- i/2/(n+1)
 for(i in 1:n) mix[3,,i,] <- i/2/(n+1) 
 mix[4,,,] <- 1-mix[2,,,]-mix[3,,,]
 }
-th[2,,,] <- .8
 if(scenario!=3){
-gfa <- readline("Generalized FA (default gfa = .8)") 
+fa <- readline("fa (default fa = .8)") 
 
-if (!is.null(gfa)) gfa <- as.numeric(gfa) else gfa <- .8
-if(is.na(gfa)) gfa <- .8 else gfa <- min(.9,max(.2,gfa))
+if (!is.null(fa)) fa <- as.numeric(fa) else fa <- .8
+if(is.na(fa)) fa <- .8 else fa <- min(.9,max(.2,fa))
 } else {
-gfa <- seq(.5,.9,length=n^3) 
+fa <- seq(.5,.9,length=n^3)
 }
-th[1,,,] <- .8*(gfa^2+sqrt(3*gfa^2-2*gfa^4))/(1-gfa^2)
+l1 <- (1+sqrt(3*fa^2-2*fa^4))/(1-fa^2)
+th[2,,,] <- (2/l1)^(1/3)
+th[1,,,] <- l1*th[2,,,]
 
 
 maxcomp <- readline("maximal order of mix-tensor model (default 3)") 
@@ -93,8 +106,8 @@ maxcomp <- readline("maximal order of mix-tensor model (default 3)")
 if (is.null(maxcomp)) maxcomp <- 3 else maxcomp <- as.numeric(maxcomp)
 if(is.na(maxcomp)) maxcomp <- 3 else maxcomp <- min(5,max(1,maxcomp))
 
-z0 <- truemixtens(mix,th,alpha,beta,grad,sigma)
-z <- tdatamixtens(mix,th,alpha,beta,grad,sigma)
+z0 <- truemixtens(mix,th,alpha,beta,grad,sigma,ns0)
+z <- tdatamixtens(mix,th,alpha,beta,grad,sigma,ns0)
 zt <- dtiTensor(z)
 zmix <- dwiMixtensor(z,optmethod="BFGS",maxcomp=maxcomp,reltol=1e-6)
 gslexists <- "gsl" %in% .packages(TRUE)
@@ -108,7 +121,7 @@ if(toupper(vodf)!="N"){
 source(system.file("rcode/mousecallbacks.r",package="dti"))
 size <- 500
 w1 <- show3d(z0,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(1, 1, size, size))
-w2 <- show3d(zt,what="odf",minalpha=1,falevel=0,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(size+11, 1, 2*size+10, size))
+w2 <- show3d(zt,what="odf",minalpha=1,minfa=0,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(size+11, 1, 2*size+10, size))
 w3 <- show3d(zmix,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(1, size+11 , size, 2*size+10))
 if(gslexists){ 
 w4 <- show3d(zqball,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(size+11, size+11, 2*size+10, 2*size+10))
@@ -129,18 +142,18 @@ cat("Estimated mixtensor ODF in ",w3,"\n")
 }
 }
 
-vgfa <- readline("Visualize and compare estimated FA and GFA's (Y/N) :")
+vfa <- readline("Visualize and compare estimated FA's (Y/N) :")
 
-if(toupper(vgfa)!="N"){
+if(toupper(vfa)!="N"){
 
 X11()
 par(mfrow=c(3,n),mar=c(1,1,2,.1),mgp=c(2,1,0))
-gfa0 <- extract(z0,"gfa")$gfa
-fa <- extract(zt,"fa")$fa
-gfa <- extract(zmix,"gfa")$gfa
-for(i in 1:n) image(gfa0[,,i],col=grey((0:255)/255),zlim=c(0,1),main=paste("True gfa sl.,",i),xaxt="n",yaxt="n")
-for(i in 1:n) image(fa[,,i],col=grey((0:255)/255),zlim=c(0,1),main=paste("Est. fa sl.,",i),xaxt="n",yaxt="n")
-for(i in 1:n) image(gfa[,,i],col=grey((0:255)/255),zlim=c(0,1),main=paste("Est gfa sl.,",i),xaxt="n",yaxt="n")
+fa0 <- extract(z0,"fa")$fa
+tfa <- extract(zt,"fa")$fa
+mfa <- extract(zmix,"fa")$fa
+for(i in 1:n) image(fa0[,,i],col=grey((0:255)/255),zlim=c(0,1),main=paste("True fa (Mixture) sl.,",i),xaxt="n",yaxt="n")
+for(i in 1:n) image(tfa[,,i],col=grey((0:255)/255),zlim=c(0,1),main=paste("Est. fa (Tensor) sl.,",i),xaxt="n",yaxt="n")
+for(i in 1:n) image(mfa[,,i],col=grey((0:255)/255),zlim=c(0,1),main=paste("Est. fa (Mixture) sl.,",i),xaxt="n",yaxt="n")
 }
 
 
