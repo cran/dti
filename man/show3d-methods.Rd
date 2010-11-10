@@ -18,7 +18,7 @@
          bgcolor="black", add=FALSE, maxobjects=729, what="ADC", 
          minalpha=1, nn=1, normalize=FALSE, box=FALSE, title=FALSE, \dots)
 \S4method{show3d}{dtiTensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, minfa=.3, mask=NULL, fibers=FALSE, 
-         maxangle=30,level=0, quant=.8, scale=.4, bgcolor="black", add=FALSE, 
+         maxangle = 30,level=0, quant=.8, scale=.4, bgcolor="black", add=FALSE, 
          subdivide=2, maxobjects=729, what="tensor", odfscale = 3, 
          minalpha=.25, normalize=NULL, box=FALSE, title=FALSE,\dots)
 \S4method{show3d}{dtiIndices}(obj, index="FA", nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, 

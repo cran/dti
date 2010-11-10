@@ -536,13 +536,14 @@ setMethod("extract","dwiMixtensor",function(x, what="andir", xind=TRUE, yind=TRU
   if("fa" %in% what){
       fa <- x@ev[1,,,]/sqrt((x@ev[1,,,]+x@ev[2,,,])^2+2*x@ev[2,,,]^2)
       fa[x@order==0] <- 0
+      dim(fa) <- x@ddim
       z$fa <- fa
     }
   if("eorder" %in% what) {
      maxorder <- dim(x@mix)[1]
      mix <- x@mix
      dim(mix) <- c(maxorder,n1*n2*n3)     
-     z$eorder <- array((2*(1:maxorder)-1)%*%mix,c(n1,n2,n3))
+     z$eorder <- array((2*(1:maxorder)-1)%*%mix,x@ddim)
   }
   invisible(z)
 })
@@ -582,9 +583,9 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
                     ev=double(3*n1*n2*n3),
                     DUP=FALSE,
                     PACKAGE="dti")[c("fa","ga","md","andir","ev")]
-    if("fa" %in% what) z$fa <- array(erg$fa,c(n1,n2,n3))
-    if("ga" %in% what) z$ga <- array(erg$ga,c(n1,n2,n3))
-    if("md" %in% what) z$md <- array(erg$md,c(n1,n2,n3))
+    if("fa" %in% what) z$fa <- array(erg$fa,x@ddim)
+    if("ga" %in% what) z$ga <- array(erg$ga,x@ddim)
+    if("md" %in% what) z$md <- array(erg$md,x@ddim)
     if("evalues" %in% what) z$evalues <- array(erg$ev,c(3,n1,n2,n3))
     if("andir" %in% what) z$andir <- array(erg$andir,c(3,n1,n2,n3))
   } else {
@@ -602,7 +603,7 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
         dd <- apply(ev^2,2:4,sum)
         md <- (ev[1,,,]+ev[2,,,]+ev[3,,,])/3
         sev <- sweep(ev,2:4,md)
-        z$fa <- sqrt(1.5*apply(sev^2,2:4,sum)/dd)
+        z$fa <- array(sqrt(1.5*apply(sev^2,2:4,sum)/dd),x@ddim)
       }
       if("ga" %in% what) {
         sev <- log(ev)
@@ -610,10 +611,10 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
         sev <- sweep(sev,2:4,md)
         ga <- sqrt(apply(sev^2,2:4,sum))
         ga[is.na(ga)] <- 0
-        z$ga <- ga 
+        z$ga <- array(ga,x@ddim)
       }
-      if("md" %in% what) z$md <- (ev[1,,,]+ev[2,,,]+ev[3,,,])/3
-      if("evalues" %in% what) z$evalues <- ev
+      if("md" %in% what) z$md <- array((ev[1,,,]+ev[2,,,]+ev[3,,,])/3,x@ddim)
+      if("evalues" %in% what) z$evalues <- array(ev,c(3,x@ddim))
     }
     if("andir" %in% what){
       z$andir <- array(.Fortran("dti3Dand",
@@ -627,8 +628,8 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
                                 PACKAGE="dti")$andir,c(3,n1,n2,n3))
     }
   }
-  if("tensor" %in% what) z$tensor <- x@D
-  if("s0" %in% what) z$s0 <- x@th0
+  if("tensor" %in% what) z$tensor <- array(x@D,c(6,x@ddim))
+  if("s0" %in% what) z$s0 <- array(x@th0,x@ddim)
   if("mask" %in% what) z$mask <- x@mask
   if("outlier" %in% what) {
     ind <- 1:prod(x@ddim)

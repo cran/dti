@@ -19,8 +19,8 @@
 \S4method{plot}{dtiTensor}(x, y, slice=1, view="axial", quant=0, minfa=NULL, contrast.enh=1,
     what="fa", qrange=c(.01,.99), xind=NULL, yind=NULL, zind=NULL, 
     mar=c(2,2,2,.2), mgp=c(2,1,0), \dots)
-\S4method{plot}{dwiMixtensor}(x, y, slice=1, view="axial", what="fa", minfa=NULL, 
-     xind=NULL, yind=NULL, zind=NULL, mar=c(2,2,2,.2),mgp=c(2,1,0), \dots)
+\S4method{plot}{dwiMixtensor}(x, y, slice=1, view="axial", what="fa", minfa=NULL,  
+     identify=FALSE, xind=NULL, yind=NULL, zind=NULL, mar=c(2,2,2,.2),mgp=c(2,1,0), \dots)
 \S4method{plot}{dtiIndices}(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL,
    show=TRUE, identify=FALSE, density=FALSE, contrast.enh=1, what="fa", 
    xind=NULL, yind=NULL, zind=NULL, mar=c(3,3,3,.3), mgp=c(2,1,0), \dots)
@@ -36,7 +36,7 @@
   \item{quant}{ If \code{is.null(minfa)} specify \code{minfa} as corresponding quantile of the fractal anisotropy (FA) index.}
   \item{minfa}{ Display only information for voxel with \code{(G)FA>minfa}}
   \item{show}{Visualize information in a graphics device (for classes \code{"dtiData"} and \code{"dtiIndices"} only).  }
-  \item{identify}{ Enable identification of coordinates by mouse actions, logical with default FALSE. Uses function \code{identify}. (for class \code{"dtiIndices"} only)}
+  \item{identify}{ Enable identification of coordinates by mouse actions, logical with default FALSE. Uses function \code{identify}. (for classes \code{"dtiIndices"} and \code{"dwiMixtensor"} only)}
   \item{density}{Show density of S0(Sb)-values (for class \code{"dtiData"}) or densities of fractal anisotropy (FA) or geodesic anisotropy (GA) ( for class \code{"dtiIndices"}).  }
   \item{contrast.enh}{ Enhance image contrast using \code{min(1,x$anindex/contrast.enh} instead of the anisotropy index itself. Effective values are within the interval (0,1).}
   \item{what}{ In case of class \code{"dtiIndices"} \code{what="ga"} uses geodesic anisotropy (GA) in contrast to \code{what="fa"} for fractional anisotropy (FA). For class \code{"dwiMixtensor"}
@@ -61,7 +61,7 @@
 
   \item{x = "dtiTensor"}{ The tensor itself, fractional anisotropy (FA), mean diffusivity (MD) and a color coded anisotropy map are provided. \code{NULL} is returned. }
 
-  \item{x = "dwiMixtensor"}{ Depending of \code{what} images of a generalized FA and/or the number of mixture components are provided. \code{NULL} is returned. }
+  \item{x = "dwiMixtensor"}{ Depending of \code{what} images of FA (\code{what="fa"}), number of mixture components (\code{what="order"}), effective order (\code{what="eorder"}) or maximum eigenvalues (\code{what="ev"}).  is returned. }
 
   \item{x = "dwiFiber"}{ Creates a density plot of fiber lengths. \code{NULL} is returned. }
   

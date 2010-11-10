@@ -363,14 +363,14 @@ create.designmatrix.dti <- function(gradient, bvalue=1) {
 }
 
 identify.fa <- function(view,slice,xind,yind,zind){
-n1 <- switch(view,"sattigal"=length(yind),length(xind))
+n1 <- switch(view,"sagittal"=length(yind),length(xind))
 n2 <- switch(view,"axial"=length(yind),length(zind))
 x <- as.vector(outer(1:n1,rep(1,n2),"*"))
 y <- as.vector(outer(rep(1,n1),1:n2,"*"))
 cat("Please use left mouse click to identify a voxel,\n terminate selection process by right mouse click\n")
 z <- identify(x,y,plot=FALSE)
 coord <- matrix(0,3,length(z))
-if(view=="sattigal"){
+if(view=="sagittal"){
 coord[1,] <- slice
 coord[2,] <- yind[x[z]]
 coord[3,] <- zind[y[z]]

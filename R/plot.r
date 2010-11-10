@@ -168,7 +168,7 @@ setMethod("plot", "dtiTensor", function(x, y, slice=1, view="axial", quant=0, mi
 
 ##############
 
-setMethod("plot", "dwiMixtensor", function(x, y, slice=1, view="axial", what="fa", minfa=NULL,  xind=NULL,yind=NULL,zind=NULL, mar=c(2,2,2,.2),mgp=c(2,1,0),...) {
+setMethod("plot", "dwiMixtensor", function(x, y, slice=1, view="axial", what="fa", minfa=NULL, identify=FALSE,  xind=NULL,yind=NULL,zind=NULL, mar=c(2,2,2,.2),mgp=c(2,1,0),...) {
   adimpro <- require(adimpro)
   if(is.null(xind)) xind<-(1:x@ddim[1])
   if(is.null(yind)) yind<-(1:x@ddim[2])
@@ -187,15 +187,35 @@ setMethod("plot", "dwiMixtensor", function(x, y, slice=1, view="axial", what="fa
   if("fa" %in% what){
      fa <- drop(stats$fa)
      if(!is.null(minfa)) fa[fa<minfa] <- 0
-     show.image(make.image(65535*fa))
+     show.image(img <- make.image(65535*fa))
      title(paste("Slice",slice,"FA"))
   }
   if("order" %in% what){
      order <- drop(stats$order)
-     show.image(make.image(65535*order/max(order)))
+     show.image(img <- make.image(65535*order/max(order)))
      title(paste("Slice",slice,"Order of mixture (Maximum=",max(order),")"))
    }
-   invisible(NULL)
+  if("eorder" %in% what){
+     eorder <- drop(stats$eorder)
+     show.image(img <- make.image(65535*eorder/max(eorder)))
+     title(paste("Slice",slice,"Effective order of mixture (Maximum=",signif(max(eorder),2),")"))
+   }
+  if("ev" %in% what){
+     ev <- drop(stats$ev[1,,,])
+     show.image(img <- make.image(65535*ev/max(ev)))
+     title(paste("Slice",slice,"Maximal Eigenvalue (Maximum=",signif(max(ev),3),")"))
+   }
+      if(identify){
+         xind<-(1:x@ddim[1])
+         yind<-(1:x@ddim[2])
+         zind<-(1:x@ddim[3])
+         img <- extract.image(img)
+         image(1:dim(img)[1],1:dim(img)[2],img,col=grey((0:255)/255))
+         identify.fa(view,slice,xind,yind,zind)
+      } else {
+         par(oldpar)
+         invisible(img)
+      }
 })
 
 ##############
