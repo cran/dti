@@ -108,6 +108,8 @@ setGeneric("reduceFibers", function(obj,  ...) standardGeneric("reduceFibers"))
 
 setMethod("reduceFibers","dwiFiber", function(obj, maxdist=1, ends=TRUE)
 {
+   args <- sys.call(-1)
+   args <- c(obj@call,args)
    obj <- sort.fibers(obj)
    fibers <- obj@fibers[,1:3]
    nsegm <- dim(fibers)[1]
@@ -140,6 +142,7 @@ setMethod("reduceFibers","dwiFiber", function(obj, maxdist=1, ends=TRUE)
     startf <- startf[keep]
     endf <- endf[keep]
     ind <- rep(startf,endf-startf+1)+sequence(endf-startf+1)-1
+    obj@call <- args
     obj@fibers <- obj@fibers[ind,]
     obj@startind <- as.integer(c(0,cumsum(endf-startf+1))[1:length(startf)]+1)
     obj

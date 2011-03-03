@@ -58,7 +58,7 @@ setMethod("show3d","dtiData", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,q
   dim(radii) <- c(length(radii)/ngrad,ngrad)
   radii <- t(radii)
   sscale <- scale
-  if(what=="colorcoded") sscale <- 1
+#  if(what=="colorcoded") sscale <- 1
   if(normalize){
      minradii <- apply(radii,2,min)
      maxradii <- apply(radii,2,max)
@@ -73,29 +73,29 @@ setMethod("show3d","dtiData", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,q
      par3d(...)
      rgl.bg(color=bgcolor)
      }
-  if(what=="colorcoded") {
-     polyeder <- switch(subdivide+1,icosa0,icosa1,icosa2,icosa3,icosa4)
-     ngrad <- dim(gradient)[2]
-     n <- dim(radii)[2]
-     cat("radii",dim(radii))
-     radii <- matrix(.Fortran("datinter",
-                        as.double(radii),
-                        as.integer(n),
-                        as.double(gradient),
-                        as.integer(ngrad),
-                        as.double(polyeder$vertices),
-                        as.integer(polyeder$nv),
-                        as.integer(nn),#number of nearest neighbors
-                        double(nn),#auxiliary 
-                        integer(nn),#auxiliary 
-                        polyradii=double(polyeder$nv*n),
-                        DUP=FALSE,
-                        PACKAGE="dti")$polyradii,polyeder$nv,n)
-     cat("newradii",dim(radii))
-     show3dCdata(radii,polyeder,centers=tmean,minalpha=minalpha,scale=scale,...)
-  } else {
+#  if(what=="colorcoded") {
+#     polyeder <- switch(subdivide+1,icosa0,icosa1,icosa2,icosa3,icosa4)
+#     ngrad <- dim(gradient)[2]
+#     n <- dim(radii)[2]
+#     cat("radii",dim(radii))
+#     radii <- matrix(.Fortran("datinter",
+#                        as.double(radii),
+#                        as.integer(n),
+#                        as.double(gradient),
+#                        as.integer(ngrad),
+#                        as.double(polyeder$vertices),
+#                        as.integer(polyeder$nv),
+#                        as.integer(nn),#number of nearest neighbors
+#                        double(nn),#auxiliary 
+#                        integer(nn),#auxiliary 
+#                        polyradii=double(polyeder$nv*n),
+#                        DUP=FALSE,
+#                        PACKAGE="dti")$polyradii,polyeder$nv,n)
+#     cat("newradii",dim(radii))
+#     show3dCdata(radii,polyeder,centers=tmean,minalpha=minalpha,scale=scale,...)
+#  } else {
      show3dData(radii,gradient,centers=tmean,minalpha=minalpha,...)
-  }
+#  }
   if(box) bbox3d()
   if(is.character(title)) {
      title3d(title,color="white",cex=1.5)

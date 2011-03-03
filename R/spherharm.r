@@ -2,7 +2,6 @@ getsphericalharmonicseven <- function(order,theta,phi){
 #
 #   compute spherical harmonics
 #
-require(gsl,quietly = TRUE,warn.conflicts = FALSE)
 order <- as.integer(max(0,order))
 if(order%%2==1){
 warning("maximum order needs to be even, increase order by one")
@@ -12,6 +11,7 @@ if(length(theta)!=length(phi)) stop("need same length of theta and phi")
 kseq <- seq(0,order,2)
 n <- length(phi)
 values <- matrix(0,(order+1)*(order+2)/2,n)
+if(require(gsl,quietly = TRUE,warn.conflicts = FALSE)){
 for(k in kseq){
 mseq <- seq(-k,k,1)
 for(m in mseq){
@@ -27,6 +27,9 @@ values[ind,] <- z
 }
 }
 detach(package:gsl)
+} else {
+warning("gsl package not available \n returning zeros instead of estimates")
+}
 values
 }
 
@@ -34,12 +37,12 @@ getsphericalharmonicsall <- function(order,theta,phi){
 #
 #   compute spherical harmonics
 #
-require(gsl)
 order <- as.integer(max(0,order))
 if(length(theta)!=length(phi)) stop("need same length of theta and phi")
 kseq <- 0:order
 n <- length(phi)
 values <- matrix(0,(order+1)^2,n)
+if(require(gsl)){
 l <- 1
 for(k in kseq){
 mseq <- (-k):k
@@ -56,5 +59,9 @@ l <- l+1
 }
 }
 detach(package:gsl)
+} else {
+warning("gsl package not available \n returning zeros instead of estimates")
+}
 values
 }
+

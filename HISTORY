@@ -1,3 +1,9 @@
+2011-03-03 version 0.9-4
+
+  - dwiQball now also works on Windows
+  - new functions dwiMtImprove and dwiMtCombine for tensor mixture models
+  - different strategie for initial estimates 
+
 2010-10-05 version 0.9-3
 
   - improved initial estimates for tensor mixture models
