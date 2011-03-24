@@ -79,7 +79,16 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
      dim(s0) <- dim(si) <- NULL
      si <- si/s0
      si[is.na(si)] <- 0
-     si[si>=1] <- 1-.Machine$double.neg.eps
+# Regularization following Aganj et al. (2010) delta=1e-3
+     ind1 <- si<0
+     ind2 <- (si<1e-3)&(!ind1)
+     ind3 <- si>1 
+     ind4 <- (si>1-1e-3)&(!ind3)
+     si[ind1] <- 5e-4
+     si[ind2] <- 5e-4+5e2*si[ind2]^2
+     si[ind3] <- 1 - 5e-4
+     si[ind4] <- 1 - 5e-4 - 5e2*(1-si[ind4])^2
+#     si[si>=1] <- 1-.Machine$double.neg.eps
      si <- log( -log(si))
      si[is.na(si)] <- 0
      si[(si == Inf)] <- 0
@@ -222,4 +231,44 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
                 what = what)
             )
 })
+
+design.spheven <- function(order,gradients,lambda){
+#
+#  compute design matrix for Q-ball
+#
+  order <- as.integer(max(0,order))
+  if(order%%2==1){
+    warning("maximum order needs to be even, increase order by one")
+    order <- order+1
+  } 
+
+  # calculate spherical angles theta and phi corresponding to the gradients
+  n <- dim(gradients)[2]
+  theta <- phi <- numeric(n)
+  for( i in 1:n){
+    angles <- sphcoord(gradients[,i])
+    theta[i] <- angles[1]
+    phi[i] <-  angles[2]
+  }
+
+  # values of SH on specified spherical angles
+  sphharmonics <- getsphericalharmonicseven(order,theta,phi)
+  # Laplace-Beltrami-Regularization term
+  lord <- rep(seq(0,order,2),2*seq(0,order,2)+1)
+  L <- lambda*diag(lord^2*(lord+1)^2)
+  # transformation matrix for SH coefficients
+  ttt <- solve(sphharmonics%*%t(sphharmonics)+L)%*%sphharmonics
+  # results
+  list(design = sphharmonics,
+       matrix = ttt,
+       theta = theta,
+       phi = phi)
+}
+
+plzero <- function(order){
+  l <- seq(2,order,2)
+  pl <- l
+  for(i in 1:length(l)) pl[i] <- (-1)^(l[i]/2)*prod(seq(1,(l[i]-1),2))/prod(seq(2,l[i],2))
+  2*pi*diag(rep(c(1,pl),2*seq(0,order,2)+1))
+}
 

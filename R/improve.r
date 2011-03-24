@@ -2,7 +2,7 @@ dwiMtImprove <- function( mtobj,dwiobj, ...) cat("No dwiMixtensor calculation de
 
 setGeneric("dwiMtImprove", function( mtobj,dwiobj, ...) standardGeneric("dwiMtImprove"))
 
-setMethod("dwiMtImprove",c("dwiMixtensor","dtiData"), function(mtobj, dwiobj, maxcomp=3,  p=40, method="mixtensor", reltol=1e-6, maxit=5000,ngc=1000, optmethod="BFGS", nguess=100*maxcomp^2,msc="BIC",pen=1,where=NULL){
+setMethod("dwiMtImprove",c("dwiMixtensor","dtiData"), function(mtobj, dwiobj, maxcomp=3,  p=40, method="mixtensor", reltol=1e-6, maxit=5000,ngc=1000, optmethod="BFGS", nguess=100*maxcomp^2,msc="BIC",pen=NULL,where=NULL){
 #
 #  uses  S(g)/s_0 = w_0 exp(-l_1) +\sum_{i} w_i exp(-l_2-(l_1-l_2)(g^T d_i)^2)
 #
@@ -13,6 +13,7 @@ setMethod("dwiMtImprove",c("dwiMixtensor","dtiData"), function(mtobj, dwiobj, ma
   maxc <- .866
   args <- sys.call(-1)
   args <- c(mtobj@call,args)
+  if(is.null(pen)) pen <- 100
   ngrad <- mtobj@ngrad
   ddim <- mtobj@ddim
   mask <- mtobj@mask
@@ -41,7 +42,7 @@ setMethod("dwiMtImprove",c("dwiMixtensor","dtiData"), function(mtobj, dwiobj, ma
   norder <- order <- z$order
   nandir <- andir <- z$andir
   maxorder <- dim(andir)[2]
-  maxcomp <- min(maxcomp,maxorder) 
+  maxcomp <- max(min(maxcomp,maxorder),max(mtobj@order))
   rm(z)
   gc()
   nsigma2 <- sigma2 <- mtobj@sigma
@@ -72,10 +73,15 @@ setMethod("dwiMtImprove",c("dwiMixtensor","dtiData"), function(mtobj, dwiobj, ma
   rm(z)
   gc()
   gc()
-  npar <- if(method=="mixtensor") 1+3*(0:maxcomp) else c(1,2+3*(1:maxcomp))
+  npar0 <- 1+3*(0:maxcomp)
+  npar <- if(method=="mixtensor") npar0 else c(1,2+3*(1:maxcomp))
 #
 #   compute penalty for model selection, default BIC
 #
+  penIC0 <- switch(msc,"AIC"=2*npar/ngrad0,"BIC"=log(ngrad0)*npar0/ngrad0,
+                  "AICC"=(1+npar0/ngrad0)/(1-(npar+2)/ngrad0),
+                  log(ngrad0)*npar0/ngrad0)
+# used to destinguish between initial estimates with qnd without isotropic part
   penIC <- switch(msc,"AIC"=2*npar/ngrad0,"BIC"=log(ngrad0)*npar/ngrad0,
                   "AICC"=(1+npar/ngrad0)/(1-(npar+2)/ngrad0),
                   log(ngrad0)*npar/ngrad0)
@@ -92,28 +98,30 @@ setMethod("dwiMtImprove",c("dwiMixtensor","dtiData"), function(mtobj, dwiobj, ma
   n3 <- ddim[3]
   igc <- 0
   ingc <- 0
-  ind3 <- -1:1
+  if(method=="mixtensor") where <- where & order<maxcomp
   prt0 <- Sys.time()
 #
 #   loop over voxel in volume
 #  exclude indices at the sides of the cube (just to save index operations,
 #  usually they are outside the mask anyway
 #
-  for(i3 in 2:(n3-1)) for(i2 in 2:(n2-1)) for(i1 in 2:(n1-1)){ # begin loop
+  for(i3 in 1:n3) for(i2 in 1:n2) for(i1 in 1:n1){ # begin loop
      ordi <- order[i1,i2,i3]
-     krit <- log(sigma2[i1,i2,i3])+penIC[ordi+1]
-     if(where[i1,i2,i3]&(ordi<maxcomp)){ # begin mask
+     smix <- sum(mix[,i1,i2,i3])
+# used to destinguish between initial estimates with qnd without isotropic part
+     krit <- log(sigma2[i1,i2,i3])+ if(smix>1-1e-8) penIC0[ordi+1] else penIC[ordi+1]
+     if(where[i1,i2,i3]){ 
 #   only analyze voxel within mask
      mc0 <- maxcomp
      ord <- mc0+1
      z <- .Fortran("imprparb",
                      as.integer(maxcomp),
                      as.integer(maxorder),
-                     as.integer(order[i1+ind3,i2+ind3,i3+ind3]),
-                     as.double(mix[,i1+ind3,i2+ind3,i3+ind3]),
-                     as.double(andir[,,i1+ind3,i2+ind3,i3+ind3]),
-                     as.double(orient[,,i1+ind3,i2+ind3,i3+ind3]),
-                     as.double(lev[,i1+ind3,i2+ind3,i3+ind3]),
+                     as.integer(getcube3(order,i1,i2,i3)),
+                     as.double(getcube3(mix,i1,i2,i3)),
+                     as.double(getcube3(andir,i1,i2,i3)),
+                     as.double(getcube3(orient,i1,i2,i3)),
+                     as.double(getcube3(lev,i1,i2,i3)),
                      as.double(vext),
                      param=numeric(2*maxcomp+1),
                      as.integer(2*maxcomp+1),
@@ -140,22 +148,22 @@ setMethod("dwiMtImprove",c("dwiMixtensor","dtiData"), function(mtobj, dwiobj, ma
 #
 #        cat("par",par[1:(2*k+1)],"pen",pen,"krit",krit,"\n")
            if(optmethod=="BFGS"){
-                 z <- optim(par[1:(2*k+1)],mfunpl0,gmfunpl0,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
+#                 z <- optim(par[1:(2*k+1)],mfunpl0,gmfunpl0,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
+#                         method="BFGS",control=list(maxit=maxit,reltol=reltol))
+                 z <- optim(par[1:lpar],mfunpl0,gmfunpl0,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
                          method="BFGS",control=list(maxit=maxit,reltol=reltol))
            } else {
-              z <- optim(par[1:(2*k+1)],mfunpl0,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
+              z <- optim(par[1:lpar],mfunpl0,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
                          method=optmethod,control=list(maxit=maxit,reltol=reltol))
            }
         } else if(method=="mixtensoriso"){
            lpar <- 2*k+1
 #
            if(optmethod=="BFGS"){
-                 z <- optim(par[1:(2*k+1)],mfunpl0,gmfunpl0,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
-                         method="BFGS",control=list(maxit=maxit,reltol=reltol))
-                 z <- optim(z$par,mfunpl1,gmfunpl1,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
+                 z <- optim(par[1:lpar],mfunpl1,gmfunpl1,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
                          method="BFGS",control=list(maxit=maxit,reltol=reltol))
            } else {
-              z <- optim(par[1:(2*k+1)],mfunpl1,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
+              z <- optim(par[1:lpar],mfunpl1,siq=siq[i1,i2,i3,],grad=grad,pen=pen,
                          method=optmethod,control=list(maxit=maxit,reltol=reltol))
            }
         }         
@@ -165,9 +173,9 @@ setMethod("dwiMtImprove",c("dwiMixtensor","dtiData"), function(mtobj, dwiobj, ma
 #   estimate of sigma from the best fitting model
 #
         if(method=="mixtensor"){
-            zz <- mfunplwghts0(z$par[1:lpar],siq[i1,i2,i3,],grad,pen)
+            zz <- mfunplwghts0(z$par,siq[i1,i2,i3,],grad,pen)
         } else if (method=="mixtensoriso"){
-            zz <- mfunplwghts1(z$par[1:lpar],siq[i1,i2,i3,],grad,pen)
+            zz <- mfunplwghts1(z$par,siq[i1,i2,i3,],grad,pen)
         }
         value <- zz$value 
         ord <- zz$ord
@@ -357,3 +365,16 @@ setMethod("dwiMtCombine",c("dwiMixtensor","dwiMixtensor"), function(mtobj1,mtobj
             )
    }
 )
+getcube3 <- function(aobj,i1,i2,i3){
+ddim <- dim(aobj)
+ndim <- length(ddim)
+subcube <- array(0,c(switch(ndim-2,NULL,ddim[1],ddim[1:2]),3,3,3))
+ind3 <- (-1):1
+indz <- ind3[(i3+ind3 > 0) & (i3+ind3 <= ddim[ndim])]
+indy <- ind3[(i2+ind3 > 0) & (i2+ind3 <= ddim[ndim-1])]
+indx <- ind3[(i1+ind3 > 0) & (i1+ind3 <= ddim[ndim-2])]
+switch(ndim-2, subcube[indx+2,indy+2,indz+2] <- aobj[i1+indx,i2+indy,i3+indz], 
+               subcube[,indx+2,indy+2,indz+2] <- aobj[,i1+indx,i2+indy,i3+indz], 
+               subcube[,,indx+2,indy+2,indz+2] <- aobj[,,i1+indx,i2+indy,i3+indz])
+subcube
+}

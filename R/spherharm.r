@@ -26,7 +26,6 @@ z <- sqrt(2)*z*sin(m*phi)
 values[ind,] <- z
 }
 }
-detach(package:gsl)
 } else {
 warning("gsl package not available \n returning zeros instead of estimates")
 }
@@ -58,7 +57,6 @@ values[l,] <- z
 l <- l+1
 }
 }
-detach(package:gsl)
 } else {
 warning("gsl package not available \n returning zeros instead of estimates")
 }

@@ -111,6 +111,7 @@ createdata.dti(tmpfile1,dtiso,btb,s0,0.5)
 
 
 # create noisy data
+cat("Creating noisy data with standard deviation ",sigma,"\n")
 set.seed(1)
 tmpfile2 <- tempfile("S_noise_all")
 createdata.dti(tmpfile2,dtiso,btb,s0,sigma)

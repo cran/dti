@@ -1,3 +1,8 @@
+2011-03-24 version 0.9-5
+
+  - added model with isotropic compartment for dwiMixtensor
+  - bugfixes for analytical gradients in dwiMixtensor
+
 2011-03-03 version 0.9-4
 
   - dwiQball now also works on Windows

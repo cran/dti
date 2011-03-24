@@ -503,7 +503,7 @@ setMethod("extract","dwiMixtensor",function(x, what="andir", xind=TRUE, yind=TRU
   if(is.numeric(xind)) swap[1] <- xind[1]>xind[length(xind)]
   if(is.numeric(yind)) swap[2] <- yind[1]>yind[length(yind)]
   if(is.numeric(zind)) swap[3] <- zind[1]>zind[length(zind)]
-  if(any(swap)) {
+  if(any(swap)){
      warning("can't reverse order of indices ")
      return(NULL)
   }
@@ -544,6 +544,22 @@ setMethod("extract","dwiMixtensor",function(x, what="andir", xind=TRUE, yind=TRU
      mix <- x@mix
      dim(mix) <- c(maxorder,n1*n2*n3)     
      z$eorder <- array((2*(1:maxorder)-1)%*%mix,x@ddim)
+  }
+  if("bic" %in% what) {
+      ngrad <- x@ngrad      
+      ns0 <- length(x@s0ind)
+      iso <- apply(x@mix,-1,sum)
+      iso <- iso>0&&iso<1e0-1e-8
+      penBIC <- log(ngrad-ns0)/(ngrad-ns0)*(iso+1+2*x@order)
+      z$bic <- array(log(pmax(1e-10,x@sigma))+penBIC,dim(x@sigma))
+  }
+  if("aic" %in% what) {
+      ngrad <- x@ngrad      
+      ns0 <- length(x@s0ind)
+      iso <- apply(x@mix,-1,sum)
+      iso <- iso>0&&iso<1e0-1e-8
+      penAIC <- 2/(ngrad-ns0)*(iso+1+2*x@order)
+      z$aic <- array(log(pmax(1e-10,x@sigma))+penAIC,dim(x@sigma))
   }
   invisible(z)
 })
@@ -631,6 +647,18 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
   if("tensor" %in% what) z$tensor <- array(x@D,c(6,x@ddim))
   if("s0" %in% what) z$s0 <- array(x@th0,x@ddim)
   if("mask" %in% what) z$mask <- x@mask
+  if("bic" %in% what) {
+      ngrad <- x@ngrad      
+      ns0 <- length(x@s0ind)
+      penBIC <- log(ngrad-ns0)/(ngrad-ns0)*6
+      z$bic <- array(log(pmax(1e-10,x@sigma))+penBIC,dim(x@sigma))
+  }
+  if("aic" %in% what) {
+      ngrad <- x@ngrad      
+      ns0 <- length(x@s0ind)
+      penAIC <- 12/(ngrad-ns0)
+      z$aic <- array(log(pmax(1e-10,x@sigma))+penAIC,dim(x@sigma))
+  }
   if("outlier" %in% what) {
     ind <- 1:prod(x@ddim)
     ind <- rep(FALSE,prod(x@ddim))
@@ -689,6 +717,20 @@ setMethod("extract","dwiQball",function(x, what="sphcoef", xind=TRUE, yind=TRUE,
   if("sphcoef" %in% what) z$sphcoef <- x@sphcoef
   if("s0" %in% what) z$s0 <- x@th0
   if("mask" %in% what) z$mask <- x@mask
+  if("bic" %in% what) {
+      ngrad <- x@ngrad      
+      ns0 <- length(x@s0ind)
+      ord <- x@order
+      penBIC <- log(ngrad-ns0)/(ngrad-ns0)*(ord+1)*(ord+2)/2
+      z$bic <- array(log(pmax(1e-10,x@sigma))+penBIC,dim(x@sigma))
+  }
+  if("aic" %in% what) {
+      ngrad <- x@ngrad      
+      ns0 <- length(x@s0ind)
+      ord <- x@order
+      penAIC <- (ord+1)*(ord+2)/(ngrad-ns0)
+      z$aic <- array(log(pmax(1e-10,x@sigma))+penAIC,dim(x@sigma))
+  }
   if("outlier" %in% what) {
     ind <- 1:prod(x@ddim)
     ind <- rep(FALSE,prod(x@ddim))

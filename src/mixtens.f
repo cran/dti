@@ -11,8 +11,8 @@ C
       implicit logical (a-z)
       integer m,lpar,ngrad
       real*8 par(lpar),siq(ngrad),grad(3,ngrad),z(ngrad,m),erg,pen
-      integer i,j,i3,mode,r
-      real*8 th,w(ngrad),sw,sth,z1,p0,p1,d1,d2,d3,work(1000),s(6)
+      integer i,j,i3,mode,jpvt(6),rank
+      real*8 th,w(ngrad),sw,sth,z1,p0,p1,d1,d2,d3,work(25)
       th = par(1)
       th = max(th,-5.d0)
       DO i = 1,m
@@ -27,15 +27,17 @@ C
             z1 = d1*grad(1,j)+d2*grad(2,j)+d3*grad(3,j)
             z(j,i) = exp(-th*z1*z1)
          END DO
+         jpvt(i)=0
       END DO
 C  
 C    siq will be replaced, need to copy it if C-version of optim is used
 C
       call dcopy(ngrad,siq,1,w,1)
-      call dgelss(ngrad,m,1,z,ngrad,w,ngrad,s,-1.d0,r,work,1000,mode)
+      call dgelsy(ngrad,m,1,z,ngrad,w,ngrad,jpvt,1d-6,rank,work,25,
+     1            mode)
+C  1d-6  is a limit for condition number 
       IF(mode.ne.0) THEN
-C         call intpr("mode",4,mode,1)
-         erg = 1d20
+         call intpr("mode",4,mode,1)
       ELSE
          sw=0.d0
 C penalize for extreme th values
@@ -56,7 +58,48 @@ C penalize for negative weights
 C
 C __________________________________________________________________
 C
-      subroutine mfunpl1(par,siq,grad,m,mp1,lpar,ngrad,pen,z,w,erg)
+      subroutine mfunpl0h(par,siq,grad,m,lpar,ngrad,z,w,b,
+     1                    work1,erg)
+C
+C   model without isotropic compartment using Larsson-Hansson code
+C   same as mfunpl but with unconstrained least squares for weights
+C
+C   code is restricted to m<=6
+C
+      implicit logical (a-z)
+      integer m,lpar,ngrad
+      real*8 par(lpar),siq(ngrad),grad(3,ngrad),z(ngrad,m),erg,
+     1       b(ngrad),work1(ngrad)
+      integer i,j,i3,mode,ind(1000)
+      real*8 th,w(ngrad),sth,z1,p0,p1,d1,d2,d3,work2(10)
+      th = par(1)
+      th = max(th,-5.d0)
+      DO i = 1,m
+         i3=2*i
+         p0=par(i3)
+         p1=par(i3+1)
+         sth = sin(p0)
+         d1 = sth*cos(p1)
+         d2 = sth*sin(p1)
+         d3 = cos(p0)
+         DO j = 1,ngrad
+            z1 = d1*grad(1,j)+d2*grad(2,j)+d3*grad(3,j)
+            z(j,i) = exp(-th*z1*z1)
+         END DO
+      END DO
+C  
+C    siq will be replaced, need to copy it if C-version of optim is used
+C
+      call dcopy(ngrad,siq,1,b,1)
+      call nnls(z,ngrad,ngrad,m,b,w,erg,work2,work1,ind,mode)
+      IF(mode.eq.2) erg = 1d10
+      call rchkusr()
+      RETURN
+      END 
+C
+C __________________________________________________________________
+C
+      subroutine mfunpl1(par,siq,grad,mp1,lpar,ngrad,pen,z,w,erg)
 C
 C   model with isotropic compartment 
 C
@@ -65,8 +108,9 @@ C
       implicit logical (a-z)
       integer m,mp1,lpar,ngrad
       real*8 par(lpar),siq(ngrad),grad(3,ngrad),z(ngrad,mp1),erg,pen
-      integer i,j,i3,mode,r
-      real*8 th,w(ngrad),sw,sth,z1,p0,p1,d1,d2,d3,work(1000),s(6),eth
+      integer i,j,i3,mode,jpvt(6),rank
+      real*8 th,w(ngrad),sw,sth,z1,p0,p1,d1,d2,d3,work(36),eth
+      m = mp1-1
       th = par(1)
       th = max(th,-5.d0)
       eth = exp(-th)
@@ -90,12 +134,15 @@ C maximal m-1 components
 C  
 C    siq will be replaced, need to copy it if C-version of optim is used
 C
+      DO i=1,mp1
+         jpvt(i)=0
+      END DO
       call dcopy(ngrad,siq,1,w,1)
-      call dgelss(ngrad,mp1,1,z,ngrad,w,ngrad,s,-1.d0,r,work,
-     1            1000,mode)
+      call dgelsy(ngrad,mp1,1,z,ngrad,w,ngrad,jpvt,1d-6,rank,work,36,
+     1            mode)
+C  1d-6  is a limit for condition number 
       IF(mode.ne.0) THEN
-C         call intpr("mode",4,mode,1)
-         erg = 1d20
+         call intpr("mode",4,mode,1)
       ELSE
          sw=0.d0
 C penalize for extreme th values
@@ -158,7 +205,7 @@ C
 C
 C __________________________________________________________________
 C
-      subroutine mfunpl1w(par,w,siq,grad,m,mp1,lpar,ngrad,z,erg)
+      subroutine mfunpl1w(par,w,siq,grad,mp1,lpar,ngrad,z,erg)
 C
 C   model with isotropic compartment 
 C
@@ -170,6 +217,7 @@ C
      1       erg
       integer i,j,i3
       real*8 th,sth,z1,p0,p1,d1,d2,d3,eth,rss,res
+      m = mp1-1
       th = par(1)
       th = max(th,-5.d0)
       eth = exp(-th)
@@ -205,20 +253,88 @@ C maximal m-1 components
 C
 C __________________________________________________________________
 C
+      subroutine mfpl0gn(par,siq,grad,m,lpar,ngrad,pen,eps,z,w,
+     1                   para,parb,dfdpar)
+C
+C   model without isotropic compartment 
+C   same as mfunpl but with unconstrained least squares for weights
+C
+C   code is restricted to m<=6
+C
+      implicit logical (a-z)
+      integer m,lpar,ngrad
+      real*8 par(lpar),siq(ngrad),grad(3,ngrad),z(ngrad,m),pen,
+     1       dfdpar(lpar),para(lpar),parb(lpar),eps
+      real*8 erga,ergb,deltai
+      integer i
+      deltai=0.5d0/eps
+      DO i=1,lpar
+         call dcopy(lpar,par,1,para,1)
+         call dcopy(lpar,par,1,parb,1)
+         para(i)=para(i)-eps
+         parb(i)=parb(i)+eps
+         call mfunpl0(para,siq,grad,m,lpar,ngrad,pen,z,w,erga)
+         call mfunpl0(parb,siq,grad,m,lpar,ngrad,pen,z,w,ergb)
+         if(max(ergb,erga).lt.1d10) THEN
+            dfdpar(i)=(ergb-erga)*deltai
+         ELSE
+            dfdpar(i)=0.d0
+         ENDIF
+      END DO
+      RETURN
+      END
+C
+C __________________________________________________________________
+C
+      subroutine mfpl0hgn(par,siq,grad,m,lpar,ngrad,eps,z,w,b,
+     1                    work1,para,parb,dfdpar)
+C
+C   model without isotropic compartment 
+C   same as mfunpl but with unconstrained least squares for weights
+C
+C   code is restricted to m<=6
+C
+      implicit logical (a-z)
+      integer m,lpar,ngrad
+      real*8 par(lpar),siq(ngrad),grad(3,ngrad),z(ngrad,m),b(lpar),
+     1       dfdpar(lpar),para(lpar),parb(lpar),eps,work1(ngrad)
+      real*8 erga,ergb,deltai
+      integer i
+      deltai=0.5d0/eps
+      DO i=1,lpar
+         call dcopy(lpar,par,1,para,1)
+         call dcopy(lpar,par,1,parb,1)
+         para(i)=para(i)-eps
+         parb(i)=parb(i)+eps
+         call mfunpl0h(para,siq,grad,m,lpar,ngrad,z,w,b,work1,erga)
+         call mfunpl0h(parb,siq,grad,m,lpar,ngrad,z,w,b,work1,ergb)
+         if(max(ergb,erga).lt.1d10) THEN
+            dfdpar(i)=(ergb-erga)*deltai
+         ELSE
+            dfdpar(i)=0.d0
+         ENDIF
+      END DO
+      RETURN
+      END
+C
+C __________________________________________________________________
+C
       subroutine mfunpl0g(par,s,g,m,lpar,n,d,z,v,w,dkgj,dkgj2,
      1                    ddkdphig,ddkdetag,dddphi,
      2                    dddeta,dvdth,dvdphi,dvdeta,dzdpars,
-     3                    dwdpars,zs,work1,
+     3                    dwdpars,dwdpars2,zs,work1,
      3                    work2,scopy,pen,dfdpar)
       implicit logical (a-z)
       integer m,n,lpar
       real*8 par(lpar),s(n),g(3,n),d(3,m),z(n,m),v(m,m),dkgj(n,m),
-     1       w(m),dkgj2(n,m),ddkdphig(n,m),ddkdetag(n,m),dddphi(3,m),
+     1       w(n),dkgj2(n,m),ddkdphig(n,m),ddkdetag(n,m),dddphi(3,m),
      2       dddeta(3,m),dvdth(m,m),dvdphi(m,m,m),dvdeta(m,m,m),
-     3       dzdpars(n,m,lpar),dwdpars(m,lpar),zs(n,m),dfdpar(lpar),pen
-      integer i,j,k,l,i3,ind(10),mode,r
+     3       dzdpars(n,m,3),dwdpars(m,lpar),dwdpars2(m,lpar),
+     4       zs(n,m),dfdpar(lpar),pen,rcond,ferr(11),berr(11)
+      integer i,j,k,l,i3,ind(5),mode,jpvt(5),rank
       real*8 th,sw,sphi,cphi,seta,ceta,z1,z2,p0,p1,
-     1       work(1000),work1(n,m),work2(n,m),scopy(n),m2th
+     1       work(250),work1(n,m),work2(n,m),scopy(n),m2th,af(25)
+C  length of work needs to be larger or equal max(m*m,ngrad)
       real*8 ddot
       external ddot
       th = par(1)
@@ -256,45 +372,37 @@ C
             ddkdetag(j,i) = ddot(3,dddeta(1,i),1,g(1,j),1)
          END DO
       END DO
+      DO i=1,m
+         jpvt(i)=0
+      END DO
 C  
 C   we now have d, dkgj,dddphi, dddeta, z, ddkdphig, ddkdetag
 C   next w
 C
-      call dcopy(n,s,1,scopy,1)
+      call dcopy(n,s,1,w,1)
       call dcopy(n*m,z,1,work1,1)
-      call dgelss(n,m,1,work1,n,scopy,n,w,-1.d0,r,work,1000,mode)
+      call dgelsy(n,m,1,work1,n,w,n,jpvt,1d-6,rank,work,25,mode)
+C  1d-6  is a limit for condition number 
       IF(mode.gt.1) THEN
          call intpr("mode",4,mode,1)
       END IF
-C      IF(r.lt.m) THEN
-C         call intpr("rank",4,r,1)
-C      END IF
-      call dcopy(m,scopy,1,w,1)
 C
 C   thats weights in w now V, dVdth, dVdphi, dVdeta, dzdpars
 C
 C   use work1, work2 and scopy for intermediate results
-      DO k=1,m
-         DO j=1,n
-            work1(j,k) = dkgj(j,k)*ddkdphig(j,k)
-            work2(j,k) = dkgj(j,k)*ddkdetag(j,k)
-         END DO
-      END DO
+C   componentwise products
+      call dcprod0(dkgj,ddkdphig,n*m,work1)
+      call dcprod0(dkgj,ddkdetag,n*m,work2)
 C initialize unneeded elements
-      DO k=1,m
-         DO l=1,lpar
-            DO j=1,n
-               dzdpars(j,k,l)=0.d0
-            END DO
-         END DO
-      END DO
-      DO k=1,m
-         DO j=1,n
-            dzdpars(j,k,1)=-dkgj2(j,k)*z(j,k)
-            dzdpars(j,k,1+k)=m2th*work1(j,k)*z(j,k)
-            dzdpars(j,k,1+m+k)=m2th*work2(j,k)*z(j,k)
-         END DO
-      END DO
+      call zerofill(dzdpars,m*3*n)
+C compute componentswise -dkgj2*z
+      call dcprod(dkgj2,z,-1.d0,n*m,dzdpars(1,1,1))
+C compute componentswise m2th*work1*z
+      call dcprod(work1,z,m2th,n*m,dzdpars(1,1,2))
+C compute componentswise m2th*work2*z
+      call dcprod(work2,z,m2th,n*m,dzdpars(1,1,3))
+      call zerofill(dVdphi,m*m*m)
+      call zerofill(dVdeta,m*m*m)
       DO k=1,m
          v(k,k)=ddot(n,z(1,k),1,z(1,k),1)
          z1 = ddot(n,dzdpars(1,k,1),1,z(1,k),1)
@@ -309,20 +417,12 @@ C initialize unneeded elements
             dVdth(l,k) = z2
          END DO
          DO i=1,m
-            DO l=1,m
-               dVdphi(i,l,k) = 0.d0
-               dVdeta(i,l,k) = 0.d0
-            END DO
-         END DO
-         DO i=1,m
-            dVdphi(i,k,k) = dVdphi(i,k,k)+
-     1                      ddot(n,dzdpars(1,k,1+k),1,z(1,i),1)
-            dVdphi(k,i,k) = dVdphi(i,k,k)+
-     1                      ddot(n,dzdpars(1,k,1+k),1,z(1,i),1)
-            dVdeta(i,k,k) = dVdeta(i,k,k)+
-     1                      ddot(n,dzdpars(1,k,1+m+k),1,z(1,i),1)
-            dVdeta(k,i,k) = dVdeta(i,k,k)+
-     1                      ddot(n,dzdpars(1,k,1+m+k),1,z(1,i),1)
+            z2 = ddot(n,dzdpars(1,k,2),1,z(1,i),1)
+            dVdphi(i,k,k) = dVdphi(i,k,k) + z2
+            dVdphi(k,i,k) = dVdphi(k,i,k) + z2
+            z2 = ddot(n,dzdpars(1,k,3),1,z(1,i),1)
+            dVdeta(i,k,k) = dVdeta(i,k,k) + z2
+            dVdeta(k,i,k) = dVdeta(k,i,k) + z2
          END DO
       END DO
 C
@@ -332,43 +432,42 @@ C
          dwdpars(k,1) = ddot(n,dzdpars(1,k,1),1,s,1) -
      1                         ddot(m,dVdth(1,k),1,w,1)
          DO l=1,m
-            dwdpars(k,1+l) = ddot(n,dzdpars(1,k,1+l),1,s,1)  - 
-     1                              ddot(m,dVdphi(1,k,l),1,w,1)
-            dwdpars(k,1+m+l) = ddot(n,dzdpars(1,k,1+m+l),1,s,1)  -
-     1                              ddot(m,dVdeta(1,k,l),1,w,1)
+            dwdpars(k,1+l) = -ddot(m,dVdphi(1,k,l),1,w,1)    
+            dwdpars(k,1+m+l) = -ddot(m,dVdeta(1,k,l),1,w,1)    
          END DO
+         dwdpars(k,1+k) = dwdpars(k,1+k) + 
+     1                    ddot(n,dzdpars(1,k,2),1,s,1)
+         dwdpars(k,1+m+k) = dwdpars(k,1+m+k) + 
+     1                    ddot(n,dzdpars(1,k,3),1,s,1)
       END DO
 C
 C   thats  dzdpars  now compute  dw/dpar in dwdpars
 C
-C     add pen/2 to diagonal element of V id weights are negative
-      DO k=1,m
-         if(w(k).lt.0) v(k,k)=v(k,k)-pen/2
-      END DO
-      call dsysv("U",m,lpar,v,m,ind,dwdpars,m,work,1000,mode)
-C      IF(mode.ne.0) THEN
-C         call intpr("mode2",5,mode,1)
-C      END IF
+      call dcopy(m*lpar,dwdpars,1,dwdpars2,1)
+      call dsysvx("N","U",m,lpar,v,m,af,m,ind,dwdpars2,m,dwdpars,
+     1            m,rcond,ferr,berr,work,25,jpvt,mode)
+      IF(mode.ne.0.or.rcond.lt.1d-8) THEN
+C   solving the linear system fails due to renk deficiency of v
+C compute numerical gradients instead
+        call mfpl0gn(par,s,g,m,lpar,n,pen,1d-6,z,w,work1,work2,dfdpar)
+         RETURN
+      END IF
 C
 C   now we have dw/dpar in dzdpars next residuals in scopy
 C
       DO j=1,n
          z1 = s(j)
+         z2 = 0.d0
          DO k=1,m
             z1 = z1 - w(k)*z(j,k)
+            z2=z2+w(k)*dzdpars(j,k,1)+dwdpars(k,1)*z(j,k)
          END DO
          scopy(j) = z1
+         work(j)=z2
       END DO
 C
 C   now we have residuals in scopy compute gradient of f
 C   use work for intermediate results
-      DO j = 1,n
-         z1 = 0.d0
-         DO k=1,m
-            z1=z1+w(k)*dzdpars(j,k,1)+dwdpars(k,1)*z(j,k)
-         END DO
-         work(j)=z1
-      END DO
       dfdpar(1)=-2.d0*ddot(n,work,1,scopy,1)
       if(th.gt.1.d1) dfdpar(1)=dfdpar(1)+1.d0
       if(th.lt.1d-2) dfdpar(1)=dfdpar(1)-1.d2
@@ -381,7 +480,7 @@ C    dzdpars contains dw/dpars
 C
       DO i = 1,m
          DO j = 1,n
-            z1=w(i)*dzdpars(j,i,1+i)
+            z1=w(i)*dzdpars(j,i,2)
             DO k=1,m
                z1=z1+dwdpars(k,1+i)*z(j,k)
             END DO
@@ -394,7 +493,7 @@ C
          END DO
 C    thats derivative with respect to phi
          DO j = 1,n
-            z1=w(i)*dzdpars(j,i,1+m+i)
+            z1=w(i)*dzdpars(j,i,3)
             DO k=1,m
                z1=z1+dwdpars(k,1+m+i)*z(j,k)
             END DO
@@ -415,20 +514,54 @@ C
 C
 C __________________________________________________________________
 C
+      subroutine mfpl1gn(par,siq,grad,m,lpar,ngrad,pen,eps,z,w,
+     1                   para,parb,dfdpar)
+C
+C   model with isotropic compartment ( m = #comp +1 )
+C   same as mfunpl but with unconstrained least squares for weights
+C
+C   code is restricted to m<=6
+C
+      implicit logical (a-z)
+      integer m,lpar,ngrad
+      real*8 par(lpar),siq(ngrad),grad(3,ngrad),z(ngrad,m),pen,
+     1       dfdpar(lpar),para(lpar),parb(lpar),eps
+      real*8 erga,ergb,deltai
+      integer i
+      deltai=0.5d0/eps
+      DO i=1,lpar
+         call dcopy(lpar,par,1,para,1)
+         call dcopy(lpar,par,1,parb,1)
+         para(i)=para(i)-eps
+         parb(i)=parb(i)+eps
+         call mfunpl1(para,siq,grad,m,lpar,ngrad,pen,z,w,erga)
+         call mfunpl1(parb,siq,grad,m,lpar,ngrad,pen,z,w,ergb)
+         if(max(ergb,erga).lt.1d10) THEN
+            dfdpar(i)=(ergb-erga)*deltai
+         ELSE
+            dfdpar(i)=0.d0
+         ENDIF
+      END DO
+      RETURN
+      END
+C
+C __________________________________________________________________
+C
       subroutine mfunpl1g(par,s,g,m,mp1,lpar,n,d,z,v,w,dkgj,dkgj2,
      1                    ddkdphig,ddkdetag,dddphi,dddeta,dvdth,
-     2                    dvdphi,dvdeta,dzdpars,dwdpars,zs,work1,
-     3                    work2,scopy,pen,dfdpar)
+     2                    dvdphi,dvdeta,dzdpars,dwdpars,dwdpars2,
+     3                    zs,work1,work2,scopy,pen,dfdpar)
       implicit logical (a-z)
       integer m,mp1,n,lpar
       real*8 par(lpar),s(n),g(3,n),d(3,m),z(n,mp1),v(mp1,mp1),
-     1       dkgj(n,m),w(mp1),dkgj2(n,m),ddkdphig(n,m),ddkdetag(n,m),
+     1       dkgj(n,m),w(n),dkgj2(n,m),ddkdphig(n,m),ddkdetag(n,m),
      2       dddphi(3,m),dddeta(3,m),dvdth(mp1,mp1),dvdphi(mp1,mp1,m),
-     3       dvdeta(mp1,mp1,m),dzdpars(n,mp1,lpar),dwdpars(mp1,lpar),
-     4       zs(n,mp1),dfdpar(lpar),pen
-      integer i,j,k,l,i3,ind(10),mode,ip1,kp1,lp1,r
-      real*8 th,sw,sphi,cphi,seta,ceta,z1,z2,p0,p1,work(1000),
-     1       work1(n,mp1),work2(n,mp1),scopy(n),zji,m2th,eth
+     3       dvdeta(mp1,mp1,m),dzdpars(n,mp1,3),dwdpars(mp1,lpar),
+     4       dwdpars2(mp1,lpar),zs(n,mp1),dfdpar(lpar),pen
+      integer i,j,k,l,i3,ind(6),mode,ip1,kp1,lp1,jpvt(6),rank
+      real*8 th,sw,sphi,cphi,seta,ceta,z1,z2,p0,p1,work(250),rcond,
+     1       work1(n,mp1),work2(n,mp1),scopy(n),zji,m2th,eth,af(36),
+     2       ferr(12),berr(12)
       real*8 ddot
       external ddot
       th = par(1)
@@ -478,46 +611,39 @@ C
 C   we now have d, dkgj,dddphi, dddeta, z, ddkdphig, ddkdetag
 C   next w
 C
-      call dcopy(n,s,1,scopy,1)
+      call dcopy(n,s,1,w,1)
       call dcopy(n*mp1,z,1,work1,1)
-      call dgelss(n,mp1,1,work1,n,scopy,n,w,-1.d0,r,work,1000,mode)
-C      IF(r.lt.mp1) THEN
-C         call intpr("rank",4,r,1)
-C      END IF
-C      IF(mode.gt.1) THEN
-C         call intpr("mode",4,mode,1)
-C      END IF
-      call dcopy(mp1,scopy,1,w,1)
+      call dgelsy(n,mp1,1,work1,n,w,n,jpvt,1d-6,rank,work,36,mode)
+      IF(mode.gt.1) THEN
+         call intpr("mode",4,mode,1)
+      END IF
 C
 C   thats weights in w now V, dVdth, dVdphi, dVdeta, dzdpars
 C
 C   use work1, work2 and scopy for intermediate results
-      DO k=1,m
-         DO j=1,n
-            work1(j,k) = dkgj(j,k)*ddkdphig(j,k)
-            work2(j,k) = dkgj(j,k)*ddkdetag(j,k)
-         END DO
-      END DO
+C   componentwise products
+      call dcprod0(dkgj,ddkdphig,n*m,work1)
+      call dcprod0(dkgj,ddkdetag,n*m,work2)
 C initialize unneeded elements
-      DO k=1,mp1
-         DO l=1,lpar
-            DO j=1,n
-               dzdpars(j,k,l)=0.d0
-            END DO
-         END DO
-      END DO
+      call zerofill(dzdpars,mp1*3*n)
 C  derivatives of z(,1) are zero (isotrop part) dzdpars(.,1,.)=0
       DO j=1,n
          dzdpars(j,1,1)=-eth
       END DO
-      DO k=1,m
-         kp1=k+1
-         DO j=1,n
-            dzdpars(j,kp1,1)=-dkgj2(j,k)*z(j,kp1)
-            dzdpars(j,kp1,kp1)=m2th*work1(j,k)*z(j,kp1)
-            dzdpars(j,kp1,m+kp1)=m2th*work2(j,k)*z(j,kp1)
-         END DO
-      END DO
+C compute componentswise -dkgj2*z(,+1)
+      call dcprod(dkgj2,z(1,2),-1.d0,n*m,dzdpars(1,2,1))
+C compute componentswise m2th*work1*z(,+1)
+      call dcprod(work1,z(1,2),m2th,n*m,dzdpars(1,2,2))
+C compute componentswise m2th*work2*z(,+1)
+      call dcprod(work2,z(1,2),m2th,n*m,dzdpars(1,2,3))
+C      DO k=1,m
+C         kp1=k+1
+C         DO j=1,n
+C            dzdpars(j,kp1,1)=-dkgj2(j,k)*z(j,kp1)
+C            dzdpars(j,kp1,kp1)=m2th*work1(j,k)*z(j,kp1)
+C            dzdpars(j,kp1,m+kp1)=m2th*work2(j,k)*z(j,kp1)
+C         END DO
+C      END DO
 C  derivatives of v with respect to theta
       DO k=1,mp1
          v(k,k)=ddot(n,z(1,k),1,z(1,k),1)
@@ -534,25 +660,18 @@ C  derivatives of v with respect to theta
          END DO
       END DO
 C  derivatives of v with respect to theta 
+      call zerofill(dVdphi,m*mp1*mp1)
+      call zerofill(dVdeta,m*mp1*mp1)
       DO k=1,m
          kp1=k+1
-         DO i=1,mp1
-            DO l=1,mp1
-               dVdphi(i,l,k) = 0.d0
-               dVdeta(i,l,k) = 0.d0
-            END DO
-         END DO
-C    dVdxxx(1,l,k) = 0.d0  dVdxxx(i,1,k) = 0.d0  -> dVdphi(1,.,.)=dVdphi(.,1,.)=0
          DO i=1,m
             ip1=i+1
-            dVdphi(ip1,kp1,k) = dVdphi(ip1,kp1,k)+
-     1                      ddot(n,dzdpars(1,kp1,kp1),1,z(1,ip1),1)
-            dVdphi(kp1,ip1,k) = dVdphi(ip1,kp1,k)+
-     1                      ddot(n,dzdpars(1,kp1,kp1),1,z(1,ip1),1)
-            dVdeta(ip1,kp1,k) = dVdeta(ip1,kp1,k)+
-     1                      ddot(n,dzdpars(1,kp1,m+kp1),1,z(1,ip1),1)
-            dVdeta(kp1,ip1,k) = dVdeta(ip1,kp1,k)+
-     1                      ddot(n,dzdpars(1,kp1,m+kp1),1,z(1,ip1),1)
+            z2 = ddot(n,dzdpars(1,kp1,2),1,z(1,ip1),1)
+            dVdphi(ip1,kp1,k) = dVdphi(ip1,kp1,k)+ z2
+            dVdphi(kp1,ip1,k) = dVdphi(kp1,ip1,k)+ z2
+            z2 = ddot(n,dzdpars(1,kp1,3),1,z(1,ip1),1)
+            dVdeta(ip1,kp1,k) = dVdeta(ip1,kp1,k)+ z2
+            dVdeta(kp1,ip1,k) = dVdeta(kp1,ip1,k)+ z2
          END DO
       END DO
 C
@@ -561,47 +680,48 @@ C
       DO k=1,mp1
          dwdpars(k,1) = ddot(n,dzdpars(1,k,1),1,s,1) -
      1                         ddot(mp1,dVdth(1,k),1,w,1)
+         kp1=k+1
          DO l=1,m
             lp1=l+1
-            dwdpars(k,lp1) = ddot(n,dzdpars(1,k,lp1),1,s,1)  - 
-     1                              ddot(mp1,dVdphi(1,k,l),1,w,1)
-            dwdpars(k,m+lp1) = ddot(n,dzdpars(1,k,m+lp1),1,s,1)  -
-     1                              ddot(mp1,dVdeta(1,k,l),1,w,1)
+            dwdpars(k,lp1) = - ddot(mp1,dVdphi(1,k,l),1,w,1)
+            dwdpars(k,m+lp1) = - ddot(mp1,dVdeta(1,k,l),1,w,1)
          END DO
+         IF(k.ne.1) THEN
+         dwdpars(k,k) = dwdpars(k,k) +
+     1                    ddot(n,dzdpars(1,k,2),1,s,1)
+         dwdpars(k,m+k) = dwdpars(k,m+k) +
+     1                    ddot(n,dzdpars(1,k,3),1,s,1)
+         END IF
       END DO
 C
 C   thats  dzdpars  now compute  dw/dpar in dwdpars
 C
-C     add pen/2 to diagonal element of V id weights are negative
-      DO k=1,mp1
-         if(w(k).lt.0) v(k,k)=v(k,k)-pen/2
-      END DO
-C      call dblepr("V",1,v,mp1*mp1)
-      call dsysv("U",mp1,lpar,v,mp1,ind,dwdpars,mp1,work,1000,mode)
-C      IF(mode.ne.0) THEN
-C         call intpr("mode2",5,mode,1)
-C      END IF
+      call dcopy(mp1*lpar,dwdpars,1,dwdpars2,1)
+      call dsysvx("N","U",mp1,lpar,v,mp1,af,mp1,ind,dwdpars2,mp1,
+     1            dwdpars,mp1,rcond,ferr,berr,work,36,jpvt,mode)
+      IF(mode.ne.0.or.rcond.lt.1d-8) THEN
+C   solving the linear system fails due to renk deficiency of v
+C compute numerical gradients instead
+      call mfpl1gn(par,s,g,mp1,lpar,n,pen,1d-6,z,w,work1,work2,dfdpar)
+         RETURN
+      END IF
 C
 C   now we have dw/dpar in dzdpars next residuals in scopy
 C
       DO j=1,n
          z1 = s(j)
+         z2=0.d0
          DO k=1,mp1
             z1 = z1 - w(k)*z(j,k)
+            z2=z2+w(k)*dzdpars(j,k,1)+dwdpars(k,1)*z(j,k)
          END DO
          scopy(j) = z1
+         work(j)=z2
       END DO
 C
 C   now we have residuals in scopy compute gradient of f
 C   use work for intermediate results
 C   z(j,1)=0 und dzdpars(j,1,1) = 0
-      DO j = 1,n
-         z1=0.d0
-         DO k=1,mp1
-            z1=z1+w(k)*dzdpars(j,k,1)+dwdpars(k,1)*z(j,k)
-         END DO
-         work(j)=z1
-      END DO
       dfdpar(1)=-2.d0*ddot(n,work,1,scopy,1)
       if(th.gt.1.d1) dfdpar(1)=dfdpar(1)+1.d0
       if(th.lt.1d-2) dfdpar(1)=dfdpar(1)-1.d2
@@ -615,7 +735,7 @@ C
       DO i = 1,m
          ip1=i+1
          DO j = 1,n
-            z1=w(ip1)*dzdpars(j,ip1,ip1)
+            z1=w(ip1)*dzdpars(j,ip1,2)
             DO k=1,mp1
                z1=z1+dwdpars(k,ip1)*z(j,k)
             END DO
@@ -628,7 +748,7 @@ C
          END DO
 C    thats derivative with respect to phi
          DO j = 1,n
-            z1=w(ip1)*dzdpars(j,ip1,m+ip1)
+            z1=w(ip1)*dzdpars(j,ip1,3)
             DO k=1,mp1
                z1=z1+dwdpars(k,m+ip1)*z(j,k)
             END DO
@@ -643,122 +763,13 @@ C    thats derivative with respect to phi
 C
 C   thats derivative with respect to eta
 C
+      z1=w(1)
+      DO i=2,mp1
+         z1=min(z1,w(i))
+      END DO
       call rchkusr()
       RETURN
       END 
-C
-C __________________________________________________________________
-C
-      subroutine getsiin2(si,vsi,ngrad,nvox,m,dgrad,nv,th,nth,
-     1                    egrad,isample,ntry,sms,z,siind,mval,ns,mask)
-C
-C  compute diagnostics for initial estimates in siind
-C  siind(1,i1,i2,i3) will contain the model order 
-C  
-C  si     - array of si-values
-C  m      - model order
-C  maxc   - maximum of cos(angle between directions)
-C  th     - theta1
-C  egrad - exp(-theta1*dgrad^2) 
-C  isample - guesses for gradient directions
-C  ntry   - number of guesses
-C  sms    - copies of si
-C  z      - array for design matrix corresponding to guesses
-C  siind  - array of indices (output)
-C  ns     - m+1
-C  mask   - mask
-C  mval   - aktual best risk
-C
-C  restricted to ngrad<=1000 and m <=10
-C
-      implicit logical (a-z)
-      integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
-     1        isample(m,ntry,nth)
-      real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),th(nth),
-     1       egrad(ngrad,nv),z(ngrad,ns),mval(nvox),vsi(nvox)
-      logical mask(nvox)
-      integer i,k,ibest,mode,ind(10),l,j,ii,icount,iw,wind(5),
-     1        nwi(5)
-      real*8 w(1000),krit,work1(1000),work2(10),erg,thj,msi,m2si,
-     1       z1,dng
-      dng=ngrad
-      iw=m
-      DO i=1,nvox
-         msi=0.d0
-         m2si=0.d0
-         z1=vsi(i)
-         mval(i)=sqrt(dng*z1)
-         if(.not.mask(i)) THEN
-            siind(1,i)=-1
-            mval(i)=0
-         END IF
-      END DO
-      call rchkusr()
-      DO j=1,nth
-         thj=th(j)
-         call dblepr("Try theta=",10,thj,1)
-         icount=0
-         DO k=1,ngrad
-            DO l=1,nv
-               egrad(k,l)=dexp(-thj*dgrad(k,l)*dgrad(k,l))
-            END DO
-         END DO
-         DO i=1,nvox
-            if(mask(i)) THEN
-C  now search for minima of sms (or weighted sms
-               ibest=0
-               krit=mval(i)
-               DO k=1,ntry
-                  call dcopy(ngrad,si(1,i),1,sms,1)
-                  DO l=1,m
-                 call dcopy(ngrad,egrad(1,isample(l,k,j)),1,z(1,l),1)
-                  END DO
-        call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
-                  IF(mode.gt.1) THEN
-                     call intpr("mode",4,mode,1)
-                     call intpr("isample",7,isample(1,k,j),m)
-                  ELSE 
-                     IF(erg.lt.krit) THEN
-                        krit=erg
-                        ibest=k
-                        iw=0
-                        DO ii=1,m
-                           if(w(ii).gt.1.d-12) THEN
-                              iw=iw+1
-                              wind(iw)=ii
-                           ELSE
-                              nwi(ii-iw)=ii
-C   nonactive directions
-                           END IF 
-                        END DO
-                     END IF  
-                  END IF
-               END DO
-               if(ibest.gt.0) THEN
-                  siind(1,i)=iw
-                  siind(2,i)=j
-                  icount=icount+1
-                  IF (iw.gt.1) THEN
-                     DO l=1,iw
-                        siind(l+2,i)=isample(wind(l),ibest,j)
-                     END DO
-                  END IF
-                  IF (iw.lt.m) THEN
-                     DO l=1,m-iw
-                        siind(m-l+3,i)=isample(nwi(l),ibest,j)
-                     END DO
-                  END IF
-                  mval(i)=krit
-               END IF
-            END IF
-            call rchkusr()
-         END DO
-C         call dblepr("mval",4,mval,216)
-         call intpr("improved:",9,icount,1)
-         call rchkusr()
-      END DO
-      RETURN
-      END
 C
 C __________________________________________________________________
 C
@@ -796,6 +807,11 @@ C
      1       z1,dng
       dng=ngrad
       iw=m
+      DO i=1,m
+         wind(i)=i
+         nwi(i)=i
+      END DO
+      ibest=1
       DO i=1,nvox
          msi=0.d0
          m2si=0.d0
@@ -811,7 +827,8 @@ C
          thj=th(j)
          DO k=1,ngrad
             DO l=1,nv
-               egrad(k,l)=dexp(-thj*dgrad(k,l)*dgrad(k,l))
+               z1 = dgrad(k,l)
+               egrad(k,l)=dexp(-thj*z1*z1)
             END DO
          END DO
          DO i=1,nvox
@@ -901,14 +918,19 @@ C
      2       vsi(nvox),dgradv(nv,nv),maxc
       logical mask(nvox),skip
       integer i,k,mode,ind(10),l,j,ii,iw,wind(5),nwi(5),mis,
-     1        is(5),isbest(5),ntry0
+     1        is(5),isbest(5),ntry0,iii
       real*8 w(1000),krit,work1(1000),work2(10),erg,thj,msi,m2si,
      1       z1,dng
       dng=ngrad
       mis=m-1
       ntry0=ntry
+      if(m.eq.1) ntry0=1
       iw=m
-      if(m.eq.1) ntry0=1 
+      DO i=1,m
+         wind(i)=i
+         nwi(i)=i
+         isbest(i)=i
+      END DO
       DO i=1,nvox
          msi=0.d0
          m2si=0.d0
@@ -924,7 +946,8 @@ C
          thj=th(j)
          DO k=1,ngrad
             DO l=1,nv
-               egrad(k,l)=dexp(-thj*dgrad(k,l)*dgrad(k,l))
+               z1 = dgrad(k,l)
+               egrad(k,l)=dexp(-thj*z1*z1)
             END DO
          END DO
          DO i=1,nvox
@@ -936,6 +959,7 @@ C  now search for minima of sms (or weighted sms)
                   IF(m.gt.1) THEN
                      skip=.FALSE.
                      DO l=1,m-1
+                        iii=mis*(k-1)+l
                    if(dgradv(isample(mis*(k-1)+l),iandir(i)).gt.maxc)
      1                    skip=.TRUE.
                      END DO
@@ -993,7 +1017,126 @@ C   nonactive directions
 C
 C __________________________________________________________________
 C
-      subroutine getsii32(si,vsi,ngrad,nvox,m,dgrad,nv,iandir,th,
+      subroutine getsi30i(si,vsi,ngrad,nvox,m,dgrad,nv,th,
+     1     nth,indth,egrad,isample,ntry,sms,z,siind,mval,ns,mask)
+C
+C  compute diagnostics for initial estimates in siind
+C  siind(1,i1,i2,i3) will contain the model order 
+C  
+C  si     - array of si-values
+C  m      - model order
+C  maxc   - maximum of cos(angle between directions)
+C  th     - theta1
+C  egrad - exp(-theta1*dgrad^2) 
+C  isample - guesses for gradient directions
+C  ntry   - number of guesses
+C  sms    - copies of si
+C  z      - array for design matrix corresponding to guesses
+C  siind  - array of indices (output)
+C  ns     - m+1
+C  mask   - mask
+C  mval   - aktual best risk
+C
+C  restricted to ngrad<=1000 and m <=10
+C
+      implicit logical (a-z)
+      integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
+     1       isample(m,ntry),indth(nvox)
+      real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
+     1       th(nvox),egrad(ngrad,nv),z(ngrad,1),mval(nvox),
+     2       vsi(nvox)
+      logical mask(nvox)
+      integer i,k,ibest,mode,ind(12),l,j,ii,iw,wind(5),nwi(5),mp1
+      real*8 w(1000),krit,work1(1000),work2(10),erg,thj,msi,m2si,
+     1       z1,dng,ethj
+      dng=ngrad
+      iw=m
+      mp1=m+1
+      DO i=1,m
+         wind(i)=i
+         nwi(i)=i
+      END DO
+      ibest=1
+      DO i=1,nvox
+         msi=0.d0
+         m2si=0.d0
+         z1=vsi(i)
+         mval(i)=sqrt(dng*z1)
+         if(.not.mask(i)) THEN
+            siind(1,i)=-1
+            mval(i)=0
+         END IF
+      END DO
+      call rchkusr()
+      DO j=1,nth
+         thj=th(j)
+         ethj=dexp(-thj)
+         DO k=1,ngrad
+            DO l=1,nv
+               z1 = dgrad(k,l)
+               egrad(k,l)=dexp(-thj*z1*z1)
+            END DO
+         END DO
+         DO i=1,nvox
+            if(mask(i)) THEN
+               IF(j.ne.indth(i)) CYCLE
+C  now search for minima of sms (or weighted sms
+               ibest=0
+               krit=mval(i)
+               DO k=1,ntry
+                  DO l=1,ngrad
+                     z(l,1)=ethj
+                  END DO
+                  call dcopy(ngrad,si(1,i),1,sms,1)
+                  DO l=1,m
+                  call dcopy(ngrad,egrad(1,isample(l,k)),1,z(1,l+1),1)
+                  END DO
+           call nnls(z,ngrad,ngrad,mp1,sms,w,erg,work2,work1,ind,mode)
+                  IF(mode.gt.1) THEN
+                     call intpr("mode",4,mode,1)
+                     call intpr("isample",7,isample(1,k),m)
+                  ELSE 
+                     IF(erg.lt.krit) THEN
+                        krit=erg
+                        ibest=k
+                        iw=0
+                        DO ii=1,m
+                           if(w(ii).gt.1.d-12) THEN
+                              iw=iw+1
+                              wind(iw)=ii
+                           ELSE
+                              nwi(ii-iw)=ii
+C   nonactive directions
+                           END IF 
+                        END DO
+                     END IF  
+                  END IF
+               END DO
+               if(ibest.gt.0) THEN
+                  siind(1,i)=iw
+                  siind(2,i)=j
+                  IF (iw.gt.1) THEN
+                     DO l=1,iw
+                        siind(l+2,i)=isample(wind(l),ibest)
+                     END DO
+                  END IF
+                  IF (iw.lt.m) THEN
+                     DO l=1,m-iw
+                        siind(m-l+3,i)=isample(nwi(l),ibest)
+                     END DO
+                  END IF
+                  mval(i)=krit
+               END IF
+            END IF
+            call rchkusr()
+         END DO
+      END DO
+      RETURN
+      END
+C
+C __________________________________________________________________
+C
+      subroutine getsi31i(si,vsi,ngrad,nvox,m,dgrad,nv,iandir,th,
      1     nth,indth,egrad,isample,ntry,sms,z,siind,mval,ns,mask,
      2     dgradv,maxc)
 C
@@ -1018,20 +1161,26 @@ C  restricted to ngrad<=1000 and m <=10
 C
       implicit logical (a-z)
       integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
-     1       isample(1),indth(nvox),iandir(2,nvox)
+     1       isample(1),indth(nvox),iandir(nvox)
       real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
-     1       th(nvox),egrad(ngrad,nv),z(ngrad,ns),mval(nvox),
+     1       th(nvox),egrad(ngrad,nv),z(ngrad,1),mval(nvox),
      2       vsi(nvox),dgradv(nv,nv),maxc
       logical mask(nvox),skip
-      integer i,k,mode,ind(10),l,j,ii,iw,wind(5),nwi(5),mis,
-     1        is(5),isbest(5),ntry0
+      integer i,k,mode,ind(12),l,j,ii,iw,wind(5),nwi(5),mis,
+     1        is(5),isbest(5),ntry0,iii,mp1
       real*8 w(1000),krit,work1(1000),work2(10),erg,thj,msi,m2si,
-     1       z1,dng
+     1       z1,dng,ethj
       dng=ngrad
-      mis=m-2
+      mis=m-1
       ntry0=ntry
+      if(m.eq.1) ntry0=1
       iw=m
-      if(mis.eq.0) ntry0=1
+      mp1=m+1
+      DO i=1,m
+         wind(i)=i
+         nwi(i)=i
+         isbest(i)=i
+      END DO
       DO i=1,nvox
          msi=0.d0
          m2si=0.d0
@@ -1045,38 +1194,40 @@ C
       call rchkusr()
       DO j=1,nth
          thj=th(j)
+         ethj=dexp(-thj)
          DO k=1,ngrad
             DO l=1,nv
-               egrad(k,l)=dexp(-thj*dgrad(k,l)*dgrad(k,l))
+               z1 = dgrad(k,l)
+               egrad(k,l)=dexp(-thj*z1*z1)
             END DO
          END DO
          DO i=1,nvox
             if(mask(i)) THEN
                IF(j.ne.indth(i)) CYCLE
-C  now search for minima of sms (or weighted sms
+C  now search for minima of sms (or weighted sms)
                krit=mval(i)
                DO k=1,ntry0
-                  if(mis.gt.0) THEN
+                  IF(m.gt.1) THEN
                      skip=.FALSE.
-                     DO l=1,m-2
-             if(dgradv(isample(mis*(k-1)+l),iandir(1,i)).gt.maxc)
-     1                    skip=.TRUE.
-             if(dgradv(isample(mis*(k-1)+l),iandir(2,i)).gt.maxc)
+                     DO l=1,m-1
+                        iii=mis*(k-1)+l
+                   if(dgradv(isample(mis*(k-1)+l),iandir(i)).gt.maxc)
      1                    skip=.TRUE.
                      END DO
                      IF(skip) CYCLE
                   END IF
                   call dcopy(ngrad,si(1,i),1,sms,1)
-                  if(mis.gt.0) THEN
-                     DO l=1,m-2
+                  DO l=1,ngrad
+                     z(l,1)=ethj
+                  END DO
+                  IF(m.gt.1) THEN
+                     DO l=1,m-1
                         is(l)=isample(mis*(k-1)+l)
-                        call dcopy(ngrad,egrad(1,is(l)),1,z(1,l),1)
+                        call dcopy(ngrad,egrad(1,is(l)),1,z(1,l+1),1)
                      END DO
                   END IF
-                  is(m-1)=iandir(1,i)
-                  call dcopy(ngrad,egrad(1,is(m-1)),1,z(1,m-1),1)
-                  is(m)=iandir(2,i)
-                  call dcopy(ngrad,egrad(1,is(m)),1,z(1,m),1)
+                  is(m)=iandir(i)
+                  call dcopy(ngrad,egrad(1,is(m)),1,z(1,mp1),1)
         call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
                   IF(mode.gt.1) THEN
                      call intpr("mode",4,mode,1)
@@ -1177,90 +1328,6 @@ C
 C
 C __________________________________________________________________
 C
-      subroutine getsiind(si,ngrad,n1,n2,n3,m,maxc,dgrad,
-     1                    sms,siind,ns,mask)
-C
-C  compute diagnostics for initial estimates in siind
-C  siind(1,i1,i2,i3) will contain the model order 
-C  
-C  si     - array of si-values
-C  m      - model order
-C  maxc   - maximum of cos(angle between directions)
-C  dgrad  - matrix of pairwise cos of gradient directions
-C  sms    - copies of si
-C  siind  - array of indices (output)
-C
-      implicit logical (a-z)
-      integer n1,n2,n3,ngrad,ns,siind(ns,n1,n2,n3),m
-      real*8 si(ngrad,n1,n2,n3),sms(ngrad),dgrad(ngrad,ngrad),maxc
-      logical mask(n1,n2,n3)
-      integer i,i1,i2,i3,imin,k
-      real*8 zmin,w
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-C               if(.not.mask(i1,i2,i3)) CYCLE
-               if(mask(i1,i2,i3)) THEN
-C  now search for minima of sms (or weighted sms
-               call dcopy(ngrad,si(1,i1,i2,i3),1,sms,1)
-               siind(1,i1,i2,i3)=m
-               DO k=1,m
-                  imin=1
-                  zmin=sms(1)
-                  DO i=2,ngrad
-                     if(sms(i).lt.zmin) THEN
-                        zmin=sms(i)
-                        imin=i
-                     END IF
-                  END DO
-                  siind(k+1,i1,i2,i3)=imin
-                  IF(k.lt.m) THEN
-                     DO i=1,ngrad
-                        w=dgrad(i,imin)
-                        if(w.gt.maxc) THEN
-                           sms(i)=1d40
-                        ELSE
-                           sms(i)=sms(i)/(1.d0-w*w)
-                        END IF
-                     END DO
-                  END IF
-               END DO
-               ELSE
-                  siind(1,i1,i2,i3)=-1
-               END IF
-            END DO
-         END DO
-      END DO
-      RETURN
-      END
-C
-C __________________________________________________________________
-C
-      subroutine getev0(si,ngrad,n1,n2,n3,lev)
-      implicit logical (a-z)
-      integer n1,n2,n3,ngrad
-      real*8 si(ngrad,n1,n2,n3),lev(2,n1,n2,n3)
-      integer i1,i2,i3,j
-      real*8 z,z1
-      z=ngrad
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-               lev(1,i1,i2,i3)=0
-               z1=si(1,i1,i2,i3)
-               DO j=2,ngrad
-                  z1=z1+si(j,i1,i2,i3)
-               END DO
-               lev(2,i1,i2,i3)=-log(z1/z)
-            END DO
-         END DO
-      call rchkusr()
-      END DO
-      RETURN
-      END
-C
-C __________________________________________________________________
-C
       subroutine iandir(vico,nvico,andir,nvox,landir,iandi)
       implicit logical(a-z)
       integer nvico,nvox,iandi(2,nvox)
@@ -1317,3 +1384,47 @@ C
       END DO
       RETURN
       END
+C
+C _________________________________________________________________
+C
+      subroutine zerofill(a,n)
+      implicit logical(a-z)
+      integer i,n
+      real*8 a(n),ZERO
+      PARAMETER   ( ZERO = 0.0D+0 )
+      DO i=1,n
+         a(i) = ZERO 
+      END DO
+      RETURN
+      END
+C
+C _________________________________________________________________
+C
+      subroutine dcprod0(a,b,n,c)
+C
+C   compute component wise product of a and b in c
+C
+      implicit logical(a-z)
+      integer i,n
+      real*8 a(n),b(n),c(n)
+      DO i=1,n
+         c(i) = a(i)*b(i)
+      END DO
+      RETURN
+      END
+C
+C _________________________________________________________________
+C
+      subroutine dcprod(a,b,alpha,n,c)
+C
+C   compute component wise product of a and b in c
+C
+      implicit logical(a-z)
+      integer i,n
+      real*8 a(n),b(n),c(n),alpha
+      DO i=1,n
+         c(i) = a(i)*b(i)*alpha
+      END DO
+      RETURN
+      END
+     
