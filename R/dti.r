@@ -15,11 +15,12 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
   args <- sys.call(-1)
   args <- c(object@call,args)
   ngrad <- object@ngrad
+  grad <- object@gradient
   ddim <- object@ddim
   s0ind <- object@s0ind
   ns0 <- length(s0ind)
   sdcoef <- object@sdcoef
-  if(all(sdcoef==0)) {
+  if(all(sdcoef[1:4]==0)) {
     cat("No parameters for model of error standard deviation found\n estimating these parameters\n You may prefer to run sdpar before calling dtiTensor")
     sdcoef <- sdpar(object,interactive=FALSE)@sdcoef
   }
@@ -120,7 +121,6 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
                 rss=double(prod(ddim)),
                 double(ngrad),
                 PACKAGE="dti",DUP=FALSE)[c("th0","D","res","rss")]
-     cat("successfully completed nonlinear regression ",format(Sys.time()),"\n")
      dim(z$th0) <- ddim
      dim(z$D) <- c(6,ddim)
      dim(z$res) <- c(ngrad,ddim)
@@ -130,6 +130,26 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
      D <- z$D
      rss <- z$rss
      th0 <- z$th0
+#  handle points where estimation failed
+     n <- prod(ddim)
+     indD <- (1:n)[D[2,,,]==0&D[3,,,]==0&D[5,,,]==0&mask]
+     if(length(indD)>0){
+     dim(si) <- c(ngrad,n)
+     dim(D) <- c(6,n)
+     dim(res) <- c(ngrad,n)
+     cat("length of IndD",length(indD),"\n")
+     for(i in indD){
+        zz <- optim(c(1,0,0,1,0,1),opttensR,method="BFGS",si=si[-s0ind,i],s0=s0[i],grad=grad[,-s0ind],sdcoef=sdcoef)
+        D[,i] <- rho2D(zz$par)
+        th0[i] <- s0[i]
+        rss[i] <- zz$value
+        res[s0ind,i] <- 0
+        res[-s0ind,i] <- tensRres(zz$par,si[-s0ind,i],s0[i],grad[,-s0ind])
+     }
+     dim(D) <- c(6,ddim)
+     dim(res) <- c(ngrad,ddim)
+     }
+     cat("successfully completed nonlinear regression ",format(Sys.time()),"\n")
      sigma2 <- array(0,c(1,1,1))
      rm(z)
      gc()
@@ -201,6 +221,43 @@ setMethod("dtiTensor","dtiData",function(object, method="nonlinear",varmethod="r
             )
 })
 
+opttensR <- function(param,si,s0,grad,sdcoef){
+      .Fortran("opttensR",
+               as.double(param),
+               as.double(si),
+               as.double(s0),
+               as.double(grad),
+               as.integer(length(si)),
+               as.double(sdcoef),
+               erg=double(1),
+               DUP=FALSE,
+               PACKAGE="dti")$erg
+}
+tensRres <- function(param,si,s0,grad){
+      .Fortran("tensRres",
+               as.double(param),
+               as.double(si),
+               as.double(s0),
+               as.double(grad),
+               as.integer(length(si)),
+               res=double(length(si)),
+               DUP=FALSE,
+               PACKAGE="dti")$res
+}
+rho2D <- function(param){
+      .Fortran("rho2D0",
+               as.double(param),
+               D=double(6),
+               DUP=FALSE,
+               PACKAGE="dti")$D
+}
+D2rho <- function(D){
+      .Fortran("D2rho0",
+               as.double(D),
+               rho=double(6),
+               DUP=FALSE,
+               PACKAGE="dti")$rho
+}
 #############
 
 dtiIndices <- function(object, ...) cat("No DTI indices calculation defined for this class:",class(object),"\n")

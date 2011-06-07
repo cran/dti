@@ -10,3 +10,4 @@ exportMethods("extract","show3d","tracking","selectFibers","reduceFibers")
 export(dtiData,readDWIdata)
 export(tensor2medinria,medinria2tensor)
 exportMethods("sdpar")
+

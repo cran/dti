@@ -348,7 +348,7 @@ setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=N
   radii <- radii/quantile(apply(radii,2,max),quant)*scale
   }
   if(toupper(what) %in% c("AXIS","BOTH")){
-   colors <- rainbow(1024,end=2/3,gamma=1.2)
+   colors <- rainbow(1024,end=2/3)
    ranger <- range(fa)
    ind <- 1024-(fa-ranger[1])/(ranger[2]-ranger[1])*1023
    colorvalues <- rep(colors[ind],rep(2*dim(mix)[1],length(ind)))
@@ -746,7 +746,7 @@ show3dODF <- function(radii,polyeder,centers=NULL,minalpha=1,...){
    alpha <- rep(minalpha,length(radii))
    nv <- polyeder$nv
    ni <- polyeder$ni*3
-   colors <- rainbow(1024,end=2/3,gamma=1.2)
+   colors <- rainbow(1024,end=2/3)
    rradii <- apply(radii,2,range)
    sradii <- sweep(sweep(radii,2,rradii[1,],"-"),2,rradii[2,]-rradii[1,],"/")
    ind <- 1024-sradii*1023

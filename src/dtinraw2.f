@@ -3,45 +3,18 @@ C
 C     regularize D 
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine regD0(D,negdefin)
-      implicit logical(a-z)
-      logical negdefin
-      real*8 D(6),ew(3),ev(3,3),ewmax
-      integer ierr
-      call eigen3(D,ew,ev,ierr)
-      if(ew(1).le.1.d-4) THEN
-C  first regularize
-         negdefin=.TRUE.
-         ewmax=max(1.d-4,(ew(1)+ew(2)+ew(3))/3.d0)
-         D(1)=ewmax
-         D(2)=0.d0
-         D(3)=0.d0
-         D(4)=ewmax
-         D(5)=0.d0
-         D(6)=ewmax
-      ELSE
-         negdefin=.FALSE.
-      END IF
-      RETURN
-      END
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C
-C     regularize D 
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine regularD(D,negdefin)
       implicit logical(a-z)
       logical negdefin
-      real*8 D(6),ew(3),ev(3,3),ewmax
+      real*8 D(6),ew(3),ev(3,3)
       integer ierr
       call eigen3(D,ew,ev,ierr)
-      if(ew(1).le.1.d-4) THEN
+      if(ew(1).le.1.d-8) THEN
 C  first regularize
          negdefin=.TRUE.
-         ewmax=max(1.d-4,ew(3))
-         ew(1)=max(.1*ewmax,ew(1))
-         ew(2)=max(.1*ewmax,ew(2))
-         ew(3)=ewmax
+         ew(1) = max(1.d-8,ew(1))
+         ew(2) = max(1.d-8,ew(2))
+         ew(3) = max(1.d-8,ew(3))
          D(1)=ew(1)*ev(1,1)*ev(1,1)+ew(2)*ev(1,2)*ev(1,2)+
      1        ew(3)*ev(1,3)*ev(1,3)
          D(2)=ew(1)*ev(1,1)*ev(2,1)+ew(2)*ev(1,2)*ev(2,2)+
@@ -67,7 +40,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine D2rho(D,rho)
       implicit logical(a-z)
       real*8 D(6),rho(6),eps
-      eps=1.d-6
+      eps=1.d-8
       rho(1)=sqrt(D(1)+eps)
       rho(2)=D(2)/rho(1)
       rho(3)=D(3)/rho(1)
@@ -78,13 +51,31 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
+C     get rho from D (with regularization of D)
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine D2rho0(D,rho)
+      implicit logical(a-z)
+      real*8 D(6),rho(6)
+      logical negdefin
+      call regularD(D,negdefin)
+      rho(1)=sqrt(max(1d-16,D(1)))
+      rho(2)=D(2)/rho(1)
+      rho(3)=D(3)/rho(1)
+      rho(4)=sqrt(max(1d-16,D(4)-rho(2)*rho(2)))
+      rho(5)=(D(5)-rho(2)*rho(3))/rho(4)
+      rho(6)=sqrt(max(1d-16,D(6)-rho(3)*rho(3)-rho(5)*rho(5)))
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
 C     get D from rho 
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine rho2D(rho,D)
       implicit logical(a-z)
       real*8 D(6),rho(6),eps
-      eps=0.d-6
+      eps=0.d-16
       D(1)=rho(1)*rho(1)+eps
       D(2)=rho(1)*rho(2)
       D(3)=rho(1)*rho(3)

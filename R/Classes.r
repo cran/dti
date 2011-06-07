@@ -49,7 +49,9 @@ setClass("dtiData",
             cat("invalid level \n")
              return(invisible(FALSE))
          }
-          if (length(object@sdcoef) != 4) {
+          if (!length(object@sdcoef) %in% c(4,8)) {
+#  sdcoef[1:2] coefs of linear model for S0-image sd, sdcoef[3:4] validity interval, 
+#  sdcoef[5] sd estimate for sb-images, sdcoef[6:7] validity interval, sdcoef[8] number of directions used
              cat("invalid model for error standard deviation \n")
              return(invisible(FALSE))
          }

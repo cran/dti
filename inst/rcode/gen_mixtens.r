@@ -129,12 +129,24 @@ create.designmatrix.dti <- function(gradient, bvalue=1) {
 
   btb * bvalue
 }
-odfdist <- function(obj1,obj2,poly=4){
+odfdist <- function(obj1,obj2,poly=4,mask=NULL){
   if(any(obj1@ddim!=obj2@ddim)) return(warning("incompatible dimensions"))
+  if(!class(obj1)%in%c("dwiMixtensor","dtiTensor","dwiQball")) return(warning("incompatible class of obj1"))
+  if(!class(obj2)%in%c("dwiMixtensor","dtiTensor","dwiQball")) return(warning("incompatible class of obj2"))
   if(!exists("icosa0")) data("polyeders")
-  polyeder <- switch(poly+1,icosa0,icosa1,icosa2,icosa3,icosa4)
   n <- prod(obj1@ddim)
-  radii1 <- .Fortran("mixtradi",
+  if(n>419103) poly <- min(poly,3)
+  if(n>1672495) poly <- min(poly,2)
+  if(n>6628036) poly <- min(poly,1)
+  polyeder <- switch(poly+1,icosa0,icosa1,icosa2,icosa3,icosa4)
+  if(is.null(mask)) mask <- rep(TRUE,n)
+  if(class(obj1)=="dwiQball"){
+     sphdesign <- design.spheven(obj1@order,polyeder$vertices,obj1@lambda)$design
+     sphcoef <- obj1@sphcoef
+     dim(sphcoef) <- c(dim(sphcoef)[1],prod(dim(sphcoef)[-1]))
+  }
+  radii1 <- if(class(obj1)=="dwiMixtensor") {
+               .Fortran("mixtradi",
                     as.double(polyeder$vertices),
                     as.integer(polyeder$nv),
                     as.double(obj1@ev),
@@ -145,9 +157,25 @@ odfdist <- function(obj1,obj2,poly=4){
                     as.integer(n),
                     radii=double(n*polyeder$nv),
                     DUP=FALSE,
+                    PACKAGE="dti")$radii 
+                } else if(class(obj1)=="dtiTensor"){
+                .Fortran("odfradii",
+                    as.double(polyeder$vertices),
+                    as.integer(polyeder$nv),
+                    as.double(obj1@D),
+                    as.integer(n),
+                    radii=double(n*polyeder$nv),
+                    DUP=FALSE,
                     PACKAGE="dti")$radii
-  dim(radii1) <- c(polyeder$nv,obj1@ddim)
-  radii2 <- .Fortran("mixtradi",
+                } else t(sphdesign)%*%sphcoef
+  dim(radii1) <- c(polyeder$nv,prod(obj1@ddim))
+  if(class(obj2)=="dwiQball") {
+     sphdesign <- design.spheven(obj2@order,polyeder$vertices,obj2@lambda)$design
+     sphcoef <- obj2@sphcoef
+     dim(sphcoef) <- c(dim(sphcoef)[1],prod(dim(sphcoef)[-1]))
+  }
+  radii2 <- if(class(obj2)=="dwiMixtensor") {
+               .Fortran("mixtradi",
                     as.double(polyeder$vertices),
                     as.integer(polyeder$nv),
                     as.double(obj2@ev),
@@ -159,6 +187,16 @@ odfdist <- function(obj1,obj2,poly=4){
                     radii=double(n*polyeder$nv),
                     DUP=FALSE,
                     PACKAGE="dti")$radii
-  dim(radii2) <- c(polyeder$nv,obj1@ddim)
-  apply((radii2-radii1)^2,2:4,mean)
+                } else if(class(obj2)=="dtiTensor"){
+                .Fortran("odfradii",
+                    as.double(polyeder$vertices),
+                    as.integer(polyeder$nv),
+                    as.double(obj2@D),
+                    as.integer(n),
+                    radii=double(n*polyeder$nv),
+                    DUP=FALSE,
+                    PACKAGE="dti")$radii
+                } else t(sphdesign)%*%sphcoef
+  dim(radii2) <- c(polyeder$nv,prod(obj1@ddim))
+  t((radii2-radii1)[,mask]^2)%*%rep(1/polyeder$nv,polyeder$nv)
   }

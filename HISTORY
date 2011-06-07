@@ -1,3 +1,13 @@
+2011-06-07 version 0.9-6.2
+
+  - fix for depreciated argument gamma in hsv and rainbow (R 2.13)
+
+2011-04-26 version 0.9-6
+
+  - bugfix in Fortran code (regularisation to force tensors to be
+       positive definite) in function dtiTensor 
+  - removed platform dependencies when using the gsl-package
+
 2011-03-24 version 0.9-5
 
   - added model with isotropic compartment for dwiMixtensor

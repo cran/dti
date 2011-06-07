@@ -29,12 +29,14 @@ C  keep directions that are found to be informative
                dir(2)=(j1-2)*vext(2)
                dir(3)=(k1-2)*vext(3)
                ord1 = order(i1,j1,k1)
+               IF(ord1.gt.0) THEN
                DO o=1,ord1
                   z = abs(dir(1)*andir(1,o,i1,j1,k1)+
      1                    dir(2)*andir(2,o,i1,j1,k1)+
      1                    dir(3)*andir(3,o,i1,j1,k1))
 C  this is large if the component shows in direction of the voxel
                   ord2 = order(i2,j2,k2)
+                  IF(ord2.gt.0) THEN
                   DO o2=1,ord2
                      z=z+mix(o,i2,j2,k2)*
      1               abs(andir(1,o,i1,j1,k1)*andir(1,o2,i2,j2,k2)+
@@ -42,8 +44,10 @@ C  this is large if the component shows in direction of the voxel
      1                   andir(3,o,i1,j1,k1)*andir(3,o2,i2,j2,k2))
 C this adds something if the same information is present on the opposite side
                   END DO
+                  END IF
                   krit(o,i1,j1,k1)=mix(o,i1,j1,k1)*z
                END DO
+               END IF
             END DO
          END DO
       END DO
@@ -62,8 +66,8 @@ C  make directions that are close to existing ones as uninteresting
      1                     andir(2,i,2,2,2)*andir(2,o,i1,j1,k1)+
      2                     andir(3,i,2,2,2)*andir(3,o,i1,j1,k1)))
                      END DO
-                  END IF
                   krit(o,i1,j1,k1)=krit(o,i1,j1,k1)*(1-z*z)
+                  END IF
                END DO
             END DO
          END DO
@@ -101,7 +105,7 @@ C
                END DO
             END DO
          END DO
-         if(bestkrit.gt.0.2d0) THEN
+         if(bestkrit.gt.0.d0) THEN
             th=max(th,lev(1,besti,bestj,bestk)-lev(2,besti,bestj,bestk))
             par(2*icomp)=bestor(1)
             par(2*icomp+1)=bestor(2)
