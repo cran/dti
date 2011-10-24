@@ -1,6 +1,6 @@
 Package: dti
-Version: 0.9-6.2
-Date: 2011-06-07
+Version: 0.9-6.3
+Date: 2011-10-24
 Title: Analysis of diffusion weighted imaging (DWI) data
 Author: Karsten Tabelow <tabelow@wias-berlin.de> Joerg Polzehl
         <polzehl@wias-berlin.de>
@@ -23,6 +23,6 @@ License: GPL (>= 2)
 Copyright: This package is Copyright (C) 2005-2011 Weierstrass
         Institute for Applied Analysis and Stochastics.
 URL: http://www.wias-berlin.de/projects/matheon_a3
-Packaged: 2011-06-07 22:54:57 UTC; polzehl
 Repository: CRAN
-Date/Publication: 2011-06-15 18:00:28
+Date/Publication: 2011-10-24 14:36:14
+Packaged: 2011-10-24 11:35:15 UTC; tabelow

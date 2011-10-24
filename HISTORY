@@ -1,3 +1,11 @@
+2011-10-24 version 0.9-6.3
+  - fixed warnings in LawsonHansonnnls.f 
+    "Rank mismatch in argument 'c' at (1) (rank-1 and scalar)"
+    for variable DUMMy in call H12
+  - fixed warnings in mixtens.f (subroutine mpl0gn) for undeclared
+    variable w
+  - removed write() line in LawsonHansonnnls.f (CRAN NOTE)
+
 2011-06-07 version 0.9-6.2
 
   - fix for depreciated argument gamma in hsv and rainbow (R 2.13)

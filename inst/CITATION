@@ -1,21 +1,21 @@
 citHeader("To cite dti in publications use:")
 
 citEntry(entry = "Article",
-  title        = "Structural Adaptive Smoothing in Diffusion Tensor Imaging: The {R} Package {dti}",
-  author       = personList(as.person("J\\\"org Polzehl"),
-                   as.person("Karsten Tabelow")),
+  title        = "Beyond the Gaussian Model in Diffusion-Weighted Imaging: The Package {dti}",
+  author       = personList(as.person("Karsten Tabelow"),
+                   as.person("J\\\"org Polzehl")),
   journal      = "Journal of Statistical Software",
-  year         = "2009",
-  volume       = "31",
-  number       = "9",
-  pages        = "1--23",
-  url          = "http://www.jstatsoft.org/v31/i09/",
+  year         = "2011",
+  volume       = "44",
+  number       = "12",
+  pages        = "1--26",
+  url          = "http://www.jstatsoft.org/v44/i12/",
 
   textVersion  =
-  paste("Joerg Polzehl, Karsten Tabelow (2009).",
-        "Structural Adaptive Smoothing in Diffusion Tensor Imaging: The R Package dti.",
-        "Journal of Statistical Software, 31(9), 1-23.",
-        "URL http://www.jstatsoft.org/v31/i09/.")
+  paste("Karsten Tabelow, Joerg Polzehl (2011).",
+        "Beyond the Gaussian Model in Diffusion-Weighted Imaging: The Package dti.",
+        "Journal of Statistical Software, 44(12), 1-26.",
+        "URL http://www.jstatsoft.org/v44/i12/.")
 )
 
 citEntry(entry = "Article",
@@ -36,5 +36,25 @@ citEntry(entry = "Article",
                "Diffusion Tensor Imaging: Structural Adaptive Smoothing.",
 	       "NeuroImage, 39(4), 1763-1773.",
 	       "doi:10.1016/j.neuroimage.2007.10.024"),
-	 header = "For the underlying methods please cite:"
+	 header = "For the structural adaptive smoothing methods please cite:"
+)
+
+citEntry(entry = "Article",
+         title = "Modeling the orientation distribution function by mixtures of angular central Gaussian distributions",
+         author = personList(as.person("Karsten Tabelow"), 
+	                     as.person("Henning U. Voss"),
+                             as.person("J\\\"org Polzehl")),
+         journal      = "Journal of Neuroscience Methods",
+         year         = "2011",
+	 volume       = "xx",
+	 number       = "x",
+	 pages        = "xxx--xxx",
+	 doi          = "10.1016/j.jneumeth.2011.09.001",
+         
+         textVersion = 
+         paste("Karsten Tabelow, Henning U. Voss, Joerg Polzehl (2011).", 
+               "Modeling the orientation distribution function by mixtures of angular central Gaussian distributions.",
+	       "Journal of Neuroscience Methods, (in press).",
+	       "doi:10.1016/j.jneumeth.2011.09.001"),
+	 header = "For the tensor mixture model please cite:"
 )

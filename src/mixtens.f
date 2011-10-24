@@ -394,7 +394,7 @@ C
       implicit logical (a-z)
       integer m,lpar,n
       real*8 par(lpar),siq(n),g(3,n),z(n,m),pen,dfdpar(lpar),
-     1       para(lpar),parb(lpar),eps
+     1       para(lpar),parb(lpar),eps,w(n)
       real*8 erga,ergb,deltai
       integer i
       deltai=0.5d0/eps
