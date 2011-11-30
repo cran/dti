@@ -461,7 +461,7 @@ C     ------------------------------------------------------------------
       STERM=ONE   
       RETURN
       END   
-       double precision FUNCTION DIFF(X,Y)
+      double precision FUNCTION DIFF(X,Y)
 c
 c  Function used in tests that depend on machine precision.
 c

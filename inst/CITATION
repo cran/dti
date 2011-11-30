@@ -45,16 +45,16 @@ citEntry(entry = "Article",
 	                     as.person("Henning U. Voss"),
                              as.person("J\\\"org Polzehl")),
          journal      = "Journal of Neuroscience Methods",
-         year         = "2011",
-	 volume       = "xx",
-	 number       = "x",
-	 pages        = "xxx--xxx",
+         year         = "2012",
+	 volume       = "203",
+	 number       = "1",
+	 pages        = "200--211",
 	 doi          = "10.1016/j.jneumeth.2011.09.001",
          
          textVersion = 
-         paste("Karsten Tabelow, Henning U. Voss, Joerg Polzehl (2011).", 
+         paste("Karsten Tabelow, Henning U. Voss, Joerg Polzehl (2012).", 
                "Modeling the orientation distribution function by mixtures of angular central Gaussian distributions.",
-	       "Journal of Neuroscience Methods, (in press).",
+	       "Journal of Neuroscience Methods, 203(1), 200-211.",
 	       "doi:10.1016/j.jneumeth.2011.09.001"),
 	 header = "For the tensor mixture model please cite:"
 )

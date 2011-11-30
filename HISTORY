@@ -1,5 +1,27 @@
+2011-11-30 version 1.0-0
+
+  - added method dwi.smooth: adaptive smoothing for DWI data 
+  - additional parameters in dwiMixtensor for improved initial estimates 
+  
+2011-10-04 version 0.9-7.3
+
+  - C-code for dwiMixtensor
+  
+2011-09-09 version 0.9-7.2
+
+  - new method dwiRiceBias for Rice-Bias correction 
+  
+2011-07-28 version 0.9-7.1 
+
+  -  bugfixes in method sdpar: produced empty interior volumes
+     if applied to DWI-data consiting of only one slice 
+
+2011-06-24 version 0.9-7
+
+  - extract for dwiMixtensor objects failed on what="s0"
+
 2011-10-24 version 0.9-6.3
-  - fixed warnings in LawsonHansonnnls.f 
+  - fixed warnings in LawsonHansonnnls.f
     "Rank mismatch in argument 'c' at (1) (rank-1 and scalar)"
     for variable DUMMy in call H12
   - fixed warnings in mixtens.f (subroutine mpl0gn) for undeclared

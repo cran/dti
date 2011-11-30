@@ -133,6 +133,25 @@ For class \code{"dwiMixtensor"}:
     \item{summary}{ Method for Function `summary' in Package `dti'. }
   }
 }
+\references{
+             J. Polzehl and K. Tabelow, 
+             \emph{Beyond the diffusion tensor model: The package \pkg{dti}},
+             Journal of Statistical Software, to appear.
+
+             K. Tabelow, H.U. Voss and J. Polzehl, 
+             \emph{Modeling the orientation distribution function by 
+             mixtures of angular central Gaussian distributions},
+             Journal of Neuroscience Methods, to appear.
+
+             J. Polzehl and K. Tabelow, 
+             \emph{Structural adaptive smoothing in diffusion tensor imaging: 
+             The R package dti}, Journal of Statistical Software, 31 (2009) pp. 1--24.
+             
+              K. Tabelow, J. Polzehl, V. Spokoiny and H.U. Voss. 
+              \emph{Diffusion Tensor Imaging: Structural adaptive smoothing}, 
+              NeuroImage 39(4), 1763-1773 (2008).
+%% ~put references to the literature/web site here ~
+}
 \author{
   Karsten Tabelow \email{tabelow@wias-berlin.de}\cr 
   J\"org Polzehl \email{polzehl@wias-berlin.de}
@@ -141,9 +160,12 @@ For class \code{"dwiMixtensor"}:
   \code{\link{dtiData}},
   \code{\link{readDWIdata}},
   \code{\link{sdpar-methods}},
+  \code{\link{getsdofsb-methods}},
+  \code{\link{dwiRiceBias-methods}},
   \code{\link{dtiTensor-methods}}, 
   \code{\link{dwiMixtensor-methods}}, 
   \code{\link{dti.smooth-methods}},
+  \code{\link{dwi.smooth-methods}},
   \code{\link{dtiIndices-methods}},
   \code{\link{dwiQball-methods}}, 
   \code{\link{tracking-methods}},

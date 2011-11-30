@@ -30,13 +30,26 @@
 
 }
 }
-\references{  K. Tabelow, J. Polzehl, H.U. Voss, and V. Spokoiny. 
+\references{ J. Polzehl and K. Tabelow, 
+             \emph{Beyond the diffusion tensor model: The package \pkg{dti}},
+             Journal of Statistical Software, to appear.
+
+             K. Tabelow, H.U. Voss and J. Polzehl, 
+             \emph{Modeling the orientation distribution function by 
+             mixtures of angular central Gaussian distributions},
+             Journal of Neuroscience Methods, to appear.
+
+             J. Polzehl and K. Tabelow, 
+             \emph{Structural adaptive smoothing in diffusion tensor imaging: 
+             The R package dti}, Journal of Statistical Software, 31 (2009) pp. 1--24.
+             
+              K. Tabelow, J. Polzehl, V. Spokoiny and H.U. Voss. 
               \emph{Diffusion Tensor Imaging: Structural adaptive smoothing}, 
               NeuroImage 39(4), 1763-1773 (2008).
 
               C.G. Koay, J.D. Carew, A.L. Alexander, P.J. Basser and M.E. Meyerand.
               \emph{ Investigation of Anomalous Estimates of Tensor-Derived Quantities in Diffusion Tensor Imaging}, 
-              Magnetic Resonance in medicine, 2006, 55, 930-936.
+              Magnetic Resonance in Medicine, 2006, 55, 930-936.
 
               \url{ http://www.wias-berlin.de/projects/matheon_a3/} 
 }
@@ -51,6 +64,7 @@
   \code{\link{medinria}}, 
   \code{\linkS4class{dtiData}}, 
   \code{\linkS4class{dtiTensor}}
+  \code{\linkS4class{dwiMixtensor}}
 }
 \examples{
   \dontrun{demo(dti_art)}

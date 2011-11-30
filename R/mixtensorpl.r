@@ -117,12 +117,29 @@ if(ord>0){
    mix <- w[o]/sw
 } else {
    mix <- NULL
-} 
+}
+
 or <- matrix(par[2:lpar],2,m)[,o,drop=FALSE]
-or[1,or[1,]<0] <- or[1,or[1,]<0]+pi
-or[1,or[1,]>pi] <- or[1,or[1,]>pi]-pi
-or[2,or[2,]<0] <- or[2,or[2,]<0]+2*pi
-or[2,or[2,]>2*pi] <- or[2,or[2,]>2*pi]-2*pi
+
+while(length(or[1,or[1,]<0])!=0 && or[1,or[1,]<0]){
+	or[1,or[1,]<0] <- or[1,or[1,]<0]+pi
+}
+
+
+while(length(or[1,or[1,]>pi])!=0 && or[1,or[1,]>pi]){
+	or[1,or[1,]>pi] <- or[1,or[1,]>pi]-pi
+}
+
+
+while(length(or[2,or[2,]<0])!=0 && or[2,or[2,]<0]){
+	or[2,or[2,]<0] <- or[2,or[2,]<0]+2*pi
+}
+
+
+while(length(or[2,or[2,]>2*pi])!=0 && or[2,or[2,]>2*pi]){
+	or[2,or[2,]>2*pi] <- or[2,or[2,]>2*pi]-2*pi
+}
+
 par <- c(par[1],or[,1:ord])
 list(ord=ord,lev=lev,mix=mix,orient=or,par=par,w=w[o])
 }
@@ -131,38 +148,55 @@ mfunwghtsi <- function(par,siq,grad){
 lparw <- length(par)
 m <- (lparw-2)/3
 if(m>0){
-lpar <- 2*m+1
-ngrad <- dim(grad)[1]
-w <- par[-(1:lpar)]           
-w0 <- w[1]
-w <- w[-1]
-o <- order(w,decreasing=TRUE)
-ord <- sum(w>0)
-if(ord<m){
-   o <- o[1:ord]
-}
-sw <- sum(w[w>0])+max(w0,0)
-lev <- c(par[1],-log(sw))
-if(ord>0){
-   mix <- w[o]/sw
+	lpar <- 2*m+1
+	ngrad <- dim(grad)[1]
+	w <- par[-(1:lpar)]           
+	w0 <- w[1]
+	w <- w[-1]
+	o <- order(w,decreasing=TRUE)
+	ord <- sum(w>0)
+	if(ord<m){
+		o <- o[1:ord]
+	}
+	sw <- sum(w[w>0])+max(w0,0)
+	lev <- c(par[1],-log(sw))
+	if(ord>0){
+		mix <- w[o]/sw
+	} else {
+		mix <- NULL
+	} 
+	
+	or <- matrix(par[2:lpar],2,m)[,o,drop=FALSE]
+
+	while(length(or[1,or[1,]<0])!=0 && or[1,or[1,]<0]){
+		or[1,or[1,]<0] <- or[1,or[1,]<0]+pi
+	}
+	
+	
+	while(length(or[1,or[1,]>pi])!=0 && or[1,or[1,]>pi]){
+		or[1,or[1,]>pi] <- or[1,or[1,]>pi]-pi
+	}
+	
+	
+	while(length(or[2,or[2,]<0])!=0 && or[2,or[2,]<0]){
+		or[2,or[2,]<0] <- or[2,or[2,]<0]+2*pi
+	}
+	
+	
+	while(length(or[2,or[2,]>2*pi])!=0 && or[2,or[2,]>2*pi]){
+		or[2,or[2,]>2*pi] <- or[2,or[2,]>2*pi]-2*pi
+	}
+
+	par <- c(par[1],or[,1:ord])
+	w <- w[o]
 } else {
-   mix <- NULL
-} 
-or <- matrix(par[2:lpar],2,m)[,o,drop=FALSE]
-or[1,or[1,]<0] <- or[1,or[1,]<0]+pi
-or[1,or[1,]>pi] <- or[1,or[1,]>pi]-pi
-or[2,or[2,]<0] <- or[2,or[2,]<0]+2*pi
-or[2,or[2,]>2*pi] <- or[2,or[2,]>2*pi]-2*pi
-par <- c(par[1],or[,1:ord])
-w <- w[o]
-} else {
-ord <- 0
-lev <- c(par[1],0)
-or <- NULL
-w0 <- 1
-w <- NULL
-par <- par[1]
-mix <- NULL
+	ord <- 0
+	lev <- c(par[1],0)
+	or <- NULL
+	w0 <- 1
+	w <- NULL
+	par <- par[1]
+	mix <- NULL
 }
 list(ord=ord,lev=lev,mix=mix,orient=or,par=par,w=c(w0,w))
 }
@@ -190,6 +224,8 @@ erg <- .Fortran("mfunpl0",as.double(par),#par(lpar)
                 PACKAGE="dti")$erg
 erg
 }
+
+
 mfunpl0h <- function(par,siq,grad){
 #
 #   evaluate rss for Mixtensor-model (without isotropic component)
@@ -212,6 +248,7 @@ erg <- .Fortran("mfunpl0h",as.double(par),#par(lpar)
                 PACKAGE="dti")$erg
 erg
 }
+
 gmfunpl0 <- function(par,siq,grad,pen=1e2){
 #
 #   evaluate rss for Mixtensor-model
@@ -268,6 +305,7 @@ w<-.Fortran("mfunpl0",as.double(par),#par(lpar)
                 double(1),#residual sum of squares
                 PACKAGE="dti")$w[1:m]
                 w <- pmax(0,w)
+
                 if(all(is.finite(w))) {
 erg<-.Fortran("mfunpl0w",as.double(par),#par(lpar)
                 as.double(w),
@@ -280,29 +318,52 @@ erg<-.Fortran("mfunpl0w",as.double(par),#par(lpar)
                 erg = double(1),#residual sum of squares
                 PACKAGE="dti")$erg
            } else {
-           cat("got w=",w,"\n")
-           erg <- 1e20
+             cat("got w=",w,"\n")
+             erg <- 1e20
            }
+
            o <- order(w,decreasing=TRUE)
            ord <- sum(w>0)
+
            if(ord<m){
               o <- o[1:ord]
            }
+
            sw <- sum(w[w>0])
            lev <- c(par[1],-log(sw))
+
            if(ord>0){
-           mix <- w[o]/sw
+	     mix <- w[o]/sw
            } else {
-           mix <- NULL
+	     mix <- NULL
            } 
+
            or <- matrix(par[2:lpar],2,m)[,o,drop=FALSE]
-           or[1,or[1,]<0] <- or[1,or[1,]<0]+pi
-           or[1,or[1,]>pi] <- or[1,or[1,]>pi]-pi
-           or[2,or[2,]<0] <- or[2,or[2,]<0]+2*pi
-           or[2,or[2,]>2*pi] <- or[2,or[2,]>2*pi]-2*pi
+
+	   while(length(or[1,or[1,]<0])!=0 && or[1,or[1,]<0]){
+		or[1,or[1,]<0] <- or[1,or[1,]<0]+pi
+	   }
+
+
+	   while(length(or[1,or[1,]>pi])!=0 && or[1,or[1,]>pi]){
+		or[1,or[1,]>pi] <- or[1,or[1,]>pi]-pi
+	   }
+
+
+	   while(length(or[2,or[2,]<0])!=0 && or[2,or[2,]<0]){
+		or[2,or[2,]<0] <- or[2,or[2,]<0]+2*pi
+	   }
+
+
+	   while(length(or[2,or[2,]>2*pi])!=0 && or[2,or[2,]>2*pi]){
+		or[2,or[2,]>2*pi] <- or[2,or[2,]>2*pi]-2*pi
+	   }
+
            par <- c(par[1],or[,1:ord])
-list(ord=ord,lev=lev,mix=mix,orient=or,par=par,value=erg)
+
+  list(ord=ord,lev=lev,mix=mix,orient=or,par=par,value=erg)
 }
+
 mfunplwghts0h <- function(par,siq,grad){
 #
 #   get weights for Mixtensor-model (without isotropic component) and extract parameters 
@@ -327,25 +388,47 @@ z <- .Fortran("mfunpl0h",as.double(par),#par(lpar)
                 PACKAGE="dti")[c("erg","w")]
            erg <- z$erg^2
            w <- z$w[1:m]
+
            o <- order(w,decreasing=TRUE)
            ord <- sum(w>0)
+
            if(ord<m){
               o <- o[1:ord]
            }
+
            sw <- sum(w[w>0])
            lev <- c(par[1],-log(sw))
+
            if(ord>0){
-           mix <- w[o]/sw
+             mix <- w[o]/sw
            } else {
-           mix <- NULL
+             mix <- NULL
            } 
+
            or <- matrix(par[2:lpar],2,m)[,o,drop=FALSE]
-           or[1,or[1,]<0] <- or[1,or[1,]<0]+pi
-           or[1,or[1,]>pi] <- or[1,or[1,]>pi]-pi
-           or[2,or[2,]<0] <- or[2,or[2,]<0]+2*pi
-           or[2,or[2,]>2*pi] <- or[2,or[2,]>2*pi]-2*pi
+
+           while(length(or[1,or[1,]<0])!=0 && or[1,or[1,]<0]){
+		or[1,or[1,]<0] <- or[1,or[1,]<0]+pi
+	   }
+
+
+	   while(length(or[1,or[1,]>pi])!=0 && or[1,or[1,]>pi]){
+		or[1,or[1,]>pi] <- or[1,or[1,]>pi]-pi
+	   }
+
+
+	   while(length(or[2,or[2,]<0])!=0 && or[2,or[2,]<0]){
+		or[2,or[2,]<0] <- or[2,or[2,]<0]+2*pi
+	   }
+
+
+	   while(length(or[2,or[2,]>2*pi])!=0 && or[2,or[2,]>2*pi]){
+		or[2,or[2,]>2*pi] <- or[2,or[2,]>2*pi]-2*pi
+	   }
+
            par <- c(par[1],or[,1:ord])
-list(ord=ord,lev=lev,mix=mix,orient=or,par=par,value=erg)
+
+  list(ord=ord,lev=lev,mix=mix,orient=or,par=par,value=erg)
 }
 #
 #  Model with isotropic part
@@ -632,7 +715,7 @@ dwiMixtensor <- function(object, ...) cat("No dwiMixtensor calculation defined f
 
 setGeneric("dwiMixtensor", function(object,  ...) standardGeneric("dwiMixtensor"))
 
-setMethod("dwiMixtensor","dtiData",function(object, maxcomp=3, method="mixtensor", reltol=1e-6, maxit=5000,ngc=1000, optmethod="BFGS", nguess=100*maxcomp^2,msc="BIC",pen=NULL){
+setMethod("dwiMixtensor","dtiData",function(object, maxcomp=3, method="mixtensor", reltol=1e-6, maxit=5000,ngc=1000, optmethod="BFGS", nguess=100*maxcomp^2,msc="BIC",pen=NULL,code="C",thinit=NULL){
 #
 #  uses  S(g)/s_0 = w_0 exp(-l_1) +\sum_{i} w_i exp(-l_2-(l_1-l_2)(g^T d_i)^2)
 #
@@ -646,6 +729,10 @@ setMethod("dwiMixtensor","dtiData",function(object, maxcomp=3, method="mixtensor
 #     BFGS for tensor mixture models without isotropic compartment
 #     L-BFGS-B for tensor mixture models with isotropic compartment
 #
+  if(method!="mixtensor"||optmethod!="BFGS") {
+     cat("Using R-code")
+     code <- "R"
+  }
   set.seed(1)
   if(is.null(pen)) pen <- 100
   if(method=="mixtensoriso") optmethod <- "L-BFGS-B"
@@ -688,16 +775,35 @@ setMethod("dwiMixtensor","dtiData",function(object, maxcomp=3, method="mixtensor
   andir <- array(z$andir,c(3,2,ddim))
   rm(z)
   gc()
-  nth <- 11
+#  nth <- 11
+  if(is.null(thinit)){
+  nth <- 5
   th <- ev[1,,,] - (ev[2,,,]+ev[3,,,])/2
-  falevel <- min(quantile(fa[fa>0],.75),.3)
-  rth <- quantile(th[fa>=falevel],c(.1,.99))
-  if(diff(rth)>0){
-     indth <- trunc((nth-1)*(th-rth[1])/diff(rth)+1)
-     th <- seq(rth[1],rth[2],length=nth)
+  falevel <- min(quantile(fa[fa>0],.75),.4)
+  cat("falevel",falevel,"\n")
+#  rth <- quantile(th[fa>=falevel],c(.1,.99))
+#  if(diff(rth)>0){
+#     indth <- trunc((nth-1)*(th-rth[1])/diff(rth)+1)
+#     th <- seq(rth[1],rth[2],length=nth)
+#  } else {
+#     th <- rep(max(th),nth)
+#     indth <- rep(1,length(th))
+#  }
+  qth <- unique(quantile(th[fa>=falevel&fa<.95],seq(.8,.99,length=nth)))
+  nth <- length(qth)
+  if(nth>1){
+     indth <- cut(th,qth,labels=FALSE)
+     indth[th<=qth[1]] <- 1
+     indth[th>=qth[nth]] <- nth
+     th <- qth
   } else {
-     th <- rep(max(th),nth)
-     indth <- rep(1,length(th))
+    indth <- rep(1,prod(ddim))
+    th <- qth
+  }
+  } else {
+    nth <- 1
+    indth <- rep(1,prod(ddim))
+    th <- thinit
   }
 cat("using th:::",th,"\n")
   cat("Start search outlier detection at",format(Sys.time()),"\n")
@@ -796,6 +902,55 @@ cat("using th:::",th,"\n")
 #
 #   loop over voxel in volume
 #
+  if(code=="C"){  
+#
+#     C-Code
+#
+  if(method=="mixtensor") meth = 1 else meth = 2
+  optmeth <- switch(optmethod, "BFGS" = 1,
+                    "CG" = 2, "Nelder-Mead" = 3, "L-BFGS-B" = 4)
+
+
+  cat("Starting parameter estimation and model selection (C-code)",format(Sys.time()),"\n")
+  z <- .C("mixture2", 
+          as.integer(meth),
+          as.integer(optmeth), 
+          as.integer(n1), 
+          as.integer(n2), 
+          as.integer(n3),
+          as.integer(mask), 
+          as.integer(siind), 
+          as.integer(ngrad), 
+          as.integer(ngrad0),
+          as.integer(maxcomp),
+          as.integer(maxit),
+          as.double(pen),
+          as.double(t(grad)),
+          as.double(reltol),
+          as.double(th),
+          as.double(penIC),
+          as.double(sigma2),
+          as.double(vert),
+          as.double(orient),
+          as.double(siq),
+          sigma2  = double(prod(ddim)),# error variance 
+          orient  = double(2*maxcomp*prod(ddim)), # phi/theta for all mixture tensors
+          order   = integer(prod(ddim)),   # selected order of mixture
+          lev     = double(2*prod(ddim)),         # logarithmic eigenvalues
+          mix     = double(maxcomp*prod(ddim)),   # mixture weights
+          DUPL=FALSE, PACKAGE="dti")[c("sigma2","orient","order","lev","mix")]
+  cat("End parameter estimation and model selection (C-code)",format(Sys.time()),"\n")
+sigma2 <-  array(z$sigma2,ddim[1:3])
+orient <- array(z$orient, c(2, maxcomp, ddim[1:3]))
+order <- array(z$order, ddim[1:3])
+lev <- array(z$lev, c(2,ddim[1:3]))
+mix <- array(z$mix, c(maxcomp, ddim[1:3]))
+method <- "mixtensor"
+  } else {
+  cat("Starting parameter estimation and model selection (R-code)",format(Sys.time()),"\n")
+#
+#     R/Fortran-Code 
+#
   for(i1 in 1:n1) for(i2 in 1:n2) for(i3 in 1:n3){ # begin loop
      if(mask[i1,i2,i3]){ # begin mask
 #   only analyze voxel within mask
@@ -820,14 +975,16 @@ cat("using th:::",th,"\n")
      }
 #  initialize EV-parameter
      if(siind[2,i1,i2,i3]>0){
-        param[1] <- th[siind[2,i1,i2,i3]]
+       param[1] <- th[siind[2,i1,i2,i3]]
      } else {
-        param[1] <- .001
+       param[1] <- .001
      }
 #   initialize orientations
-     param[rep(2*(1:mc0),rep(2,mc0))+c(0,1)] <- orient[,1:mc0,i1,i2,i3]
+     param[2:(2*mc0+1)] <- orient[,1:mc0,i1,i2,i3]
      sigmai <- sigma2[i1,i2,i3]
      krit <- log(sigmai)+penIC[1]
+
+#      cat("param from orient:\n", param, "\n")
 #
 #  use AIC/ngrad0, BIC/ngrad0 or AICC/ngrad0 respectively
 #
@@ -836,17 +993,18 @@ cat("using th:::",th,"\n")
 #
 #  otherwise we would reanalyze a model
 #
-        if(optmethod=="L-BFGS-B"){
-        param <- if(method=="mixtensor") param[1:(3*k+1)] else param[1:(3*k+2)]
-        if(k==mc0){
-           param[-(1:(2*k+1))] <- if(method=="mixtensor") rep(1/k,k) else rep(1/k,k+1)
-        } else {
-           param[-(1:(2*k+1))] <- zz$w[1:(if(method=="mixtensor") k else (k+1))]
-        }
-        }
-        if(method=="mixtensor"){
-#
-           z <- switch(optmethod,
+           if(optmethod=="L-BFGS-B"){
+		param <- if(method=="mixtensor") param[1:(3*k+1)] else param[1:(3*k+2)]
+		if(k==mc0){
+			param[-(1:(2*k+1))] <- if(method=="mixtensor") rep(1/k,k) else rep(1/k,k+1)
+		} else {
+			param[-(1:(2*k+1))] <- zz$w[1:(if(method=="mixtensor") k else (k+1))]
+		}
+          }
+
+          if(method=="mixtensor"){
+
+            z <- switch(optmethod,
                     "BFGS"=optim(param[1:(2*k+1)],mfunpl0,gmfunpl0,
                            siq=siq[i1,i2,i3,],grad=grad,pen=pen,
                            method="BFGS",control=list(maxit=maxit,reltol=reltol)),
@@ -860,41 +1018,41 @@ cat("using th:::",th,"\n")
                            siq=siq[i1,i2,i3,],grad=grad,method="L-BFGS-B",
                            lower=c(0,rep(-Inf,2*k),rep(0,k)),
                            control=list(maxit=maxit,factr=reltol/.Machine$double.eps)))
-        } else { # method=="mixtensoriso"
-           z <- optim(param[1:(3*k+2)],fn=mfunpli,gr=gmfunpli,
+          } else { # method=="mixtensoriso"
+            z <- optim(param[1:(3*k+2)],fn=mfunpli,gr=gmfunpli,
                            siq=siq[i1,i2,i3,],grad=grad,method="L-BFGS-B",
                            lower=c(0,rep(-Inf,2*k),rep(0,k+1)),
                            control=list(maxit=maxit,factr=reltol/.Machine$double.eps))
 #
 #  other methods seem less numerically stable in this situation
 #
-        }        
+          }        
 #
 #   estimate of sigma from the best fitting model
 #
-        if(method=="mixtensor"){
+          if(method=="mixtensor"){
             zz <- switch(optmethod,
                     "BFGS"=mfunplwghts0(z$par[1:(2*k+1)],siq[i1,i2,i3,],grad,pen),
                     "CG"=mfunplwghts0(z$par[1:(2*k+1)],siq[i1,i2,i3,],grad,pen),
                     "Nelder-Mead"=mfunplwghts0h(z$par[1:(2*k+1)],siq[i1,i2,i3,],grad),
                     "L-BFGS-B"=mfunwghts(z$par[1:(3*k+1)],siq[i1,i2,i3,],grad))
-        } else if (method=="mixtensoriso"){
+          } else {
             zz <- mfunwghtsi(z$par[1:(3*k+2)],siq[i1,i2,i3,],grad)
-        }
-        value <- if(optmethod=="L-BFGS-B") z$value else zz$value
-        ord <- zz$ord
+          }
+          value <- if(optmethod=="L-BFGS-B") z$value else zz$value
+          ord <- zz$ord
+
 #  replace sigmai by best variance estimate from currently best model
 # thats sum of squared residuals for the restricted model (w>0)
-        if(any(zz$lev<0)||ord<k){
-           ttt <- krit
-#   parameters not interpretable reduce order
-        } else {
+          if(any(zz$lev<0)||ord<k){
+            ttt <- krit
+          } else {
 #           si2new <- value/(ngrad0-3*ord-1) 
-           si2new <- value/ngrad0 # changed 2011/05/13 
-           ttt <- log(si2new)+penIC[1+ord]
-           param[1:(2*k+1)] <- zz$par
-        }
-        
+            si2new <- value/ngrad0 # changed 2011/05/13 
+            ttt <- log(si2new)+penIC[1+ord]
+            param[1:(2*k+1)] <- zz$par
+          }
+
 #
 #     use directions corresponding to largest weights as initial directions
 #
@@ -905,7 +1063,7 @@ cat("using th:::",th,"\n")
            mix[,i1,i2,i3] <- if(ord==maxcomp) zz$mix else c(zz$mix,rep(0,maxcomp-ord))
            orient[,1:ord,i1,i2,i3] <- zz$orient
            sigma2[i1,i2,i3] <- si2new
-       }
+        }
      }
    } # end model order
     if(igc<ngc){
@@ -920,6 +1078,8 @@ cat("using th:::",th,"\n")
     }
   }# end mask
   }# end loop
+  cat("End parameter estimation and model selection (R-code)",format(Sys.time()),"\n")
+  } # end Code-verzweigung 
   invisible(new("dwiMixtensor",
                 model = "homogeneous_prolate",
                 call   = args,

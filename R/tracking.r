@@ -207,7 +207,7 @@ setMethod("tracking","dtiIndices", function(obj, roix=NULL, roiy=NULL, roiz=NULL
               DUP=FALSE, package="dti")
 
   dim(dd) <- c(length(dd)/6,6);
-  istartfiber <- ident.fibers(dd[1:3])
+  istartfiber <- ident.fibers(dd[,1:3])
   z <- compactFibers(dd,istartfiber)
   roimask <- array(0,obj@ddim)
   roimask[roix,roiy,roiz] <- 1

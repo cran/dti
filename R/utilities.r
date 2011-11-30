@@ -2,7 +2,7 @@
 #                                                              #
 # Section for Utility functions                                #
 #                                                              #
-################################################################
+################################################################ 
 
 sdpar <- function(object,  ...) cat("No method defined for class:",class(object),"\n")
 
@@ -21,7 +21,7 @@ setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive
   sdcoef <- object@sdcoef
   level0 <- if(is.null(level)) object@level else max(0,level)
   s0ind<-object@s0ind
-  s0 <- object@si[,,,s0ind]
+  s0 <- object@si[,,,s0ind,drop=FALSE]
   ls0ind <- length(s0ind)
   A0 <- level0
   if(ls0ind>1) {
@@ -30,22 +30,24 @@ setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive
     A1 <- quantile(s0mean[s0mean>0],.98)
     dim(s0mean) <- object@ddim
   } else {
+    dim(s0) <- object@ddim
     A1 <- quantile(s0[s0>0],.98)
   }
   if(interactive) {
     accept <- FALSE
     ddim <- object@ddim
+    ddm1 <- ddim-1
     bw <- min(bw.nrd(if(ls0ind>1) s0mean[s0mean>0] else s0[s0>0]),diff(range(if(ls0ind>1) s0mean else s0))/256)
     z <- density(if(ls0ind>1) s0mean[s0mean>0&s0mean<A1] else s0[s0>0&s0<A1],bw = max(bw,.01),,n=1024)
-    indx1 <- trunc(0.05*ddim[1]):trunc(0.95*ddim[1])
-    indx2 <- trunc(0.1*ddim[1]):trunc(0.9*ddim[1])
-    indx3 <- trunc(0.15*ddim[1]):trunc(0.85*ddim[1])
-    indy1 <- trunc(0.05*ddim[2]):trunc(0.95*ddim[2])
-    indy2 <- trunc(0.1*ddim[2]):trunc(0.9*ddim[2])
-    indy3 <- trunc(0.15*ddim[2]):trunc(0.85*ddim[2])
-    indz1 <- trunc(0.05*ddim[3]):trunc(0.95*ddim[3])
-    indz2 <- trunc(0.1*ddim[3]):trunc(0.9*ddim[3])
-    indz3 <- trunc(0.15*ddim[3]):trunc(0.85*ddim[3])
+    indx1 <- trunc(0.05*ddm1[1]):trunc(0.95*ddm1[1])+1
+    indx2 <- trunc(0.1*ddm1[1]):trunc(0.9*ddm1[1])+1
+    indx3 <- trunc(0.15*ddm1[1]):trunc(0.85*ddm1[1])+1
+    indy1 <- trunc(0.05*ddm1[2]):trunc(0.95*ddm1[2])+1
+    indy2 <- trunc(0.1*ddm1[2]):trunc(0.9*ddm1[2])+1
+    indy3 <- trunc(0.15*ddm1[2]):trunc(0.85*ddm1[2])+1
+    indz1 <- trunc(0.05*ddm1[3]):trunc(0.95*ddm1[3])+1
+    indz2 <- trunc(0.1*ddm1[3]):trunc(0.9*ddm1[3])+1
+    indz3 <- trunc(0.15*ddm1[3]):trunc(0.85*ddm1[3])+1
     z1 <- density(if(ls0ind>1) s0mean[indx1,indy1,indz1][s0mean[indx1,indy1,indz1]>0] else s0[indx1,indy1,indz1][s0[indx1,indy1,indz1]>0],bw=bw,n=1024)
     z2 <- density(if(ls0ind>1) s0mean[indx2,indy2,indz2][s0mean[indx2,indy2,indz2]>0] else s0[indx2,indy2,indz2][s0[indx2,indy2,indz2]>0],bw=bw,n=1024)
     z3 <- density(if(ls0ind>1) s0mean[indx3,indy3,indz3][s0mean[indx3,indy3,indz3]>0] else s0[indx3,indy3,indz3][s0[indx3,indy3,indz3]>0],bw=bw,n=1024)
@@ -151,9 +153,6 @@ setMethod("getsdofsb","dtiData", function(object,qA0=.1,qA1=.98,nsb=NULL,level=N
   set.seed(1)
   snsb <- sample(ngrad0,nsb)
   sb <- extract(object,what="sb")$sb[,,,snsb,drop=FALSE]
-  cat(dim(sb),"\n")
-   cat(sort(snsb),"\n")
-   cat(nsb,"\n")
   A0 <- quantile(sb,qA0)
   A1 <- quantile(sb,qA1)
   sdcoef1 <- coef1 <- coef2 <- numeric(nsb)
@@ -581,7 +580,7 @@ setMethod("extract","dwiMixtensor",function(x, what="andir", xind=TRUE, yind=TRU
      andir[3,] <- cos(orient[1,])
      z$andir <- array(andir,c(3,dim(x@orient)[-1]))
      }
-  if("s0" %in% what) z$s0 <- x@S0
+  if("s0" %in% what) z$s0 <- x@th0
   if("mask" %in% what) z$mask <- x@mask
   if("fa" %in% what){
       fa <- x@ev[1,,,]/sqrt((x@ev[1,,,]+x@ev[2,,,])^2+2*x@ev[2,,,]^2)

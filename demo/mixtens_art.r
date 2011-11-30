@@ -105,8 +105,14 @@ if(is.na(maxcomp)) maxcomp <- 3 else maxcomp <- min(5,max(1,maxcomp))
 z0 <- truemixtens(mix,th,alpha,beta,grad,sigma,ns0)
 z <- tdatamixtens(mix,th,alpha,beta,grad,sigma,ns0)
 zt <- dtiTensor(z)
-zmix <- dwiMixtensor(z,maxcomp=maxcomp)
-zmix <- dwiMtImprove(zmix,z,maxcomp=maxcomp)
+zmix <- dwiMixtensor(z,maxcomp=1)
+summary(zmix)
+if(maxcomp>1) for(m in 2:maxcomp){
+zmix0 <- dwiMixtensor(z,maxcomp=m)
+zmix <- dwiMtCombine(zmix0,zmix)
+zmix <- dwiMtImprove(zmix,z,maxcomp=m)
+summary(zmix)
+}
 gslexists <- "gsl" %in% .packages(TRUE)
 if(gslexists) zqball <- dwiQball(z,order=8,lambda=2e-2)
 

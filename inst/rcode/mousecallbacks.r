@@ -101,3 +101,19 @@ mouseFOV <- function(button = 1, dev = rgl.cur())
     mouseInterp(button,dev=dev,fn=par3dinterp(times=c(1,179)/180, FOV=c(1,179),method="linear"), 
                       init=par3d("FOV")/180, range = c(1,179)/180, direction=c(0,1))
 
+clamp <- function(value, low, high)
+{
+  if (value < low) {
+    warning( paste("value clamped to ",low) ); 
+    result <- low
+  }
+  else if (value > high) {
+    warning( paste("value clamped to ",high) );
+    result <- high
+  }
+  else {
+    result <- value
+  }
+
+  return (result);
+}

@@ -49,13 +49,23 @@
 \value{
   An object of class \code{dtiTensor}.
 }
-\references{  Tabelow, K. and Polzehl, J. and Spokoiny, V. and Voss, H. U. (2008)
-              Diffusion Tensor Imaging: Structural adaptive smoothing,
-              \emph{NeuroImage} \bold{39(4)}, 1763--1773.
+\references{               J. Polzehl and K. Tabelow, 
+             \emph{Beyond the diffusion tensor model: The package \pkg{dti}},
+             Journal of Statistical Software, to appear.
 
-              Koay, C. G. and Carew, J. D. and Alexander, A. L. and Basser, P. J. and Meyerand, M.E. (2006)
-              Investigation of Anomalous Estimates of Tensor-Derived Quantities in Diffusion Tensor Imaging, 
-              \emph{Magnetic Resonance in Medicine} \bold{55}, 930--936.
+             K. Tabelow, H.U. Voss and J. Polzehl, 
+             \emph{Modeling the orientation distribution function by 
+             mixtures of angular central Gaussian distributions},
+             Journal of Neuroscience Methods, to appear.
+
+             J. Polzehl and K. Tabelow, 
+             \emph{Structural adaptive smoothing in diffusion tensor imaging: 
+             The R package dti}, Journal of Statistical Software, 31 (2009) pp. 1--24.
+             
+              K. Tabelow, J. Polzehl, V. Spokoiny and H.U. Voss. 
+              \emph{Diffusion Tensor Imaging: Structural adaptive smoothing}, 
+              NeuroImage 39(4), 1763-1773 (2008).
+
 
               \url{ http://www.wias-berlin.de/projects/matheon_a3/} 
 }

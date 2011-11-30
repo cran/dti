@@ -110,7 +110,6 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
             if(.not.keep(ishort)) CYCLE
             keep(ishort)=.FALSE.
             DO is=startf(ishort),endf(ishort)
-               mindist=maxd
                f1=fibers(1,is)
                f2=fibers(2,is)
                f3=fibers(3,is)
@@ -118,7 +117,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
                   z1=f1-fibers(1,il)
                   z2=f2-fibers(2,il)
                   z3=f3-fibers(3,il)
-                  mindist=min(mindist,z1*z1+z2*z2+z3*z3)
+                  mindist=z1*z1+z2*z2+z3*z3
+                  if(mindist.lt.maxd) EXIT
                END DO
                if(mindist.ge.maxd) THEN
                   keep(ishort)=.TRUE.

@@ -1,0 +1,11 @@
+070507
+------
+
+* dti.smooth() liefert fuer hmax=1 einen object-fehler. ursache ist das nichtdurchlaufen der iteration und damit die nichtexistenz von theta!
+
+* fuer die graphische ausgabe in dti.smooth() wird auf die nichtexistente funktion andir2.image() zurueckgegriffen. muss durch plot() ersetzt werden.
+
+010127
+------
+
+* wir brauchen das inst/dat verzeichnis nicht, packe die files nach data

@@ -394,7 +394,7 @@ C
       implicit logical (a-z)
       integer m,lpar,n
       real*8 par(lpar),siq(n),g(3,n),z(n,m),pen,dfdpar(lpar),
-     1       para(lpar),parb(lpar),eps,w(n)
+     1       w(n),para(lpar),parb(lpar),eps
       real*8 erga,ergb,deltai
       integer i
       deltai=0.5d0/eps
@@ -632,7 +632,7 @@ C
       integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
      1       isample(m,ntry),indth(nvox)
       real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
-     1       th(nvox),egrad(ngrad,nv),z(ngrad,ns),mval(nvox),
+     1       th(nth),egrad(ngrad,nv),z(ngrad,ns),mval(nvox),
      2       vsi(nvox)
       logical mask(nvox)
       integer i,k,ibest,mode,ind(10),l,j,ii,iw,wind(5),nwi(5)
@@ -747,11 +747,11 @@ C
       integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
      1       isample(1),indth(nvox),iandir(nvox)
       real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
-     1       th(nvox),egrad(ngrad,nv),z(ngrad,ns),mval(nvox),
+     1       th(nth),egrad(ngrad,nv),z(ngrad,ns),mval(nvox),
      2       vsi(nvox),dgradv(nv,nv),maxc
       logical mask(nvox),skip
       integer i,k,mode,ind(10),l,j,ii,iw,wind(5),nwi(5),mis,
-     1        is(5),isbest(5),ntry0,iii
+     1        is(5),isbest(5),ntry0,km1mis
       real*8 w(1000),krit,work1(1000),work2(10),erg,thj,msi,m2si,
      1       z1,dng
       dng=ngrad
@@ -789,11 +789,11 @@ C
 C  now search for minima of sms (or weighted sms)
                krit=mval(i)
                DO k=1,ntry0
+                  km1mis=(k-1)*mis
                   IF(m.gt.1) THEN
                      skip=.FALSE.
                      DO l=1,m-1
-                        iii=mis*(k-1)+l
-                   if(dgradv(isample(mis*(k-1)+l),iandir(i)).gt.maxc)
+                   if(dgradv(isample(km1mis+l),iandir(i)).gt.maxc)
      1                    skip=.TRUE.
                      END DO
                      IF(skip) CYCLE
@@ -801,7 +801,7 @@ C  now search for minima of sms (or weighted sms)
                   call dcopy(ngrad,si(1,i),1,sms,1)
                   IF(m.gt.1) THEN
                      DO l=1,m-1
-                        is(l)=isample(mis*(k-1)+l)
+                        is(l)=isample(km1mis+l)
                         call dcopy(ngrad,egrad(1,is(l)),1,z(1,l),1)
                      END DO
                   END IF
@@ -876,7 +876,7 @@ C
       integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
      1       isample(m,ntry),indth(nvox)
       real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
-     1       th(nvox),egrad(ngrad,nv),z(ngrad,1),mval(nvox),
+     1       th(nth),egrad(ngrad,nv),z(ngrad,1),mval(nvox),
      2       vsi(nvox)
       logical mask(nvox)
       integer i,k,ibest,mode,ind(12),l,j,ii,iw,wind(5),nwi(5),mp1
@@ -996,11 +996,11 @@ C
       integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
      1       isample(1),indth(nvox),iandir(nvox)
       real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
-     1       th(nvox),egrad(ngrad,nv),z(ngrad,1),mval(nvox),
+     1       th(nth),egrad(ngrad,nv),z(ngrad,1),mval(nvox),
      2       vsi(nvox),dgradv(nv,nv),maxc
       logical mask(nvox),skip
       integer i,k,mode,ind(12),l,j,ii,iw,wind(5),nwi(5),mis,
-     1        is(5),isbest(5),ntry0,iii,mp1
+     1        is(5),isbest(5),ntry0,mp1,km1mis
       real*8 w(1000),krit,work1(1000),work2(10),erg,thj,msi,m2si,
      1       z1,dng,ethj
       dng=ngrad
@@ -1040,11 +1040,11 @@ C
 C  now search for minima of sms (or weighted sms)
                krit=mval(i)
                DO k=1,ntry0
+                  km1mis=(k-1)*mis
                   IF(m.gt.1) THEN
                      skip=.FALSE.
                      DO l=1,m-1
-                        iii=mis*(k-1)+l
-                   if(dgradv(isample(mis*(k-1)+l),iandir(i)).gt.maxc)
+                       if(dgradv(isample(km1mis+l),iandir(i)).gt.maxc)
      1                    skip=.TRUE.
                      END DO
                      IF(skip) CYCLE
@@ -1055,7 +1055,7 @@ C  now search for minima of sms (or weighted sms)
                   END DO
                   IF(m.gt.1) THEN
                      DO l=1,m-1
-                        is(l)=isample(mis*(k-1)+l)
+                        is(l)=isample(km1mis+l)
                         call dcopy(ngrad,egrad(1,is(l)),1,z(1,l+1),1)
                      END DO
                   END IF
