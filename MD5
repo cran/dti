@@ -1,6 +1,6 @@
 47a06bc5deb27376bcc69ef1315f0f7d *BUGS
 1f13cea7da0e978bb7473d42b89ed63e *COPYRIGHT
-deb4919ce524ae46811a0aa20ac37c78 *DESCRIPTION
+cfedd7076236accd6449e0cd754fee1b *DESCRIPTION
 8e71c68ed497ef340376b6a5ab2a5a77 *HISTORY
 b87b80616c4fa5076a778e5c58cd3ae1 *NAMESPACE
 1c563d50eb7c8394bfada09b1079d7c7 *R-try/try.r
@@ -92,7 +92,7 @@ e40f0a5e8b31819eebb27c1301d54616 *src/dtifull.f
 a2c0ea018a2745088eaff83a009e0b66 *src/misc.f
 2f62e385d9d849fd7cd4f3cce6172507 *src/mixtens.f
 d41d8cd98f00b204e9800998ecf8427e *src/mixtensor.h
-e924afc78b9aa0f7df903bb894349727 *src/mixtensorpl.c
+e39f28029623ca54485b28cafd15eb22 *src/mixtensorpl.c
 750ed798c4bf16b10f83df65bba4e332 *src/nlrdtirg.f
 4f107f4a4984888622743ea30e696c24 *src/rice.f
 1e2d5804e72f2d40225d098d4719413a *src/show3d.f

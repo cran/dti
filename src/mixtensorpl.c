@@ -5,9 +5,6 @@
 #include <R_ext/Utils.h>
 #include <stdlib.h>
 
-#include <sys/time.h>
-#include <omp.h>
-#include <time.h>
 
 int dim_x = 0, dim_y = 0, dim_z = 0, ngrad0c = 0;
 int i1 = 0, i2 = 0, i3 = 0;
