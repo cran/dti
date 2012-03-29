@@ -1,4 +1,101 @@
 #
+#
+#      estimate variance parameter in a multicoil system
+#
+#
+awssigmc <- function(y,steps,mask=NULL,ncoils=1,vext=c(1,1),lambda=10,h0=2,method="median",
+     verbose=FALSE,model="chisq",sequence=FALSE){
+   ddim <- dim(y)
+   n <- prod(ddim)
+   if(length(ddim)!=3) {
+      warning("first argument should be a 3-dimentional array")
+      stop()
+   }
+   if(length(mask)!=n) {
+      warning("dimensions of data array and mask should coincide")
+      stop()
+   }
+   if(is.null(mask)) mask <- array(TRUE,ddim)
+   sigma <- mean(y[mask]^2)/2/ncoils
+   th <- array(2*ncoils+sigma,ddim)
+#  use chi-sq quantities
+   ni <- array(1,ddim)
+   if(sequence) sigmas <- numeric(steps)
+   for(i in 1:steps){
+   h <- h0*1.25^((i-1)/3)
+   if(model=="chisq"){
+   z <- .Fortran("awsvchi2",
+                 as.double(y^2),
+                 as.double(th),
+                 ni=as.double(ni),
+                 as.logical(mask),
+                 as.integer(ddim[1]),
+                 as.integer(ddim[2]),
+                 as.integer(ddim[3]),
+                 as.double(lambda),
+                 as.integer(ncoils),
+                 th=double(n),
+                 th2=double(n),
+                 ni2=double(n),
+                 double(n),#array to precompute lgamma
+                 as.double(sigma),
+                 as.double(h),
+                 as.double(vext),
+                 DUPL=FALSE,
+                 PACKAGE="dti")[c("ni","th","th2","ni2")]
+     ni <- z$ni
+     th <- z$th
+     ind <- ni>mean(ni)
+     m1 <- th[ind]
+     cw <- z$ni2[ind]/ni[ind]^2
+     mu <- pmax(1/(1-cw)*(z$th2[ind]-m1^2),0)
+     p <- 2*ncoils
+     s2<-(m1-sqrt(pmax(0,m1^2-mu*ncoils)))/p
+     } else {
+    z <- .Fortran("awsvchi2",
+                 as.double(y),
+                 as.double(th),
+                 ni=as.double(ni),
+                 as.logical(mask),
+                 as.integer(ddim[1]),
+                 as.integer(ddim[2]),
+                 as.integer(ddim[3]),
+                 as.double(lambda),
+                 as.integer(ncoils),
+                 th=double(n),
+                 th2=double(n),
+                 ni2=double(n),
+                 double(n),#array to precompute lgamma
+                 as.double(sigma),
+                 as.double(h),
+                 as.double(vext),
+                 DUPL=FALSE,
+                 PACKAGE="dti")[c("ni","th","th2","ni2")]
+     ni <- z$ni
+     th <- z$th2
+     ind <- ni>mean(ni)
+     m1 <- z$th[ind]
+     cw <- z$ni2[ind]/ni[ind]^2
+     mu <- pmax(1/(1-cw)*(th[ind]-m1^2),0)
+     eta <- fixpetaL(ncoils,rep(1,sum(ind)),m1,mu)
+     s2 <- (m1/m1chiL(ncoils,eta))^2
+    }
+     if(verbose){
+     plot(density(sqrt(s2[s2>0]),to=min(max(sqrt(s2[s2>0])),median(sqrt(s2[s2>0]))*5)),
+            main=paste("estimated sigmas step",i,"h=",signif(h,3)))
+     cat("step",i,"h=",signif(h,3),"quantiles of ni",signif(quantile(ni),3),"mean",signif(mean(ni),3),"\n")
+     cat("quantiles of sigma",signif(sqrt(quantile(s2[s2>0])),3),"mean",signif(sqrt(mean(s2[s2>0])),3),"\n")
+     }
+     if(method=="median") sigma <- median(s2[s2>0]) else {
+#  use the maximal mode of estimated local variance parameters, exclude largest values for better precision
+        dsigma <- density(s2[s2>0],n=1024,to=quantile(s2[s2>0],.95))
+        sigma <- dsigma$x[dsigma$y==max(dsigma$y)][1]
+     }
+     if(sequence) sigmas[i] <- sigma
+     }
+     sqrt(if(sequence) sigmas else sigma)
+     }
+#
 #    R - function  aws  for likelihood  based  Adaptive Weights Smoothing (AWS)
 #    for local constant Gaussian, Bernoulli, Exponential, Poisson, Weibull and  
 #    Volatility models                                                         

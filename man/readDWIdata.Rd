@@ -9,10 +9,10 @@
 dtiData(gradient, imagefile, ddim, xind = NULL, yind = NULL, zind = NULL, 
         level = 0, mins0value = 0, maxvalue = 32000, voxelext = c(1, 1, 1), 
         orientation = c(0, 2, 5), rotation = diag(3))
-readDWIdata(gradient, dirlist, format, nslice = NULL, order = NULL, 
+readDWIdata(gradient, dirlist, format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), nslice = NULL, order = NULL, 
         xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, 
         maxvalue = 32000, voxelext = NULL, orientation = c(0, 2, 5), 
-        rotation = diag(3))
+        rotation = NULL, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -32,6 +32,7 @@ readDWIdata(gradient, dirlist, format, nslice = NULL, order = NULL,
   \item{voxelext}{ voxel extensions in coordinate directions }
   \item{orientation}{ orientations of data as coded in AFNI }
   \item{rotation}{ optional rotation matrix for the coordinate system.}
+  \item{verbose}{ some progress reports if TRUE }
 }
 \details{
   The function \code{dtiData} creates an object of class \code{"dtiData"} from an image file, where the diffusion weighted data is given as 2-byte integer.  This image file has to be prepared by the user.  Use \code{\link{writeBin}} to write out first all S0 images and than all Si images. The \code{gradient} should be created according to this order. Run the demo in order to have an example, how to do this!

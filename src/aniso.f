@@ -223,82 +223,78 @@ C
 C    Compute DTI-Indices for a slice
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti2Dfa(D,n1,n2,mask,fa,md,adir)
+      subroutine dti2Dfa(D,n,mask,fa,md,adir)
       implicit logical (a-z)
-      integer n1,n2
-      logical mask(n1,n2)
-      real*8 D(6,n1,n2),fa(n1,n2),md(n1,n2),adir(3,n1,n2)
-      integer i1,i2,ierr
+      integer n
+      logical mask(n)
+      real*8 D(6,n),fa(n),md(n),adir(3,n)
+      integer i,ierr
       real*8 lambda(3),evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
-      DO i1=1,n1
-         DO i2=1,n2
-            if(mask(i1,i2)) THEN
-               call eigen3(D(1,i1,i2),lambda,evec,ierr)
-               a1=lambda(1)
-               a2=lambda(2)
-               a3=lambda(3)
-               trc=(a1+a2+a3)/3.d0
-               adir(1,i1,i2)=evec(1,3)
-               adir(2,i1,i2)=evec(2,3)
-               adir(3,i1,i2)=evec(3,3)
-               md(i1,i2)=trc
-               d1=a1-trc
-               d2=a2-trc
-               d3=a3-trc
-               dd=a1*a1+a2*a2+a3*a3
-               IF(dd.gt.1.d-12) THEN
-               fa(i1,i2)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
-               ELSE
-               fa(i1,i2)=0.d0
-               ENDIF
+      DO i=1,n
+         if(mask(i)) THEN
+            call eigen3(D(1,i),lambda,evec,ierr)
+            a1=lambda(1)
+            a2=lambda(2)
+            a3=lambda(3)
+            trc=(a1+a2+a3)/3.d0
+            adir(1,i)=evec(1,3)
+            adir(2,i)=evec(2,3)
+            adir(3,i)=evec(3,3)
+            md(i)=trc
+            d1=a1-trc
+            d2=a2-trc
+            d3=a3-trc
+            dd=a1*a1+a2*a2+a3*a3
+            IF(dd.gt.1.d-12) THEN
+               fa(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
             ELSE
-               md(i1,i2)=0.d0
-               fa(i1,i2)=0.d0
-               adir(1,i1,i2)=1.d0
-               adir(2,i1,i2)=0.d0
-               adir(3,i1,i2)=0.d0
-            END IF
-         END DO
+               fa(i)=0.d0
+            ENDIF
+         ELSE
+            md(i)=0.d0
+            fa(i)=0.d0
+            adir(1,i)=1.d0
+            adir(2,i)=0.d0
+            adir(3,i)=0.d0
+         END IF
       END DO
       RETURN
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti2Dga(D,n1,n2,mask,ga,md,adir)
+      subroutine dti2Dga(D,n,mask,ga,md,adir)
       implicit logical (a-z)
-      integer n1,n2
-      logical mask(n1,n2)
-      real*8 D(6,n1,n2),ga(n1,n2),md(n1,n2),adir(3,n1,n2)
-      integer i1,i2,ierr
+      integer n
+      logical mask(n)
+      real*8 D(6,n),ga(n),md(n),adir(3,n)
+      integer i,ierr
       real*8 lambda(3),evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
-      DO i1=1,n1
-         DO i2=1,n2
-            if(mask(i1,i2)) THEN
-               call eigen3(D(1,i1,i2),lambda,evec,ierr)
-               a1=log(lambda(1))
-               a2=log(lambda(2))
-               a3=log(lambda(3))
-               trc=(a1+a2+a3)/3.d0
-               adir(1,i1,i2)=evec(1,3)
-               adir(2,i1,i2)=evec(2,3)
-               adir(3,i1,i2)=evec(3,3)
-               md(i1,i2)=trc
-               d1=a1-trc
-               d2=a2-trc
-               d3=a3-trc
-               dd=a1*a1+a2*a2+a3*a3
-               IF(dd.gt.1.d-12) THEN
-               ga(i1,i2)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
-               ELSE
-               ga(i1,i2)=0.d0
-               ENDIF
+      DO i=1,n
+         if(mask(i)) THEN
+            call eigen3(D(1,i),lambda,evec,ierr)
+            a1=log(lambda(1))
+            a2=log(lambda(2))
+            a3=log(lambda(3))
+            trc=(a1+a2+a3)/3.d0
+            adir(1,i)=evec(1,3)
+            adir(2,i)=evec(2,3)
+            adir(3,i)=evec(3,3)
+            md(i)=trc
+            d1=a1-trc
+            d2=a2-trc
+            d3=a3-trc
+            dd=a1*a1+a2*a2+a3*a3
+            IF(dd.gt.1.d-12) THEN
+               ga(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
             ELSE
-               md(i1,i2)=0.d0
-               ga(i1,i2)=0.d0
-               adir(1,i1,i2)=1.d0
-               adir(2,i1,i2)=0.d0
-               adir(3,i1,i2)=0.d0
-            END IF
-         END DO
+               ga(i)=0.d0
+            ENDIF
+         ELSE
+            md(i)=0.d0
+            ga(i)=0.d0
+            adir(1,i)=1.d0
+            adir(2,i)=0.d0
+            adir(3,i)=0.d0
+         END IF
       END DO
       RETURN
       END
@@ -307,63 +303,105 @@ C
 C    Compute DTI-Indices for a volume
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dtiind3D(D,n1,n2,n3,mask,fa,ga,md,adir,bary)
+      subroutine dtiind3D(D,n,mask,fa,ga,md,adir,bary)
       implicit logical (a-z)
-      integer n1,n2,n3
-      logical mask(n1,n2,n3)
-      real*8 D(6,n1,n2,n3),fa(n1,n2,n3),md(n1,n2,n3),adir(3,n1,n2,n3),
-     1       bary(3,n1,n2,n3),ga(n1,n2,n3)
-      integer i1,i2,i3,ierr
+      integer n
+      logical mask(n)
+      real*8 D(6,n),fa(n),md(n),adir(3,n),bary(3,n),ga(n)
+      integer i,ierr
       real*8 lambda(3),evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-            if(mask(i1,i2,i3)) THEN
-               call eigen3(D(1,i1,i2,i3),lambda,evec,ierr)
-               a1=lambda(1)
-               a2=lambda(2)
-               a3=lambda(3)
-               trc=(a1+a2+a3)/3.d0
-               adir(1,i1,i2,i3)=evec(1,3)
-               adir(2,i1,i2,i3)=evec(2,3)
-               adir(3,i1,i2,i3)=evec(3,3)
-               md(i1,i2,i3)=trc
-               d1=a1-trc
-               d2=a2-trc
-               d3=a3-trc
-               dd=a1*a1+a2*a2+a3*a3
-               IF(dd.gt.1.d-12) THEN
-               fa(i1,i2,i3)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
-               bary(1,i1,i2,i3)=(a3-a2)/trc/3.d0
-               bary(2,i1,i2,i3)=2.d0*(a2-a1)/trc/3.d0
-               bary(3,i1,i2,i3)=a1/trc
-               ELSE
-               fa(i1,i2,i3)=0.d0
-               bary(1,i1,i2,i3)=0.d0
-               bary(2,i1,i2,i3)=0.d0
-               bary(3,i1,i2,i3)=1.d0
-               ENDIF
-               d1=log(a1)
-               d2=log(a2)
-               d3=log(a3)
-               dd=(d1+d2+d3)/3.d0
-               d1=d1-dd
-               d2=d2-dd
-               d3=d3-dd
-               ga(i1,i2,i3)=sqrt(d1*d1+d2*d2+d3*d3)
+      DO i=1,n
+         if(mask(i)) THEN
+            call eigen3(D(1,i),lambda,evec,ierr)
+            a1=lambda(1)
+            a2=lambda(2)
+            a3=lambda(3)
+            trc=(a1+a2+a3)/3.d0
+            adir(1,i)=evec(1,3)
+            adir(2,i)=evec(2,3)
+            adir(3,i)=evec(3,3)
+            md(i)=trc
+            d1=a1-trc
+            d2=a2-trc
+            d3=a3-trc
+            dd=a1*a1+a2*a2+a3*a3
+            IF(dd.gt.1.d-12) THEN
+               fa(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
+               bary(1,i)=(a3-a2)/trc/3.d0
+               bary(2,i)=2.d0*(a2-a1)/trc/3.d0
+               bary(3,i)=a1/trc
             ELSE
-               md(i1,i2,i3)=0.d0
-               fa(i1,i2,i3)=0.d0
-               ga(i1,i2,i3)=0.d0
-               adir(1,i1,i2,i3)=1.d0
-               adir(2,i1,i2,i3)=0.d0
-               adir(3,i1,i2,i3)=0.d0
-               bary(1,i1,i2,i3)=0.d0
-               bary(2,i1,i2,i3)=0.d0
-               bary(3,i1,i2,i3)=1.d0
-            END IF
-            END DO
-         END DO
+               fa(i)=0.d0
+               bary(1,i)=0.d0
+               bary(2,i)=0.d0
+               bary(3,i)=1.d0
+            ENDIF
+            d1=log(a1)
+            d2=log(a2)
+            d3=log(a3)
+            dd=(d1+d2+d3)/3.d0
+            d1=d1-dd
+            d2=d2-dd
+            d3=d3-dd
+            ga(i)=sqrt(d1*d1+d2*d2+d3*d3)
+         ELSE
+            md(i)=0.d0
+            fa(i)=0.d0
+            ga(i)=0.d0
+            adir(1,i)=1.d0
+            adir(2,i)=0.d0
+            adir(3,i)=0.d0
+            bary(1,i)=0.d0
+            bary(2,i)=0.d0
+            bary(3,i)=1.d0
+         END IF
+      END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C    Compute DTI-Indices for a volume (version for parallelization code)
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine dtiind3p(D,n,ergs)
+      implicit logical (a-z)
+      integer n
+      real*8 D(6,n),ergs(9,n)
+      integer i,ierr
+      real*8 lambda(3),evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
+      DO i=1,n
+            call eigen3(D(1,i),lambda,evec,ierr)
+            a1=lambda(1)
+            a2=lambda(2)
+            a3=lambda(3)
+            trc=(a1+a2+a3)/3.d0
+            ergs(1,i)=evec(1,3)
+            ergs(2,i)=evec(2,3)
+            ergs(3,i)=evec(3,3)
+            ergs(6,i)=trc
+            d1=a1-trc
+            d2=a2-trc
+            d3=a3-trc
+            dd=a1*a1+a2*a2+a3*a3
+            IF(dd.gt.1.d-12) THEN
+               ergs(4,i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
+               ergs(7,i)=(a3-a2)/trc/3.d0
+               ergs(8,i)=2.d0*(a2-a1)/trc/3.d0
+               ergs(9,i)=a1/trc
+            ELSE
+               ergs(4,i)=0.d0
+               ergs(7,i)=0.d0
+               ergs(8,i)=0.d0
+               ergs(9,i)=1.d0
+            ENDIF
+            d1=log(a1)
+            d2=log(a2)
+            d3=log(a3)
+            dd=(d1+d2+d3)/3.d0
+            d1=d1-dd
+            d2=d2-dd
+            d3=d3-dd
+            ergs(5,i)=sqrt(d1*d1+d2*d2+d3*d3)
       END DO
       RETURN
       END
@@ -372,52 +410,47 @@ C
 C    Compute subset of DTI-Indices for a volume
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dtieigen(D,n1,n2,n3,mask,fa,ev,adir)
+      subroutine dtieigen(D,n,mask,fa,ev,adir)
       implicit logical (a-z)
-      integer n1,n2,n3
-      logical mask(n1,n2,n3)
-      real*8 D(6,n1,n2,n3),fa(n1,n2,n3),ev(3,n1,n2,n3),
-     1       adir(3,2,n1,n2,n3)
-      integer i1,i2,i3,ierr
+      integer n
+      logical mask(n)
+      real*8 D(6,n),fa(n),ev(3,n),adir(3,2,n)
+      integer i,ierr
       real*8 lambda(3),evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-            if(mask(i1,i2,i3)) THEN
-               call eigen3(D(1,i1,i2,i3),lambda,evec,ierr)
-               ev(1,i1,i2,i3)=lambda(3)
-               ev(2,i1,i2,i3)=lambda(2)
-               ev(3,i1,i2,i3)=lambda(1)
-               a1=lambda(1)
-               a2=lambda(2)
-               a3=lambda(3)
-               trc=(a1+a2+a3)/3.d0
-               adir(1,1,i1,i2,i3)=evec(1,3)
-               adir(2,1,i1,i2,i3)=evec(2,3)
-               adir(3,1,i1,i2,i3)=evec(3,3)
-               adir(1,2,i1,i2,i3)=evec(1,2)
-               adir(2,2,i1,i2,i3)=evec(2,2)
-               adir(3,2,i1,i2,i3)=evec(3,2)
-               d1=a1-trc
-               d2=a2-trc
-               d3=a3-trc
-               dd=a1*a1+a2*a2+a3*a3
-               IF(dd.gt.1.d-12) THEN
-               fa(i1,i2,i3)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
-               ELSE
-               fa(i1,i2,i3)=0.d0
-               ENDIF
+      DO i=1,n
+         if(mask(i)) THEN
+            call eigen3(D(1,i),lambda,evec,ierr)
+            ev(1,i)=lambda(3)
+            ev(2,i)=lambda(2)
+            ev(3,i)=lambda(1)
+            a1=lambda(1)
+            a2=lambda(2)
+            a3=lambda(3)
+            trc=(a1+a2+a3)/3.d0
+            adir(1,1,i)=evec(1,3)
+            adir(2,1,i)=evec(2,3)
+            adir(3,1,i)=evec(3,3)
+            adir(1,2,i)=evec(1,2)
+            adir(2,2,i)=evec(2,2)
+            adir(3,2,i)=evec(3,2)
+            d1=a1-trc
+            d2=a2-trc
+            d3=a3-trc
+            dd=a1*a1+a2*a2+a3*a3
+            IF(dd.gt.1.d-12) THEN
+               fa(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
             ELSE
-               fa(i1,i2,i3)=0.d0
-               adir(1,1,i1,i2,i3)=1.d0
-               adir(2,1,i1,i2,i3)=0.d0
-               adir(3,1,i1,i2,i3)=0.d0
-               adir(1,2,i1,i2,i3)=0.d0
-               adir(2,2,i1,i2,i3)=1.d0
-               adir(3,2,i1,i2,i3)=0.d0
-            END IF
-            END DO
-         END DO
+               fa(i)=0.d0
+            ENDIF
+         ELSE
+            fa(i)=0.d0
+            adir(1,1,i)=1.d0
+            adir(2,1,i)=0.d0
+            adir(3,1,i)=0.d0
+            adir(1,2,i)=0.d0
+            adir(2,2,i)=1.d0
+            adir(3,2,i)=0.d0
+         END IF
       END DO
       RETURN
       END
@@ -426,60 +459,117 @@ C
 C    Compute DTI-Indices for a volume
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti3Dall(D,n1,n2,n3,mask,fa,ga,md,adir,ev)
+      subroutine dti3Dall(D,n,mask,fa,ga,md,adir,ev)
       implicit logical (a-z)
-      integer n1,n2,n3
-      logical mask(n1,n2,n3)
-      real*8 D(6,n1,n2,n3),fa(n1,n2,n3),md(n1,n2,n3),adir(3,n1,n2,n3),
-     1       ev(3,n1,n2,n3),ga(n1,n2,n3)
-      integer i1,i2,i3,ierr
+      integer n
+      logical mask(n)
+      real*8 D(6,n),fa(n),md(n),adir(3,n),ev(3,n),ga(n)
+      integer i,ierr
       real*8 evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-            if(mask(i1,i2,i3)) THEN
-               call eigen3(D(1,i1,i2,i3),ev(1,i1,i2,i3),evec,ierr)
-               a1=ev(1,i1,i2,i3)
-               a2=ev(2,i1,i2,i3)
-               a3=ev(3,i1,i2,i3)
-               trc=(a1+a2+a3)/3.d0
-               adir(1,i1,i2,i3)=evec(1,3)
-               adir(2,i1,i2,i3)=evec(2,3)
-               adir(3,i1,i2,i3)=evec(3,3)
-               md(i1,i2,i3)=trc
-               d1=a1-trc
-               d2=a2-trc
-               d3=a3-trc
-               dd=a1*a1+a2*a2+a3*a3
-               IF(dd.gt.1.d-12) THEN
-               fa(i1,i2,i3)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
-               ELSE
-               fa(i1,i2,i3)=0.d0
-               ev(1,i1,i2,i3)=0.d0
-               ev(2,i1,i2,i3)=0.d0
-               ev(3,i1,i2,i3)=0.d0
-               ENDIF
-               d1=log(a1)
-               d2=log(a2)
-               d3=log(a3)
-               dd=(d1+d2+d3)/3.d0
-               d1=d1-dd
-               d2=d2-dd
-               d3=d3-dd
-               ga(i1,i2,i3)=sqrt(d1*d1+d2*d2+d3*d3)
+      DO i=1,n
+         if(mask(i)) THEN
+            call eigen3(D(1,i),ev(1,i),evec,ierr)
+            a1=ev(1,i)
+            a2=ev(2,i)
+            a3=ev(3,i)
+            trc=(a1+a2+a3)/3.d0
+            adir(1,i)=evec(1,3)
+            adir(2,i)=evec(2,3)
+            adir(3,i)=evec(3,3)
+            md(i)=trc
+            d1=a1-trc
+            d2=a2-trc
+            d3=a3-trc
+            dd=a1*a1+a2*a2+a3*a3
+            IF(dd.gt.1.d-12) THEN
+               fa(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
             ELSE
-               md(i1,i2,i3)=0.d0
-               fa(i1,i2,i3)=0.d0
-               ga(i1,i2,i3)=0.d0
-               adir(1,i1,i2,i3)=1.d0
-               adir(2,i1,i2,i3)=0.d0
-               adir(3,i1,i2,i3)=0.d0
-               ev(1,i1,i2,i3)=0.d0
-               ev(2,i1,i2,i3)=0.d0
-               ev(3,i1,i2,i3)=0.d0
-            END IF
-            END DO
-         END DO
+               fa(i)=0.d0
+               ev(1,i)=0.d0
+               ev(2,i)=0.d0
+               ev(3,i)=0.d0
+            ENDIF
+            d1=log(a1)
+            d2=log(a2)
+            d3=log(a3)
+            dd=(d1+d2+d3)/3.d0
+            d1=d1-dd
+            d2=d2-dd
+            d3=d3-dd
+            ga(i)=sqrt(d1*d1+d2*d2+d3*d3)
+         ELSE
+            md(i)=0.d0
+            fa(i)=0.d0
+            ga(i)=0.d0
+            adir(1,i)=1.d0
+            adir(2,i)=0.d0
+            adir(3,i)=0.d0
+            ev(1,i)=0.d0
+            ev(2,i)=0.d0
+            ev(3,i)=0.d0
+         END IF
+      END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C    Compute DTI-Indices for a volume (parallelized version)
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine dti3Dalp(D,n,ergs)
+C
+C  components of ergs: 1:fa 2:ga 3:md, 4:6 adir, 7:9 ev
+C
+      implicit logical (a-z)
+      integer n
+      real*8 D(6,n),ergs(9,n)
+      integer i,ierr
+      real*8 evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
+      DO i=1,n
+         call eigen3(D(1,i),ergs(7,i),evec,ierr)
+         a1=ergs(7,i)
+         a2=ergs(8,i)
+         a3=ergs(9,i)
+         trc=(a1+a2+a3)/3.d0
+         ergs(4,i)=evec(1,3)
+         ergs(5,i)=evec(2,3)
+         ergs(6,i)=evec(3,3)
+         ergs(3,i)=trc
+         d1=a1-trc
+         d2=a2-trc
+         d3=a3-trc
+         dd=a1*a1+a2*a2+a3*a3
+         IF(dd.gt.1.d-12) THEN
+            ergs(1,i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
+         ELSE
+            ergs(1,i)=0.d0
+            ergs(4,i)=0.d0
+            ergs(5,i)=0.d0
+            ergs(6,i)=0.d0
+         ENDIF
+         d1=log(a1)
+         d2=log(a2)
+         d3=log(a3)
+         dd=(d1+d2+d3)/3.d0
+         d1=d1-dd
+         d2=d2-dd
+         d3=d3-dd
+         ergs(2,i)=sqrt(d1*d1+d2*d2+d3*d3)
+      END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C    Compute DTI-eigenvalues for a volume (parallel version)
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine dti3Devp(D,n,ev)
+      implicit logical (a-z)
+      integer n
+      real*8 D(6,n),ev(3,n)
+      integer i,ierr
+      DO i=1,n
+         call eigen30(D(1,i),ev(1,i),ierr)
       END DO
       RETURN
       END
@@ -488,24 +578,69 @@ C
 C    Compute DTI-eigenvalues for a volume
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti3Dev(D,n1,n2,n3,mask,ev)
+      subroutine dti3Dev(D,n,mask,ev)
       implicit logical (a-z)
-      integer n1,n2,n3
-      logical mask(n1,n2,n3)
-      real*8 D(6,n1,n2,n3),ev(3,n1,n2,n3)
-      integer i1,i2,i3,ierr
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-               if(mask(i1,i2,i3)) THEN
-                  call eigen30(D(1,i1,i2,i3),ev(1,i1,i2,i3),ierr)
-               ELSE
-                  ev(1,i1,i2,i3)=0.d0
-                  ev(2,i1,i2,i3)=0.d0
-                  ev(3,i1,i2,i3)=0.d0
-               END IF
-            END DO
-         END DO
+      integer n
+      logical mask(n)
+      real*8 D(6,n),ev(3,n)
+      integer i,ierr
+      DO i=1,n
+         if(mask(i)) THEN
+            call eigen30(D(1,i),ev(1,i),ierr)
+         ELSE
+            ev(1,i)=0.d0
+            ev(2,i)=0.d0
+            ev(3,i)=0.d0
+         END IF
+      END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C    Compute DTI-eigenvectors for a volume (parallel version)
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine dti3Danp(D,n,andir)
+      implicit logical (a-z)
+      integer n
+      real*8 D(6,n),andir(3,n)
+      integer i,ierr
+      real*8 lambda(3),evec(3,3)
+      DO i=1,n
+         call eigen3(D(1,i),lambda,evec,ierr)
+         andir(1,i)=evec(1,3)
+         andir(2,i)=evec(2,3)
+         andir(3,i)=evec(3,3)
+      END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C    Regularize tensors bu setting eigenvalues to zero
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine dti3Dreg(D,n)
+      implicit logical (a-z)
+      integer n
+      real*8 D(6,n)
+      integer i,ierr
+      real*8 lam(3),evec(3,3)
+      DO i=1,n
+         call eigen3(D(1,i),lam,evec,ierr)
+         if(lam(1).lt.0.d0) lam(1)=0.d0
+         if(lam(2).lt.0.d0) lam(2)=0.d0
+         D(1,i) = lam(1)*evec(1,1)*evec(1,1)+
+     1          lam(2)*evec(1,2)*evec(1,2)+lam(3)*evec(1,3)*evec(1,3)
+         D(2,i) = lam(1)*evec(1,1)*evec(2,1)+
+     1          lam(2)*evec(1,2)*evec(2,2)+lam(3)*evec(1,3)*evec(2,3)
+         D(3,i) = lam(1)*evec(1,1)*evec(3,1)+
+     1          lam(2)*evec(1,2)*evec(3,2)+lam(3)*evec(1,3)*evec(3,3)
+         D(4,i) = lam(1)*evec(2,1)*evec(2,1)+
+     1          lam(2)*evec(2,2)*evec(2,2)+lam(3)*evec(2,3)*evec(2,3)
+         D(5,i) = lam(1)*evec(2,1)*evec(3,1)+
+     1          lam(2)*evec(2,2)*evec(3,2)+lam(3)*evec(2,3)*evec(3,3)
+         D(6,i) = lam(1)*evec(3,1)*evec(3,1)+
+     1          lam(2)*evec(3,2)*evec(3,2)+lam(3)*evec(3,3)*evec(3,3)
       END DO
       RETURN
       END
@@ -514,28 +649,24 @@ C
 C    Compute DTI-eigenvectors for a volume
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti3Dand(D,n1,n2,n3,mask,andir)
+      subroutine dti3Dand(D,n,mask,andir)
       implicit logical (a-z)
-      integer n1,n2,n3
-      logical mask(n1,n2,n3)
-      real*8 D(6,n1,n2,n3),andir(3,n1,n2,n3)
-      integer i1,i2,i3,ierr
+      integer n
+      logical mask(n)
+      real*8 D(6,n),andir(3,n)
+      integer i,ierr
       real*8 lambda(3),evec(3,3)
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-               if(mask(i1,i2,i3)) THEN
-                  call eigen3(D(1,i1,i2,i3),lambda,evec,ierr)
-                  andir(1,i1,i2,i3)=evec(1,3)
-                  andir(2,i1,i2,i3)=evec(2,3)
-                  andir(3,i1,i2,i3)=evec(3,3)
-               ELSE
-                  andir(1,i1,i2,i3)=0.d0
-                  andir(2,i1,i2,i3)=0.d0
-                  andir(3,i1,i2,i3)=0.d0
-               END IF
-            END DO
-         END DO
+      DO i=1,n
+         if(mask(i)) THEN
+            call eigen3(D(1,i),lambda,evec,ierr)
+            andir(1,i)=evec(1,3)
+            andir(2,i)=evec(2,3)
+            andir(3,i)=evec(3,3)
+         ELSE
+            andir(1,i)=0.d0
+            andir(2,i)=0.d0
+            andir(3,i)=0.d0
+         END IF
       END DO
       RETURN
       END

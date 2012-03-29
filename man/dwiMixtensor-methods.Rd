@@ -20,7 +20,8 @@
 \usage{
 \S4method{dwiMixtensor}{dtiData}(object, maxcomp=3, method="mixtensor", reltol=1e-6,
           maxit=5000, ngc=1000, optmethod="BFGS", nguess=100*maxcomp^2,
-          msc="BIC", pen=NULL, code = "C", thinit = NULL)
+          msc="BIC", pen=NULL, code = "C", thinit = NULL, mc.cores =
+          getOption("mc.cores", 2L))
 \S4method{dwiMtImprove}{dwiMixtensor,dtiData}(mtobj, dwiobj, maxcomp=3, method="mixtensor", reltol=1e-6, maxit=5000, ngc=1000, optmethod="BFGS", nguess= 100*maxcomp^2, msc="BIC", pen=NULL, where=NULL, new=FALSE)
 \S4method{dwiMtCombine}{dwiMixtensor,dwiMixtensor}(mtobj1,mtobj2, msc="BIC", where=NULL)
 }
@@ -60,6 +61,8 @@
              in argument \code{mtobj} will be discarded. Defaults to \code{new=FALSE}, i.e. 
              the original fit will be kept if it performs better with respect to the specified
              criterion in \code{msc}.}
+   \item{mc.cores}{Number of cores to use. Defaults to getOption("mc.cores", 2L). 
+   This may be larger than the optimal value. Our experience suggests to use 4-6 cores if available.}
    }
 \details{
   The method \code{"dwiMixtensor"} estimates, in each voxel, a mixture of radial symmetric tensors from the DWI data contained in an object of class \code{"dtiData"}. The number of mixture components is selected depending on the data, with a maximum number of components specified by \code{maxcomp}. 

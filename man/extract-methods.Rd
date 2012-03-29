@@ -21,7 +21,7 @@
 }
 \usage{
   \S4method{extract}{dtiData}(x, what="data", xind=TRUE, yind=TRUE, zind=TRUE)
-  \S4method{extract}{dtiTensor}(x, what="tensor", xind=TRUE, yind=TRUE, zind=TRUE)
+  \S4method{extract}{dtiTensor}(x, what="tensor", xind=TRUE, yind=TRUE, zind=TRUE, mc.cores = getOption("mc.cores", 2L))
   \S4method{extract}{dwiMixtensor}(x, what="andir", xind=TRUE, yind=TRUE, zind=TRUE)
   \S4method{extract}{dtiIndices}(x, what=c("fa","andir"), xind=TRUE, yind=TRUE, zind=TRUE)
   \S4method{extract}{dwiQball}(x, what="sphcoef", xind=TRUE, yind=TRUE, zind=TRUE)
@@ -40,6 +40,8 @@
   \item{zind}{ vector of z-coordinates, defaults to whole range. }
   \item{what}{ Statistic to extract. See Methods Section for details. }
   \item{drop}{ unused. }
+   \item{mc.cores}{Number of cores to use. Defaults to getOption("mc.cores", 2L). 
+   This may be larger than the optimal value. Our experience suggests to use 4-6 cores if available.}
 }
 \section{Methods}{
 \describe{

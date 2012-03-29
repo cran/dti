@@ -1,6 +1,5 @@
 gethseqfullse3 <-
-function (kstar, gradstats, kappa=NULL, vext = c(1, 1), dist = "SE3", 
-    verbose = FALSE) 
+function (kstar, gradstats, kappa=NULL, vext = c(1, 1)) 
 {
     ngrad <- dim(gradstats$bghat)[2]
     h  <- vr  <- matrix(0,ngrad,kstar)
@@ -15,28 +14,21 @@ function (kstar, gradstats, kappa=NULL, vext = c(1, 1), dist = "SE3",
                      as.integer(kstar),#kstar
                      as.double(gradstats$k456),
                      as.double(gradstats$nbg),
-                     as.double(gradstats$nbghat),
                      as.integer(ngrad),
                      as.double(kappa),#kappa
                      as.double(vext),#vext
                      h=double(kstar),
                      vr=double(kstar),#
                      n=integer(1),#
+                     as.integer(gradstats$dist),
                      DUPL=FALSE,
                      PACKAGE="dti")[c("h","vr","n")]
        h[i,] <- z$h
        vr[i,] <- z$vr 
        n <- n+z$n
-        if (verbose) {
-#            cat("i",i,"h[i,.]:", signif(h[i,],3), "\n")
-           cat("Grad-nr.:",i," max(h): ", signif(max(h[i,]),3),"\n")
-        }
-        else {
-            cat(".")
-        }
-        gc()
+       cat(".")
     }
-        cat("\n number of positive weights:",n,"time elapsed:", 
+        cat("\n number of positive weights:",n,"mean maximal bandwidth",signif(mean(h[,kstar]),3),"time elapsed:", 
                 format(difftime(Sys.time(), prt0), digits = 3), 
                 "\n")
     list(h=h,kappa=kappa,vred=vr,n=n)

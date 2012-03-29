@@ -1,3 +1,22 @@
+2012-05-21
+
+  -added function awssigmc for estimation of noise standard deviation.
+
+2012-01-31 
+
+  - added KL-distance for multicoil-systems in dwi.smooth 
+  - dwi.smooth now has alternative discrepancies
+  - added method getmask
+
+2011-12-01 version 1.0-2
+
+  - added dependency on R-2.14.0 and package parallel
+  - new function pmatrix
+  
+2011-12-01 version 1.0-1
+
+  - code polishing to avoid unnecessary loops in Fortran
+  
 2011-11-30 version 1.0-0
 
   - added method dwi.smooth: adaptive smoothing for DWI data 

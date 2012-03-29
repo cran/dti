@@ -37,6 +37,7 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
   ngrad <- object@ngrad
   ddim0 <- object@ddim0
   ddim <- object@ddim
+  nvox <- prod(ddim)
   z <- .Fortran("outlier",
                 as.double(object@si),
                 as.integer(prod(ddim)),
@@ -276,9 +277,7 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
 #  replace non-tensors (with negative eigenvalues) by a small isotropic tensor 
       ind <- array(.Fortran("dti3Dev",
                            as.double(z$D),
-                           as.integer(n1),
-                           as.integer(n2),
-                           as.integer(n3),
+                           as.integer(n1*n2*n3),
                            as.logical(mask),
                            ev=double(3*n1*n2*n3),
                            DUPL=FALSE,

@@ -162,9 +162,9 @@ setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL
   dim(tmean) <- c(3,n)
   z <- extract(obj,what=c("andir","fa"))
   if(minfa>0) mask <- mask&(z$fa>=minfa)
-  maxev <- extract(obj,what="evalues")$evalues[3,,,,drop=FALSE][mask]
+  maxev <- extract(obj,what="evalues",mc.cores=1)$evalues[3,,,,drop=FALSE][mask]
   dim(mask) <- NULL
-  andir <- matrix(z$andir,3,n)[,mask]
+  andir <- matrix(z$andir,3,n)[,mask,drop=FALSE]
   fa <- z$fa[mask]
   if(method==1) {
     andir <- abs(andir)

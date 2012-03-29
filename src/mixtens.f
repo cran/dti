@@ -699,7 +699,7 @@ C   nonactive directions
                if(ibest.gt.0) THEN
                   siind(1,i)=iw
                   siind(2,i)=j
-                  IF (iw.gt.1) THEN
+                  IF (iw.ge.1) THEN
                      DO l=1,iw
                         siind(l+2,i)=isample(wind(l),ibest)
                      END DO
@@ -711,6 +711,113 @@ C   nonactive directions
                   END IF
                   mval(i)=krit
                END IF
+            END IF
+            call rchkusr()
+         END DO
+      END DO
+      RETURN
+      END
+C
+C __________________________________________________________________
+C
+      subroutine pgtsii30(si,vsi,ngrad,nvox,m,dgrad,nv,th,
+     1     nth,indth,egrad,isample,ntry,sms,z,siind,mval,ns)
+C
+C  compute diagnostics for initial estimates in siind
+C  siind(1,i1,i2,i3) will contain the model order (mc parallel version)
+C  
+C  si     - array of si-values
+C  m      - model order
+C  maxc   - maximum of cos(angle between directions)
+C  th     - theta1
+C  egrad - exp(-theta1*dgrad^2) 
+C  isample - guesses for gradient directions
+C  ntry   - number of guesses
+C  sms    - copies of si
+C  z      - array for design matrix corresponding to guesses
+C  siind  - array of indices (output)
+C  ns     - m+1
+C  mask   - mask
+C  mval   - aktual best risk
+C
+C  restricted to ngrad<=1000 and m <=10
+C
+      implicit logical (a-z)
+      integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
+     1       isample(m,ntry),indth(nvox)
+      real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
+     1       th(nth),egrad(ngrad,nv),z(ngrad,ns),mval(nvox),
+     2       vsi(nvox)
+      integer i,k,ibest,mode,ind(10),l,j,ii,iw,wind(5),nwi(5)
+      real*8 w(1000),krit,work1(1000),work2(10),erg,thj,msi,m2si,
+     1       z1,dng
+      dng=ngrad
+      iw=m
+      DO i=1,m
+         wind(i)=i
+         nwi(i)=i
+      END DO
+      ibest=1
+      DO i=1,nvox
+         msi=0.d0
+         m2si=0.d0
+         z1=vsi(i)
+         mval(i)=sqrt(dng*z1)
+      END DO
+      call rchkusr()
+      DO j=1,nth
+         thj=th(j)
+         DO k=1,ngrad
+            DO l=1,nv
+               z1 = dgrad(k,l)
+               egrad(k,l)=dexp(-thj*z1*z1)
+            END DO
+         END DO
+         DO i=1,nvox
+            IF(j.ne.indth(i)) CYCLE
+C  now search for minima of sms (or weighted sms
+            ibest=0
+            krit=mval(i)
+            DO k=1,ntry
+               call dcopy(ngrad,si(1,i),1,sms,1)
+               DO l=1,m
+                  call dcopy(ngrad,egrad(1,isample(l,k)),1,z(1,l),1)
+               END DO
+             call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
+               IF(mode.gt.1) THEN
+                  call intpr("mode",4,mode,1)
+                  call intpr("isample",7,isample(1,k),m)
+               ELSE 
+                  IF(erg.lt.krit) THEN
+                     krit=erg
+                     ibest=k
+                     iw=0
+                     DO ii=1,m
+                        if(w(ii).gt.1.d-12) THEN
+                           iw=iw+1
+                           wind(iw)=ii
+                        ELSE
+                           nwi(ii-iw)=ii
+C   nonactive directions
+                        END IF 
+                     END DO
+                  END IF  
+               END IF
+            END DO
+            if(ibest.gt.0) THEN
+               siind(1,i)=iw
+               siind(2,i)=j
+               IF (iw.ge.1) THEN
+                  DO l=1,iw
+                     siind(l+2,i)=isample(wind(l),ibest)
+                  END DO
+               END IF
+               IF (iw.lt.m) THEN
+                  DO l=1,m-iw
+                     siind(m-l+3,i)=isample(nwi(l),ibest)
+                  END DO
+               END IF
+               mval(i)=krit
             END IF
             call rchkusr()
          END DO
@@ -830,7 +937,7 @@ C   nonactive directions
                END DO
                siind(1,i)=iw
                siind(2,i)=j
-               IF (iw.gt.1) THEN
+               IF (iw.ge.1) THEN
                   DO l=1,iw
                      siind(l+2,i)=isbest(wind(l))
                   END DO
@@ -842,6 +949,129 @@ C   nonactive directions
                END IF
                mval(i)=krit
             END IF
+            call rchkusr()
+         END DO
+      END DO
+      RETURN
+      END
+C
+C __________________________________________________________________
+C
+      subroutine pgtsii31(si,vsi,ngrad,nvox,m,dgrad,nv,iandir,th,
+     1     nth,indth,egrad,isample,ntry,sms,z,siind,mval,ns,
+     2     dgradv,maxc)
+C
+C  compute diagnostics for initial estimates in siind
+C  siind(1,i1,i2,i3) will contain the model order 
+C  
+C  si     - array of si-values
+C  m      - model order
+C  maxc   - maximum of cos(angle between directions)
+C  th     - theta1
+C  egrad - exp(-theta1*dgrad^2) 
+C  isample - guesses for gradient directions
+C  ntry   - number of guesses
+C  sms    - copies of si
+C  z      - array for design matrix corresponding to guesses
+C  siind  - array of indices (output)
+C  ns     - m+1
+C  mval   - aktual best risk
+C
+C  restricted to ngrad<=1000 and m <=10
+C
+      implicit logical (a-z)
+      integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
+     1       isample(1),indth(nvox),iandir(nvox)
+      real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
+     1       th(nth),egrad(ngrad,nv),z(ngrad,ns),mval(nvox),
+     2       vsi(nvox),dgradv(nv,nv),maxc
+      logical skip
+      integer i,k,mode,ind(10),l,j,ii,iw,wind(5),nwi(5),mis,
+     1        is(5),isbest(5),ntry0,km1mis
+      real*8 w(1000),krit,work1(1000),work2(10),erg,thj,msi,m2si,
+     1       z1,dng
+      dng=ngrad
+      mis=m-1
+      ntry0=ntry
+      if(m.eq.1) ntry0=1
+      iw=m
+      DO i=1,m
+         wind(i)=i
+         nwi(i)=i
+         isbest(i)=i
+      END DO
+      DO i=1,nvox
+         msi=0.d0
+         m2si=0.d0
+         z1=vsi(i)
+         mval(i)=sqrt(dng*z1)
+      END DO
+      call rchkusr()
+      DO j=1,nth
+         thj=th(j)
+         DO k=1,ngrad
+            DO l=1,nv
+               z1 = dgrad(k,l)
+               egrad(k,l)=dexp(-thj*z1*z1)
+            END DO
+         END DO
+         DO i=1,nvox
+            IF(j.ne.indth(i)) CYCLE
+C  now search for minima of sms (or weighted sms)
+            krit=mval(i)
+            DO k=1,ntry0
+               km1mis=(k-1)*mis
+               IF(m.gt.1) THEN
+                  skip=.FALSE.
+                  DO l=1,m-1
+                   if(dgradv(isample(km1mis+l),iandir(i)).gt.maxc)
+     1                    skip=.TRUE.
+                  END DO
+                  IF(skip) CYCLE
+               END IF
+               call dcopy(ngrad,si(1,i),1,sms,1)
+               IF(m.gt.1) THEN
+                  DO l=1,m-1
+                     is(l)=isample(km1mis+l)
+                     call dcopy(ngrad,egrad(1,is(l)),1,z(1,l),1)
+                  END DO
+               END IF
+               is(m)=iandir(i)
+               call dcopy(ngrad,egrad(1,is(m)),1,z(1,m),1)
+        call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
+               IF(mode.gt.1) THEN
+                  call intpr("mode",4,mode,1)
+                  call intpr("isample",7,is,m)
+               ELSE 
+                  IF(erg.lt.krit) THEN
+                     krit=erg
+                     iw=0
+                     DO ii=1,m
+                        isbest(ii)=is(ii)
+                        if(w(ii).gt.1.d-12) THEN
+                           iw=iw+1
+                           wind(iw)=ii
+                        ELSE
+                           nwi(ii-iw)=ii
+C   nonactive directions
+                        END IF 
+                     END DO
+                  END IF  
+               END IF
+            END DO
+            siind(1,i)=iw
+            siind(2,i)=j
+            IF (iw.ge.1) THEN
+               DO l=1,iw
+                  siind(l+2,i)=isbest(wind(l))
+               END DO
+            END IF
+            IF (iw.lt.m) THEN
+               DO l=1,m-iw
+                  siind(m-l+3,i)=isbest(nwi(l))
+               END DO
+            END IF
+            mval(i)=krit
             call rchkusr()
          END DO
       END DO
@@ -948,7 +1178,7 @@ C   nonactive directions
                if(ibest.gt.0) THEN
                   siind(1,i)=iw
                   siind(2,i)=j
-                  IF (iw.gt.1) THEN
+                  IF (iw.ge.1) THEN
                      DO l=1,iw
                         siind(l+2,i)=isample(wind(l),ibest)
                      END DO
@@ -1084,7 +1314,7 @@ C   nonactive directions
                END DO
                siind(1,i)=iw
                siind(2,i)=j
-               IF (iw.gt.1) THEN
+               IF (iw.ge.1) THEN
                   DO l=1,iw
                      siind(l+2,i)=isbest(wind(l))
                   END DO
@@ -1104,57 +1334,51 @@ C   nonactive directions
 C
 C __________________________________________________________________
 C
-      subroutine sweeps0(si,s0,n1,n2,n3,ng0,ng1,level,siq,ms0,vsi,
-     1                   mask)
+      subroutine sweeps0(si,s0,n,ng0,ng1,level,siq,ms0,vsi,mask)
 C
 C   calculate mean s0 value
 C   generate mask
 C   sweep s0 from si to generate  siq
 C   calculate variance of siq
 C
-      integer n1,n2,n3,ng0,ng1,si(n1,n2,n3,ng1),s0(n1,n2,n3,ng0),
-     1        level
-      real*8 siq(n1,n2,n3,ng1),ms0(n1,n2,n3),vsi(n1,n2,n3)
-      logical mask(n1,n2,n3),maskk
-      integer i1,i2,i3,k
+      integer n,ng0,ng1,si(n,ng1),s0(n,ng0),level
+      real*8 siq(n,ng1),ms0(n),vsi(n)
+      logical mask(n),maskk
+      integer i,k
       real*8 s,z,z2,thresh,cv,s0mean
-      thresh = level*ng0
+      thresh = max(1,level*ng0)
       cv=ng1*(ng1-1)
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-               z=0.d0
-               DO k=1,ng0
-                  z=z+s0(i1,i2,i3,k)
-               END DO
-               s0mean = z/ng0
-               ms0(i1,i2,i3) = s0mean
-               maskk = z.ge.thresh
-               IF(maskk) THEN
-                  z=0.d0
-                  z2=0.d0
-                  DO k=1,ng1
-                     s=si(i1,i2,i3,k)/s0mean
-                     if(s.gt.0.99d0) s=0.99d0
-                     z=z+s
-                     z2=z2+s*s
-                     siq(i1,i2,i3,k)=s
-                  END DO
-                  vsi(i1,i2,i3)=(ng1*z2-z)/cv
-                  if(vsi(i1,i2,i3).lt.1d-8) THEN
-                     maskk = .FALSE.
-                     vsi(i1,i2,i3)=0.d0
-                  END IF
-               ELSE
-                  vsi(i1,i2,i3)=0.d0
-                  DO k=1,ng1
-                     siq(i1,i2,i3,k)=1.d0
-                  END DO
-               END IF
-               mask(i1,i2,i3) = maskk
-            END DO
+      DO i=1,n
+         z=0.d0
+         DO k=1,ng0
+            z=z+s0(i,k)
          END DO
-      call rchkusr()
+         s0mean = z/ng0
+         ms0(i) = s0mean
+         maskk = z.ge.thresh
+         IF(maskk) THEN
+            z=0.d0
+            z2=0.d0
+            DO k=1,ng1
+               s=si(i,k)/s0mean
+               if(s.gt.0.99d0) s=0.99d0
+               z=z+s
+               z2=z2+s*s
+               siq(i,k)=s
+            END DO
+            vsi(i)=(ng1*z2-z)/cv
+            if(vsi(i).lt.1d-8) THEN
+               maskk = .FALSE.
+               vsi(i)=0.d0
+            END IF
+         ELSE
+            vsi(i)=0.d0
+            DO k=1,ng1
+               siq(i,k)=1.d0
+            END DO
+         END IF
+         mask(i) = maskk
+         call rchkusr()
       END DO
       RETURN
       END

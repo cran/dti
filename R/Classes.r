@@ -22,7 +22,7 @@ dwi <- function(object,  ...) cat("This object has class",class(object),"\n")
 setGeneric("dwi", function(object,  ...) 
 standardGeneric("dwi"))
 
-setClassUnion("narray",c("array","numeric"))
+#setClassUnion("narray",c("array","numeric"))
 
 setClass("dtiData",
          representation(si   = "array",

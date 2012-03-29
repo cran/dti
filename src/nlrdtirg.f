@@ -1,32 +1,53 @@
-      subroutine nlrdtirg(s,nb,n1,n2,n3,mask,b,sdcoef,th0,D,niter,eps,
+      subroutine nlrdtirg(s,nb,n,mask,b,sdcoef,th0,D,niter,eps,
      1                    res,rss,varinv)
 C
 C  this is based on a regularized tensor similar to Koay et.al. (2006)
 C
       implicit logical (a-z)
-      integer nb,n1,n2,n3,s(nb,n1,n2,n3),niter
-      logical mask(n1,n2,n3)
-      real*8 D(6,n1,n2,n3),b(6,nb),res(nb,n1,n2,n3),
-     1    th0(n1,n2,n3),eps,rss(n1,n2,n3),sdcoef(4),varinv(nb)
-      integer i1,i2,i3,j
-      DO i3=1,n3
-         DO i2=1,n2
-            DO i1=1,n1
-               if(mask(i1,i2,i3)) THEN
-                  call islvdti(s(1,i1,i2,i3),nb,b,sdcoef,varinv,
-     1                       th0(i1,i2,i3),D(1,i1,i2,i3),
-     2                       res(1,i1,i2,i3),niter,eps,rss(i1,i2,i3))
-               ELSE
-                  DO j=1,6
-                     D(j,i1,i2,i3)=0.d0
-                  END DO
-                  rss(i1,i2,i3)=0.d0
-               END IF
+      integer nb,n,s(nb,n),niter
+      logical mask(n)
+      real*8 D(6,n),b(6,nb),res(nb,n),th0(n),eps,rss(n),sdcoef(4),
+     1       varinv(nb)
+      integer i,j
+      DO i=1,n
+         if(mask(i)) THEN
+            call islvdti(s(1,i),nb,b,sdcoef,varinv,th0(i),D(1,i),
+     1                       res(1,i),niter,eps,rss(i))
+         ELSE
+            DO j=1,6
+               D(j,i)=0.d0
             END DO
-         END DO
+            rss(i)=0.d0
+         END IF
+      call rchkusr()         
       END DO
       RETURN
       END
+      subroutine nlrdtirp(s,nb,n,b,sdcoef,th0,niter,eps,res,npar,
+     1                    varinv)
+C
+C  this is based on a regularized tensor similar to Koay et.al. (2006)
+C  modified to use parallelization  with function pmatrix
+C  npar = 8+nb
+C  res(1,) used for th0
+C  res(2:7,) used for D
+C  res(8,) used for rss
+C  res(9:npar,) used for residuals
+      implicit logical (a-z)
+      integer nb,n,npar,s(nb,n),niter
+      real*8 b(6,nb),res(npar,n),th0(n),eps,sdcoef(4),varinv(nb)
+      integer i
+      DO i=1,n
+            res(1,i) = th0(i)
+            call islvdti(s(1,i),nb,b,sdcoef,varinv,res(1,i),res(2,i),
+     1                       res(9,i),niter,eps,res(8,i))
+      call rchkusr()         
+      END DO
+      RETURN
+      END
+C
+C
+C
       subroutine islvdtir(s,nb,b,varinv,th0,D,F,niter,eps,rss)
 C
 C  Implements the regularized Gauss-Newton Algortithm (10.2.8)

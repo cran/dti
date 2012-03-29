@@ -514,9 +514,10 @@ setMethod("[","dwiQball",function(x, i, j, k, drop=FALSE){
 
 ########## extract()
 
-extract <- function(x, ...) cat("Data extraction not defined for this class:",class(x),"\n")
+#extract <- function(x, ...) cat("Data extraction not defined for this class:",class(x),"\n")
 
-setGeneric("extract", function(x, ...) standardGeneric("extract"))
+#setGeneric("extract", function(x, ...) standardGeneric("extract"))
+#setGeneric("extract", function(x, ...) cat("Data extraction not defined for this class:",class(x),"\n"), package="dti")
 
 setMethod("extract","dtiData",function(x, what="data", xind=TRUE, yind=TRUE, zind=TRUE){
   what <- tolower(what) 
@@ -615,7 +616,7 @@ setMethod("extract","dwiMixtensor",function(x, what="andir", xind=TRUE, yind=TRU
 
 
 
-setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE, zind=TRUE){
+setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE, zind=TRUE,mc.cores=getOption("mc.cores", 2L)){
   what <- tolower(what) 
   swap <- rep(FALSE,3)
   if(is.numeric(xind)) swap[1] <- xind[1]>xind[length(xind)]
@@ -630,24 +631,36 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
   n1 <- x@ddim[1]
   n2 <- x@ddim[2]
   n3 <- x@ddim[3]
+  ddim <- x@ddim
+  nvox <- prod(ddim)
   needev <- ("fa" %in% what) || ("ga" %in% what) || ("md" %in% what) || ("evalues" %in% what)
   needall <- needev && ("andir" %in% what)
 
   z <- list(NULL)
   if(needall){
-    erg <- .Fortran("dti3Dall",
+    erg <- if(mc.cores<=1||prod(ddim)<=mc.cores)
+           .Fortran("dti3Dall",
                     as.double(x@D),
-                    as.integer(n1),
-                    as.integer(n2),
-                    as.integer(n3),
+                    as.integer(nvox),
                     as.logical(x@mask),
-                    fa=double(n1*n2*n3),
-                    ga=double(n1*n2*n3),
-                    md=double(n1*n2*n3),
-                    andir=double(3*n1*n2*n3),
-                    ev=double(3*n1*n2*n3),
+                    fa=double(nvox),
+                    ga=double(nvox),
+                    md=double(nvox),
+                    andir=double(3*nvox),
+                    ev=double(3*nvox),
                     DUP=FALSE,
                     PACKAGE="dti")[c("fa","ga","md","andir","ev")]
+    else {
+          D <- matrix(x@D,6,prod(ddim))[,x@mask]
+                res <- matrix(0,9,prod(ddim))
+                res[,x@mask] <- pmatrix(D,pdti3Dall,mc.cores=mc.cores,mc.silent = TRUE)
+                list(andir=res[4:6,],
+                     fa=res[1,],
+                     ga=res[2,],
+                     md=res[3,],
+                     ev=res[7:9,])
+      
+    }
     if("fa" %in% what) z$fa <- array(erg$fa,x@ddim)
     if("ga" %in% what) z$ga <- array(erg$ga,x@ddim)
     if("md" %in% what) z$md <- array(erg$md,x@ddim)
@@ -655,16 +668,19 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
     if("andir" %in% what) z$andir <- array(erg$andir,c(3,n1,n2,n3))
   } else {
     if(needev){
-      ev <- array(.Fortran("dti3Dev",
+      if(mc.cores<=1) ev <- array(.Fortran("dti3Dev",
                            as.double(x@D),
-                           as.integer(n1),
-                           as.integer(n2),
-                           as.integer(n3),
+                           as.integer(nvox),
                            as.logical(x@mask),
-                           ev=double(3*n1*n2*n3),
+                           ev=double(3*nvox),
                            DUP=FALSE,
                            PACKAGE="dti")$ev,c(3,n1,n2,n3))
-      if("fa" %in% what) {
+          else {
+            ev <- matrix(0,3,nvox)
+            D <- matrix(x@D,6,nvox)[,x@mask]
+            ev[,x@mask] <- pmatrix(D,pdti3Dev,mc.cores=mc.cores,mc.silent = TRUE)
+         }
+     if("fa" %in% what) {
         dd <- apply(ev^2,2:4,sum)
         md <- (ev[1,,,]+ev[2,,,]+ev[3,,,])/3
         sev <- sweep(ev,2:4,md)
@@ -682,15 +698,18 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
       if("evalues" %in% what) z$evalues <- array(ev,c(3,x@ddim))
     }
     if("andir" %in% what){
-      z$andir <- array(.Fortran("dti3Dand",
+      if(mc.cores<=1) z$andir <- array(.Fortran("dti3Dand",
                                 as.double(x@D),
-                                as.integer(n1),
-                                as.integer(n2),
-                                as.integer(n3),
+                                as.integer(nvox),
                                 as.logical(x@mask),
-                                andir=double(3*n1*n2*n3),
+                                andir=double(3*nvox),
                                 DUP=FALSE,
-                                PACKAGE="dti")$andir,c(3,n1,n2,n3))
+                                PACKAGE="dti")$andir,c(3,nvox))
+          else {
+            z$andir <- matrix(0,3,nvox)
+            D <- matrix(x@D,6,nvox)[,x@mask]
+            z$andir[,x@mask] <- pmatrix(D,pdti3Dand,mc.cores=mc.cores,mc.silent = TRUE)
+         }
     }
   }
   if("tensor" %in% what) z$tensor <- array(x@D,c(6,x@ddim))
@@ -789,3 +808,30 @@ setMethod("extract","dwiQball",function(x, what="sphcoef", xind=TRUE, yind=TRUE,
   invisible(z)
 })
 
+getmask <- function(object,  ...) cat("No method defined for class:",class(object),"\n")
+
+setGeneric("getmask", function(object,  ...) standardGeneric("getmask"))
+
+setMethod("getmask","dtiData",function(object, level=NULL, prop=.4, size=3){
+if(is.null(level)) level <- object@level
+if(!is.null(level)){ 
+z <- .Fortran("getmask",
+              as.integer(object@si[,,,object@s0ind]),
+              as.integer(object@ddim[1]),
+              as.integer(object@ddim[2]),
+              as.integer(object@ddim[3]),
+              as.integer(length(object@s0ind)),
+              as.double(level),
+              as.integer(size),
+              as.double(prop),
+              s0=double(prod(object@ddim)),
+              mask=logical(prod(object@ddim)),
+              DUP=FALSE,
+              PACKAGE="dti")[c("s0","mask")]
+} else {
+z <- list(s0=object@si[,,,object@s0ind],mask=array(TRUE,object@ddim))
+}
+dim(z$s0) <- dim(z$mask) <- object@ddim
+z
+}
+)

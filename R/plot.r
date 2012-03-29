@@ -86,8 +86,7 @@ setMethod("plot", "dtiTensor", function(x, y, slice=1, view="axial", quant=0, mi
   if(what=="GA"){
   z <- .Fortran("dti2Dga",
                 as.double(D),
-                as.integer(n1),
-                as.integer(n2),
+                as.integer(n1*n2),
                 as.logical(mask),
                 fa=double(n1*n2),
                 md=double(n1*n2),
@@ -97,8 +96,7 @@ setMethod("plot", "dtiTensor", function(x, y, slice=1, view="axial", quant=0, mi
   } else {
   z <- .Fortran("dti2Dfa",
                 as.double(D),
-                as.integer(n1),
-                as.integer(n2),
+                as.integer(n1*n2),
                 as.logical(mask),
                 fa=double(n1*n2),
                 md=double(n1*n2),

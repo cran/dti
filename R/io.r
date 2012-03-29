@@ -104,120 +104,180 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
 
 ############
 
-readDWIdata <- function(gradient, dirlist, format, nslice = NULL, order = NULL,
-                        xind=NULL, yind=NULL, zind=NULL,
-                        level=0, mins0value=0, maxvalue=32000,
-                        voxelext=NULL, orientation=c(0,2,5), rotation=diag(3)) {
-  # basic consistency checks
-  args <- list(sys.call())
-  if (!(format %in% c("DICOM","NIFTI","ANALYZE","AFNI")))
-    stop("Cannot handle other formats then DICOM|NIFTI|ANALYZE|AFNI, found:",format)
-  if ((format == "DICOM") & is.null(nslice))
-    stop("Cannot handle DICOM folders without specifying number of slices nslice!")
-#  if (any(sort((orientation)%/%2) != 0:2)) stop("invalid orientation \n")
-  if (dim(gradient)[2]==3) gradient <- t(gradient)
-  if (dim(gradient)[1]!=3) stop("Not a valid gradient matrix")
-  ngrad <- dim(gradient)[2]
-  s0ind <- (1:ngrad)[apply(abs(gradient),2,max)==0] 
 
-  # generate file list in specified order
+## TODO: what about siemens mosaic?
+##       the loop over files contains many not neccessary operations (voxelext etc)
+readDWIdata <- function(gradient, dirlist, 
+                        format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), 
+                        nslice = NULL, order = NULL,
+                        xind = NULL, yind = NULL, zind = NULL,
+                        level = 0, mins0value = 0, maxvalue = 32000,
+                        voxelext = NULL, orientation = c(0L, 2L, 5L), rotation = NULL,
+                        verbose = FALSE) {
+
+  args <- list(sys.call())
+
+  ## basic consistency checks
+  format <- match.arg(format)
+  if ((format == "DICOM") & is.null(nslice))
+    stop("readDWIdata: Cannot handle DICOM folders without specifying number of slices nslice!")
+  if (length(dim(gradient)) != 2) stop("readDWIdata: Not a valid gradient matrix.")
+  if (dim(gradient)[2] == 3) gradient <- t(gradient)
+  if (dim(gradient)[1] != 3) stop("readDWIdata: Not a valid gradient matrix.")
+  ngrad <- dim(gradient)[2]
+  s0ind <- (1:ngrad)[apply(abs(gradient), 2, max) == 0]
+  if (length(s0ind) < 1) stop("readDWIdata: No b0 gradients found.")
+
+  ## generate file list in specified order
   filelist <- NULL
-  for (dd in dirlist) filelist <- c(filelist, paste(dd,list.files(dd),sep=.Platform$file.sep))
+  for (dd in dirlist) filelist <- c(filelist, paste(dd, list.files(dd), sep = .Platform$file.sep))
   if (format == "DICOM") {
     if (is.null(zind)) zind <- 1:nslice
     if (length(filelist) != ngrad * nslice)
-      stop("Number of found files does not match ngrad*nslice",length(filelist))
+      stop("readDWIdata: Number of found files (", length(filelist), ") does not match ngrad*nslice")
     if (is.null(order)) {
-      order <- 1:(ngrad*nslice)
+      order <- 1:(ngrad * nslice)
     } else {
-      if (length(order) != ngrad*nslice)
-        stop("Length of order vector does not match ngrad*nslice")
+      if (length(order) != ngrad * nslice)
+        stop("readDWIdata: Length of order vector does not match ngrad*nslice")
     }
-    dim(order) <- c(nslice,ngrad)
-    order <- order[zind,]
+    dim(order) <- c(nslice, ngrad)
+    order <- order[zind, ]
     dim(order) <- NULL
     filelist <- filelist[order]
   } else {
-    if (format =="ANALYZE") filelist <- unlist(strsplit(filelist[regexpr("\\.hdr$", filelist) != -1],"\\.hdr"))
-    if (format =="AFNI") filelist <- filelist[regexpr("\\.HEAD$", filelist) != -1]
-    if (length(filelist) != ngrad)
-      stop("Number of found files does not match ngrad",length(filelist),"\nPlease provide each gradient cube in a separate file.")
-    if (is.null(order)) {
-      order <- 1:ngrad
+    if (format == "ANALYZE") filelist <- unlist(strsplit(filelist[regexpr("\\.hdr$", filelist) != -1], "\\.hdr"))
+    if (format == "AFNI") filelist <- filelist[regexpr("\\.HEAD$", filelist) != -1]
+    if (format == "NIFTI") {
+      if ((length(filelist) != ngrad) & (length(filelist) != 1))
+	stop("readDWIdata: Number of found NIfTI files (", length(filelist),") does not match ngrad and is larger then 1\nPlease provide each gradient cube in a separate file or one 4D file.")
+	if (length(filelist) == ngrad) {
+	  if (is.null(order)) {
+	    order <- 1:ngrad
+	  } else {
+	    if (length(order) != ngrad)
+	      stop("readDWIdata: Length of order vector does not match ngrad")
+	  }
+	  filelist <- filelist[order]
+	}
     } else {
-      if (length(order) != ngrad)
-        stop("Length of order vector does not match ngrad")
+      if (length(filelist) != ngrad)
+	stop("readDWIdata: Number of found files does not match ngrad",length(filelist),"\nPlease provide each gradient cube in a separate file.")
+      if (is.null(order)) {
+	order <- 1:ngrad
+      } else {
+	if (length(order) != ngrad)
+	  stop("readDWIdata: Length of order vector does not match ngrad")
+      }
+      filelist <- filelist[order]
     }
-    filelist <- filelist[order]
   }
-  # read all DICOM files
-  cat("Start reading data",format(Sys.time()), "\n")
+  nfiles <- length(filelist)
+ 
+  ## read all files
+  if (verbose) cat("readDWIdata: Start reading data", format(Sys.time()), "\n")
   si <- numeric()
-  cat("\n")
   ddim <- NULL
   first <- TRUE
   i <- 0
+  if (!verbose) pb <- txtProgressBar(0, nfiles, style = 3)
   for (ff in filelist) {
     i <- i+1
-    cat(".")
+    if (!verbose) setTxtProgressBar(pb, i)
     if (format == "DICOM") {
-      data <- read.DICOM(ff)
+      dd <- dicomInfo(ff)
+      delta <- c(as.numeric(unlist(strsplit(extractHeader(dd$hdr, "PixelSpacing", FALSE)[1], " "))), extractHeader(dd$hdr, "SliceThickness")[1])
+      imageOrientationPatient <- as.numeric(unlist(strsplit(extractHeader(dd$hdr, "ImageOrientationPatient", FALSE)[1], " ")))
+      imageOrientationPatient <- matrix(c(imageOrientationPatient, vcrossp(imageOrientationPatient[1:3], imageOrientationPatient[4:6])), 3, 3)
+      gradx <- dd$hdr[which((dd$hdr[, 1] == "0019") & (dd$hdr[, 2] == "10BB"))[1], 6]
+      grady <- dd$hdr[which((dd$hdr[, 1] == "0019") & (dd$hdr[, 2] == "10BC"))[1], 6]
+      gradz <- dd$hdr[which((dd$hdr[, 1] == "0019") & (dd$hdr[, 2] == "10BD"))[1], 6]
+      bvalue <- as.numeric(unlist(strsplit(dd$hdr[which((dd$hdr[, 1] == "0043") & (dd$hdr[, 2] == "1039"))[1], 6], " ")))[1]
+      if (verbose) cat("diffusion gradient", gradx, grady, gradz, "b-value", bvalue, "\n")
+#      ## WORKAROUND!!
+#      dd$img <- aperm(dd$img, c(2, 1))
+#      ## END WORKAROUND!!
     } else if (format == "NIFTI") {
-      data <- fmri::read.NIFTI(ff,setmask=FALSE)
-      nslice <- data$dim[3]
+      dd <- readNIfTI(ff, reorient = FALSE)
+      nslice <- dim(dd)[3]
       if (is.null(zind)) zind <- 1:nslice
+      delta <- dd@pixdim[2:4]
+      imageOrientationPatient <- t(matrix(c(dd@srow_x[1:3]/dd@pixdim[2:4], dd@srow_y[1:3]/dd@pixdim[2:4], dd@srow_z[1:3]/dd@pixdim[2:4]), 3, 3))
     } else if (format == "ANALYZE") {
-      data <- fmri::read.ANALYZE(ff,setmask=FALSE)
-      nslice <- data$dim[3]
+      dd <- readANALYZE(ff)
+      nslice <- dim(dd)[3]
       if (is.null(zind)) zind <- 1:nslice
+      delta <- dd@pixdim[2:4]
+      imageOrientationPatient <- diag(3)
     } else if (format == "AFNI") {
-      data <- fmri::read.AFNI(ff,setmask=FALSE)
-      nslice <- data$dim[3]
+      dd <- readAFNI(ff)
+      nslice <- dim(dd)[3]
       if (is.null(zind)) zind <- 1:nslice
+      delta <- dd@DELTA
+      imageOrientationPatient <- diag(3)
     } 
-    if (is.null(ddim)) ddim <- c(data$dim[1:2],nslice,ngrad)
+    ddim <- if (format == "DICOM") c(dim(dd$img)[1:2], nslice, ngrad) else c(dim(dd)[1:2], nslice, ngrad)
+
     if (is.null(voxelext)) {
-      if (!is.null(data$delta)) {
-        if (!prod(voxelext == data$delta))
-          warning("Voxel extension",voxelext,"is not found in data:",data$delta)
-        voxelext <- data$delta
+      if (length(delta) == 3) {
+	voxelext <- delta
       } else {
-        warning("Voxel extension neither found nor given!")
-      }
-    }
-    if (is.null(xind)) xind <- 1:data$dim[1]
-    if (is.null(yind)) yind <- 1:data$dim[2]
-    if (format == "DICOM") {
-      if(first){ 
-         ttt <- extract.data(data)[xind,yind]
-         nttt <- dim(ttt)
-         n <- length(filelist)
-         si <- numeric(n*prod(nttt))
-         dim(si) <- c(nttt,n)
-         si[,,1]<- ttt
-         first <- FALSE
-      } else {
-         si[,,i] <- extract.data(data)[xind,yind]
+	voxelext <- c(1, 1, 1)
+	warning("readDWIdata: Could not find voxel size. Setting default.")
       }
     } else {
-      if(first){ 
-         ttt <- extract.data(data)[xind,yind,zind,]
-         nttt <- dim(ttt)
-         n <- length(filelist)
-         si <- numeric(n*prod(nttt))
-         dim(si) <- c(nttt,n)
-         if(length(nttt)==4) si[,,,,1]<- ttt else si[,,,1] <- ttt
-         first <- FALSE
-     } else {
-      ttt <- extract.data(data)[xind,yind,zind,]
-      if(length(nttt)==4) si[,,,,i] <- ttt else si[,,,i] <- ttt
+      if (length(delta) == 3) {
+        if (any(voxelext != delta))
+          warning("readDWIdata: Voxel extension", voxelext, "is not match its value in data files:", delta)
+      }
+    }
+
+    if (is.null(rotation)) {
+      if (any(imageOrientationPatient != 0)) {
+	rotation <- imageOrientationPatient
+      } else {
+	rotation <- diag(3)
+      }
+    } else {
+      if (any(imageOrientationPatient != rotation)) {
+        warning("readDWIdata: Rotation matrices differ: ", imageOrientationPatient)
+      }
+    }
+
+    if (is.null(xind)) xind <- 1:ddim[1]
+    if (is.null(yind)) yind <- 1:ddim[2]
+    if (format == "DICOM") {
+      if (first) { 
+        ttt <- dd$img[xind, yind]
+        nttt <- dim(ttt)
+        si <- numeric(nfiles * prod(nttt))
+        dim(si) <- c(nttt, nfiles)
+        si[ , , 1] <- ttt
+        first <- FALSE
+      } else {
+        si[ , , i] <- dd$img[xind, yind]
+      }
+    } else {
+      if (length(filelist) > 1) { # list of 3D files
+	if (first) { 
+	  ttt <- dd[xind, yind, zind]
+	  nttt <- dim(ttt)
+	  si <- numeric(nfiles * prod(nttt))
+	  dim(si) <- c(nttt, nfiles)
+	  si[ , , , 1] <- ttt
+	  first <- FALSE
+	} else {
+	  si[ , , , i] <- dd[xind, yind, zind]
+	}
+      } else { # this is a 4D file
+	si <- dd[xind, yind, zind,]
       }
     }
   }
-  cat("\n")
-  dim(si) <- c(length(xind),length(yind),length(zind),ngrad)
+  if (!verbose) close(pb)
+  dim(si) <- c(length(xind), length(yind), length(zind), ngrad)
   dimsi <- dim(si)
-  cat("Data successfully read",format(Sys.time()), "\n")
+  if (verbose) cat("readDWIdata: Data successfully read", format(Sys.time()), "\n")
 
   # redefine orientation
   xyz <- (orientation)%/%2+1
@@ -245,42 +305,41 @@ readDWIdata <- function(gradient, dirlist, format, nslice = NULL, order = NULL,
       gradient[3,] <- -gradient[3,]
       }
   # orientation set to radiological convention
+
+  ## this replaces the content off all voxel with elements <=0 or >maxvalue by 0
   si <- .Fortran("initdata",
-                 si=as.integer(si),
+                 si = as.integer(si),
                  as.integer(dimsi[1]),
                  as.integer(dimsi[2]),
                  as.integer(dimsi[3]),
                  as.integer(dimsi[4]),
                  as.integer(maxvalue),
-                 PACKAGE="dti")$si
-  # this replaces the content off all voxel with elements <=0 or >maxvalue by 0
+                 PACKAGE = "dti")$si
   dim(si) <- dimsi
-  level <- max(mins0value,level*mean(si[,,,s0ind][si[,,,s0ind]>0])) # set level to level*mean  of positive s_0 values
-  ddim0 <- as.integer(ddim)
-  ddim <- as.integer(dim(si)[1:3])
 
-  cat("Create auxiliary statistics",format(Sys.time()), " \n")
-  rind <- replind(gradient)
+  ## set level to level*mean  of positive s_0 values
+  level <- max(mins0value, level * mean(si[ , , , s0ind][si[ , , , s0ind] > 0]))
+  cat("readDWIdata: Create auxiliary statistics",format(Sys.time()), " \n")
 
   invisible(new("dtiData",
-                call = args,
-                si     = si,
-                gradient = gradient,
-                btb    = create.designmatrix.dti(gradient),
-                ngrad  = ngrad, # = dim(btb)[2]
-                s0ind  = s0ind, # indices of S_0 images
-                replind = rind,
-                ddim   = ddim,
-                ddim0  = ddim0,
-                xind   = xind,
-                yind   = yind,
-                zind   = zind,
-                level  = level,
-                sdcoef = rep(0,4),
-                voxelext = voxelext,
-                orientation = as.integer(c(0,2,5)),
-                rotation = rotation,
-                source = paste(dirlist,collapse="|"))
+                call        = args,
+                si          = si,
+                gradient    = gradient,
+                btb         = create.designmatrix.dti(gradient),
+                ngrad       = ngrad,
+                s0ind       = s0ind,
+                replind     = replind(gradient),
+                ddim        = as.integer(dim(si)[1:3]),
+                ddim0       = as.integer(ddim),
+                xind        = xind,
+                yind        = yind,
+                zind        = zind,
+                level       = level,
+                sdcoef      = rep(0,4),
+                voxelext    = voxelext,
+                orientation = orientation,
+                rotation    = rotation,
+                source      = paste(dirlist, collapse = "|"))
             )
 }
 

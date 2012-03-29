@@ -1,3 +1,24 @@
+kldist <- function(L,eta1,eta2){
+#
+#  L -number of coils
+#  eta1 - m1_1/sigma
+#  eta2 - m1_2/sigma
+n1 <- length(eta1)
+n2 <- length(eta2)
+f1 <- (2*L+eta1^2)^2/(2*L+2*eta1^2)
+c1 <- (2*L+2*eta1^2)/(2*L+eta1^2)
+f2 <- (2*L+eta2^2)^2/(2*L+2*eta2^2)
+c2 <- (2*L+2*eta2^2)/(2*L+eta2^2)
+lGf1 <- lgamma(f1/2)
+lGf2 <- lgamma(f2/2)
+flc1 <- f1/2*log(c1)
+flc2 <- f2/2*log(c2)
+psif1 <- digamma(f1/2)
+-outer(lGf1,lGf2,"-")-outer(flc1,flc2,"-")+outer(f1,f2,"-")/2*outer(log(c1)+psif1,rep(1,n2),"*")+
+(outer(c1,c2,"/")-1)*outer(f1,rep(1/2,n2),"*")
+}
+
+
 fwhm2bw <- function(hfwhm) hfwhm/sqrt(8*log(2))
 
 replind <- function(gradient){
@@ -317,4 +338,10 @@ object@orient <- array(.Fortran("parofor",
 object@mix <- array(z$mix,dim(mix))
 object@order <- array(z$order,ddim)
 object
+}
+
+vcrossp <- function(a, b) {
+   c(a[2] * b[3] - a[3] * b[2],
+     a[3] * b[1] - a[1] * b[3],
+     a[1] * b[2] - a[2] * b[1])
 }

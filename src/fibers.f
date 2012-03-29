@@ -99,6 +99,8 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       DO i=1,nfibers
          keep(i)=.TRUE.
       END DO
+      mindist=1d10
+C  just to prevent a compiler warning
       ncounts=0
       nlong=0
       DO ilong=1,nfibers-1

@@ -1,13 +1,13 @@
-      subroutine ghfse3i(i4,kstar,k456,nbg,nbghat,ng,
-     1                    kappa,vext,h,varred,n)
+      subroutine ghfse3i(i4,kstar,k456,nbg,ng,
+     1                    kappa,vext,h,varred,n,dist)
 C
 C   compute bandwidth sequence for given kappa and gradients  
 C   lkfse3i0 computes weighting schemes and corresponding variance reduction
-C   k456,nbg,nbghat,ng (input) contain auxiliary statistics(gradients)
+C   k456,nbg,ng (input) contain auxiliary statistics(gradients)
 C
       implicit logical (a-z)
-      integer ng,i4,kstar,n
-      real*8 k456(3,ng,ng),nbg(3,3,ng),nbghat(3,3,ng,ng),vext(2),
+      integer ng,i4,kstar,n,dist
+      real*8 k456(3,ng,ng),nbg(3,3,ng),vext(2),
      1       kappa,h(kstar),varred(kstar)
       logical getkappa
       integer k,n0,maxn
@@ -17,19 +17,19 @@ C
       hakt=1.d0
 C   initialize kappa
 C   loop over steps
-      call lkfse3i0(hakt,kappa/hakt,i4,k456,nbg,nbghat,ng,
-     1                   vext,vr,n)
+      call lkfse3i0(hakt,kappa/hakt,i4,k456,nbg,ng,
+     1                   vext,vr,n,dist)
       chk=ch*vr
       maxn = 1
       DO k=1,kstar
-         call lkfse3i0(hakt,kappa/hakt,i4,k456,nbg,nbghat,ng,
-     1                   vext,vr,n)
+         call lkfse3i0(hakt,kappa/hakt,i4,k456,nbg,ng,
+     1                   vext,vr,n,dist)
 C  search for new hakt   
          vred=vr/chk
          DO WHILE (vred.lt.1) 
             hakt=hakt*1.05
-            call lkfse3i0(hakt,kappa/hakt,i4,k456,nbg,nbghat,ng,
-     1                   vext,vr,n)
+            call lkfse3i0(hakt,kappa/hakt,i4,k456,nbg,ng,
+     1                   vext,vr,n,dist)
             vred=vr/chk
          END DO
          DO WHILE (vred.gt.1.01) 
@@ -37,8 +37,8 @@ C  search for new hakt
             v0r=vr
             n0=n
             hakt=hakt/1.005
-            call lkfse3i0(hakt,kappa/hakt,i4,k456,nbg,nbghat,ng,
-     1                   vext,vr,n)
+            call lkfse3i0(hakt,kappa/hakt,i4,k456,nbg,ng,
+     1                   vext,vr,n,dist)
             vred=vr/chk
             If (vred.lt.1) THEN
                hakt=hakt0
@@ -51,8 +51,8 @@ C  search for new hakt
          chk=chk*ch
          maxn=max(maxn,n)
          if(k.eq.kstar) THEN
-            call lkfse3i0(h(k),kappa/hakt,i4,k456,nbg,nbghat,ng,
-     1                   vext,vr,n)
+            call lkfse3i0(h(k),kappa/hakt,i4,k456,nbg,ng,
+     1                   vext,vr,n,dist)
          END IF
 C  number of positive weights for last step in n
       END DO
@@ -83,72 +83,69 @@ C
       g123(3,3) = sg
       RETURN
       END
-      subroutine expm3(m,ex)
-C
-C   Compute matrix exponential of m:   ex = exp(m) 
-C   using a series expansion
-C
+      subroutine exppm6(p,ex)
       implicit logical (a-z)
-      real*8 m(3,3),ex(3,3)
-      integer i1,i2,j
-      real*8 mpot(3,3),mpotn(3,3),maxmpot,jfac,z
-      DO i1=1,3
-         mpot(i1,i1) = 1.d0
-         ex(i1,i1)   = 1.d0
-         IF(i1.eq.3) CYCLE
-         DO i2=i1+1,3
-            mpot(i1,i2) = 0.d0
-            ex(i1,i2)   = 0.d0
-            mpot(i2,i1) = 0.d0
-            ex(i2,i1)   = 0.d0
-         END DO
-      END DO
-      maxmpot = 1.d0
-      j = 1
-      jfac = 1.d0
-      DO While (maxmpot.gt.1.d-12)
-         jfac = jfac*j
-         DO i1=1,3
-            DO i2=1,3
-               mpotn(i1,i2)=mpot(i1,1)*m(1,i2)+mpot(i1,2)*m(2,i2)+
-     1                      mpot(i1,3)*m(3,i2)
-            END DO
-         END DO
-         maxmpot=0.d0
-         DO i1=1,3
-            DO i2=1,3
-               mpot(i1,i2)=mpotn(i1,i2)
-               z = mpot(i1,i2)/jfac
-               ex(i1,i2)=ex(i1,i2)+z
-               z = abs(z)
-               IF(z.gt.1d10) EXIT
-               maxmpot = max(maxmpot,z)
-            END DO
-         END DO
-         j = j+1
-         IF(j.gt.50) EXIT
-      END DO
+      real*8 p,ex(3,3)
+      ex(1,1)=dcos(p)
+      ex(1,2)=dsin(p)
+      ex(1,3)=0.d0
+      ex(2,1)=-dsin(p)
+      ex(2,2)=dcos(p)
+      ex(2,3)=0.d0
+      ex(3,1)=0.d0
+      ex(3,2)=0.d0
+      ex(3,3)=1.d0
       RETURN
       END
-      subroutine k456krit(par,matm,m4,m5,m6,erg)
+      subroutine exppm5(p,ex)
+      implicit logical (a-z)
+      real*8 p,ex(3,3)
+      ex(1,1)=dcos(p)
+      ex(1,2)=0.d0
+      ex(1,3)=-dsin(p)
+      ex(2,1)=0.d0
+      ex(2,2)=1.d0
+      ex(2,3)=0.d0
+      ex(3,1)=dsin(p)
+      ex(3,2)=0.d0
+      ex(3,3)=dcos(p)
+      RETURN
+      END
+      subroutine exppm4(p,b,ex)
+      implicit logical (a-z)
+      real*8 b,p,ex(3,3)
+      real*8 D,sqr2,sb,pDs,D2,cpds,spds,spdsh
+      sqr2 = dsqrt(2.d0)
+      sb = dsin(b)
+      D = dsqrt(3.d0-dcos(2.d0*b))
+      pDs = p*D/sqr2
+      cpds = dcos(pDs)
+      spds = dsin(pDs)
+      spdsh = dsin(pDs/2.d0)
+      D2 = D*D
+      ex(1,1)=2.d0*(1.d0+cpDs*sb*sb)/D2
+      ex(1,2)=-sqr2/D*sb*spDs
+      ex(1,3)=-4.d0/D2*sb*spdsh*spdsh
+      ex(2,1)=-ex(1,2)
+      ex(2,2)=cpDs
+      ex(2,3)=sqr2/D*spDs
+      ex(3,1)=ex(1,3)
+      ex(3,2)=-ex(2,3)
+      ex(3,3)=1.d0-2.d0/D2*(1.d0-cpDs)
+      RETURN
+      END
+      subroutine k456krb(par,b,matm,erg)
 C
 C  Solve exponential equation for dicrepance parameters
 C  compute ||\prod_{i=4}^6 exp(par[i] m_i) - matm||^2
 C
       implicit logical (a-z)
-      real*8 par(3),matm(3,3),m4(3,3),m5(3,3),m6(3,3),erg
+      real*8 par(3),b,matm(3,3),erg
       integer i1,i2
-      real*8 s,z,am4(3,3),am5(3,3),am6(3,3),em4(3,3),em5(3,3),em6(3,3)
-      DO i1=1,3
-         DO i2=1,3
-            am4(i1,i2)=par(1)*m4(i1,i2)
-            am5(i1,i2)=par(2)*m5(i1,i2)
-            am6(i1,i2)=par(3)*m6(i1,i2)
-         END DO
-      END DO
-      call expm3(am4,em4)
-      call expm3(am5,em5)
-      call expm3(am6,em6)
+      real*8 s,z,em4(3,3),em5(3,3),em6(3,3),am4(3,3),am5(3,3)
+      call exppm4(par(1),b,em4)
+      call exppm5(par(2),em5)
+      call exppm6(par(3),em6)
       DO i1=1,3
          DO i2=1,3
             am5(i1,i2)=em5(i1,1)*em6(1,i2)+em5(i1,2)*em6(2,i2)+
@@ -208,10 +205,10 @@ C standardize to length 1
       END DO
       RETURN
       END
-      subroutine bgstats(g,n,bg,bghat,nbg,nbghat)
+      subroutine bgstats(g,n,bg,bghat,nbg)
       implicit logical (a-z)
       integer n
-      real*8 g(3,n),bg(2,n),bghat(2,n,n),nbg(3,3,n),nbghat(3,3,n,n)
+      real*8 g(3,n),bg(2,n),bghat(2,n,n),nbg(3,3,n)
       integer i1,i2
       real*8 dgamma,cb1,sb1,cb2,sb2,betah,cbh,z,gammah,cdg
 C   first get sperical coordinates in bg
@@ -228,7 +225,6 @@ C    die normalen-vektoren der Gradienten
                bghat(1,i1,i2)=asin(sin(bg(1,i1)-
      1                             sign(1.d0,cdg)*bg(1,i2)))
                bghat(2,i1,i2)=0.d0
-               call ng123(betah,gammah,nbghat(1,1,i1,i2))
                CYCLE
             END IF
             sb2=sin(bg(1,i2))
@@ -246,26 +242,26 @@ C   this should not happen
                   call dblepr("cb1",3,cb1,1)
                   call dblepr("cbh",3,cbh,1)
                END IF
-               gammah = asin(dgamma*sign(1d0,cb1*cbh)) 
+C               gammah = asin(dgamma*sign(1d0,cb1*cbh)) 
+               gammah = dgamma*sign(1d0,cb1*cbh)
             END IF
             bghat(1,i1,i2)=betah
             bghat(2,i1,i2)=gammah
 C    die spherischen Koordinaten der Gradientenpaare (Parameter der Rotationsmatix)
-            call ng123(betah,gammah,nbghat(1,1,i1,i2))
-C    die normalen-vektoren der Gradientenpaare
          END DO
       END DO  
       RETURN
       END
-      subroutine lkfse3i(h,kappa,i4,k456,nbg,nbghat,ng,
-     1                   vext,ind,wght,n)
+      subroutine lkfse3i(h,kappa,i4,k456,nbg,ng,
+     1                   vext,ind,wght,n,dist)
       implicit logical (a-z)
-      integer ng,n,ind(5,n),i4
+      integer ng,n,ind(5,n),i4,dist
       real*8 h,kappa,k456(3,ng,ng),
-     1       nbg(3,3,ng),nbghat(3,3,ng,ng),vext(2),wght(n)
+     1       nbg(3,3,ng),vext(2),wght(n)
       integer ih1,ih2,ih3,i,j1,j2,j3,j4
-      real*8 h2,kap2,x1,x2,x3,xh1,xh2,xh3,k1,k2,k3,k4,k5,k6,z,z1,
+      real*8 h2,kap2,x1,x2,x3,k4,k5,k6,z,z1,
      1       vd2,vd3,gi1,gi2,gi3
+C     real*8 k1,k2,k3,xh1,xh2,xh3,
       ih1 = max(1.d0,5.0d0*h)
       ih2 = max(1.d0,5.0d0*h/vext(1))
       ih3 = max(1.d0,5.0d0*h/vext(2))
@@ -277,12 +273,16 @@ C    die normalen-vektoren der Gradientenpaare
       gi1 = nbg(1,1,i4)
       gi2 = nbg(2,1,i4)
       gi3 = nbg(3,1,i4)
+      z = 0.d0
+C  just to prevent compiler warnings
       DO j4 = 1,ng
 C         cb = abs(gi1*nbg(1,1,j4)+gi2*nbg(2,1,j4)+gi3*nbg(3,1,j4))
          k4 = k456(1,i4,j4)
          k5 = k456(2,i4,j4)
          k6 = k456(3,i4,j4)
-         z = (k4*k4+k5*k5+k6*k6)/kap2
+         if(dist.eq.1) z = (k4*k4+k5*k5+abs(k6))/kap2
+         if(dist.eq.2) z = (k4*k4+k5*k5+k6*k6)/kap2
+         if(dist.eq.3) z = k4*k4/kap2
          if(z.gt.h2) CYCLE
 C   last three komponents already to large
          DO j1 = 0,ih1
@@ -291,24 +291,7 @@ C   last three komponents already to large
                x2 = vd2*j2
                DO j3 = -ih3,ih3
                   x3 = vd3*j3
-                  xh1=x1*nbg(1,2,j4)+x2*nbg(2,2,j4)+x3*nbg(3,2,j4)
-                  xh2=x1*nbg(1,3,j4)+x2*nbg(2,3,j4)+x3*nbg(3,3,j4)
-                  xh3=x1*nbg(1,1,j4)+x2*nbg(2,1,j4)+x3*nbg(3,1,j4)
-C thats xhat
-C now k1       
-                  k1=xh1*nbghat(1,2,i4,j4)+xh2*nbghat(2,2,i4,j4)+
-     1               xh3*nbghat(3,2,i4,j4)
-                  z1=z+k1*k1
-                  if(z1.gt.h2) CYCLE
-C   last three komponents + first already to large
-                  k2=xh1*nbghat(1,3,i4,j4)+xh2*nbghat(2,3,i4,j4)+
-     1               xh3*nbghat(3,3,i4,j4)
-                  z1=z1+k2*k2
-                  if(z1.gt.h2) CYCLE
-C   last three komponents + first two already to large
-                  k3=xh1*nbghat(1,1,i4,j4)+xh2*nbghat(2,1,i4,j4)+
-     1               xh3*nbghat(3,1,i4,j4)
-                  z1=z1+k3*k3
+                  z1 = z+x1*x1+x2*x2+x3*x3
                   if(z1.gt.h2) CYCLE
                   if(i.gt.n) THEN
                      call intpr("Exceeded max i",14,i,1)
@@ -332,15 +315,16 @@ C   *cb
       n = i-1
       RETURN
       END
-      subroutine lkfse3i0(h,kappa,i4,k456,nbg,nbghat,ng,
-     1                   vext,vred,n)
+      subroutine lkfse3i0(h,kappa,i4,k456,nbg,ng,
+     1                   vext,vred,n,dist)
       implicit logical (a-z)
-      integer ng,n,i4
+      integer ng,n,i4,dist
       real*8 h,kappa,k456(3,ng,ng),
-     1       nbg(3,3,ng),nbghat(3,3,ng,ng),vext(2),vred
+     1       nbg(3,3,ng),vext(2),vred
       integer ih1,ih2,ih3,j1,j2,j3,j4,mj1,mj2,mj3,rad
-      real*8 x1,x2,x3,xh1,xh2,xh3,k1,k2,k3,k4,k5,k6,z,z1,
+      real*8 x1,x2,x3,k4,k5,k6,z,z1,
      1       sw,sw2,wght,anz,h2,kap2,vd2,vd3,gi1,gi2,gi3
+C     real*8 k1,k2,k3,xh1,xh2,xh3
       ih1 = max(1.d0,5.0d0*h)
       ih2 = max(1.d0,5.0d0*h/vext(1))
       ih3 = max(1.d0,5.0d0*h/vext(2))
@@ -357,12 +341,16 @@ C   *cb
       gi1 = nbg(1,1,i4)
       gi2 = nbg(2,1,i4)
       gi3 = nbg(3,1,i4)
+      z = 0.d0
+C  just to prevent compiler warnings
       DO j4 = 1,ng
 C         cb = abs(gi1*nbg(1,1,j4)+gi2*nbg(2,1,j4)+gi3*nbg(3,1,j4))
          k4 = k456(1,i4,j4)
          k5 = k456(2,i4,j4)
          k6 = k456(3,i4,j4)
-         z = (k4*k4+k5*k5+k6*k6)/kap2
+         if(dist.eq.1) z = (k4*k4+k5*k5+abs(k6))/kap2
+         if(dist.eq.2) z = (k4*k4+k5*k5+k6*k6)/kap2
+         if(dist.eq.3) z = k4*k4/kap2
          if(z.gt.h2) CYCLE
 C   last three komponents already to large
          DO j1 = 0,ih1
@@ -371,27 +359,9 @@ C   last three komponents already to large
                x2 = vd2*j2
                DO j3 = -ih3,ih3
                   x3 = vd3*j3
-                  xh1=x1*nbg(1,2,j4)+x2*nbg(2,2,j4)+x3*nbg(3,2,j4)
-                  xh2=x1*nbg(1,3,j4)+x2*nbg(2,3,j4)+x3*nbg(3,3,j4)
-                  xh3=x1*nbg(1,1,j4)+x2*nbg(2,1,j4)+x3*nbg(3,1,j4)
-C thats xhat
-C now k1       
-                  k1=xh1*nbghat(1,2,i4,j4)+xh2*nbghat(2,2,i4,j4)+
-     1               xh3*nbghat(3,2,i4,j4)
-                  z1=z+k1*k1
-                  if(z1.gt.h2) CYCLE
-C   last three komponents + first already to large
-                  k2=xh1*nbghat(1,3,i4,j4)+xh2*nbghat(2,3,i4,j4)+
-     1               xh3*nbghat(3,3,i4,j4)
-                  z1=z1+k2*k2
-                  if(z1.gt.h2) CYCLE
-C   last three komponents + first two already to large
-                  k3=xh1*nbghat(1,1,i4,j4)+xh2*nbghat(2,1,i4,j4)+
-     1               xh3*nbghat(3,1,i4,j4)
-                  z1=z1+k3*k3
+                  z1 = z+x1*x1+x2*x2+x3*x3
                   if(z1.gt.h2) CYCLE
                   wght= (1.d0-z1/h2)
-C        *cb
 C   if j1>0  (-j1,-j2,-j3) gets the same weight, so count it twice
                   if(j1.eq.0) THEN
                      anz=1.d0
@@ -418,148 +388,57 @@ C   if j1>0  (-j1,-j2,-j3) gets the same weight, so count it twice
       END IF
       RETURN
       END
-      subroutine lkfulse3(h,kappa,k456,nbg,nbghat,ng,
-     1                   vext,ind,wght,n)
+      subroutine lkfulse3(h,kappa,k456,nbg,ng,vext,ind,wght,n,dist)
       implicit logical (a-z)
-      integer ng,n,ind(5,n)
-      real*8 h(ng),kappa(ng),k456(3,ng,ng),
-     1       nbg(3,3,ng),nbghat(3,3,ng,ng),vext(2),wght(n)
+      integer ng,n,ind(5,n),dist
+      real*8 h(ng),kappa(ng),k456(3,ng,ng),nbg(3,3,ng),vext(2),wght(n)
       integer ns,ni,i
       ns = 0
       DO i = 1,ng
          ni = n-ns
-         call lkfse3i(h(i),kappa(i),i,k456,nbg,nbghat,ng,
-     1                vext,ind(1,ns+1),wght(ns+1),ni)
+         call lkfse3i(h(i),kappa(i),i,k456,nbg,ng,
+     1                vext,ind(1,ns+1),wght(ns+1),ni,dist)
          ns = ns+ni
       END DO
       n = ns
       RETURN
       END      
-      subroutine adasmse3(y,th,ni,mask,n1,n2,n3,ngrad,lambda,ind,w,n,
-     1                    thn,r,s2inv,sw,swy,swy2)
+      subroutine adrsmse3(y,th,ni,mask,n1,n2,n3,ngrad,lambda,ncoils,
+     1                    ind,w,n,thn,ldf,sigma,sw,swy,model)
+C   model=1 takes noncentral Chi-sq values in y
+C   model=0 takes noncentral Chi values in y
 C
 C   perform adaptive smoothing on SE(3) 
 C   ind(.,i) contains coordinate indormation corresponding to positive
 C   location weights in w(i)
 C   ind(.,i)[1:5] are j1-i1,j2-i2,j3-i3, i4 and j4 respectively 
-C   s2inv containes the inverses of estimated variances
 C
       implicit logical (a-z)
-      integer n1,n2,n3,ngrad,n,ind(5,n)
+      integer n1,n2,n3,ngrad,n,ind(5,n),ncoils,model
       logical mask(n1,n2,n3)
-      real*8 y(n1,n2,n3,ngrad),th(n1,n2,n3,ngrad),ni(n1,n2,n3,ngrad),
-     1       lambda,w(n),thn(n1,n2,n3,ngrad),sw(ngrad),swy(ngrad),
-     2       swy2(ngrad),s2inv(n1,n2,n3,ngrad),r(n1,n2,n3,ngrad)
+      real y(n1,n2,n3,ngrad),thn(n1,n2,n3,ngrad),ni(n1,n2,n3,ngrad),
+     1     ldf(n1,n2,n3,ngrad),th(n1,n2,n3,ngrad)
+      real*8 lambda,w(n),sw(ngrad),swy(ngrad),
+     2       sigma,lgfi,dgfi,fici,df
       integer i,i1,i2,i3,i4,j1,j2,j3,j4
-      real*8 z,yj,swyi,nii,thi
+      real*8 z,thi,nii,thj,ldfi,ldfj
+      real*8 kldisnc1
+      external kldisnc1
+      nii=1.d0
+      df=2.d0*ncoils
+C just to prevent a compiler warning
+C  precompute values of lgamma(corrected df/2) in each voxel
       DO i1=1,n1
          DO i2=1,n2
             DO i3=1,n3
-               if(.not.mask(i1,i2,i3)) CYCLE
                DO i4=1,ngrad
-                  sw(i4)=0.d0
-                  swy(i4)=0.d0
-                  swy2(i4)=0.d0
+                  thi=th(i1,i2,i3,i4)
+                  call lgstats(thi,sigma,df,model,ldfi)
+                  ldf(i1,i2,i3,i4)=ldfi
                END DO
-               i4=0
-               DO i=1,n
-                  if(ind(4,i).ne.i4) THEN
-C   by construction ind(4,.) should have same values consequtively
-                     i4 = ind(4,i)
-                     thi = th(i1,i2,i3,i4)
-                     nii = ni(i1,i2,i3,i4)/lambda
-                  END IF
-                  j1=i1+ind(1,i)
-                  j2=i2+ind(2,i)
-                  j3=i3+ind(3,i)
-                  if(j1.le.0.or.j1.gt.n1) CYCLE
-                  if(j2.le.0.or.j2.gt.n2) CYCLE
-                  if(j3.le.0.or.j3.gt.n3) CYCLE
-                  if(.not.mask(j1,j2,j3)) CYCLE          
-C                  i4=ind(4,i)
-                  j4=ind(5,i)
-                  z=thi-th(j1,j2,j3,i4)
-                  z=z*z*nii
-                  if(z.ge.1.d0) CYCLE
-                  z=w(i)*min(1.d0,2.d0-2.d0*z)
-                  z=z*s2inv(j1,j2,j3,j4)
-                  sw(i4)=sw(i4)+z
-                  yj=y(j1,j2,j3,j4)
-                  swy(i4)=swy(i4)+z*yj
-                  swy2(i4)=swy2(i4)+z*yj*yj
-               END DO
-               DO i=1,n
-                  if(ind(1,i).eq.0) CYCLE
-                  if(ind(4,i).ne.i4) THEN
-C   by construction ind(4,.) should have same values consequtively
-                     i4 = ind(4,i)
-                     thi = th(i1,i2,i3,i4)
-                     nii = ni(i1,i2,i3,i4)/lambda
-                  END IF
-C
-C   handle case j1-i1 < 0 which is not contained in ind 
-C   using axial symmetry
-C
-                  j1=i1-ind(1,i)
-                  j2=i2-ind(2,i)
-                  j3=i3-ind(3,i)
-                  if(j1.le.0.or.j1.gt.n1) CYCLE
-                  if(j2.le.0.or.j2.gt.n2) CYCLE
-                  if(j3.le.0.or.j3.gt.n3) CYCLE
-                  if(.not.mask(j1,j2,j3)) CYCLE          
-C                  i4=ind(4,i)
-                  j4=ind(5,i)
-                  z=thi-th(j1,j2,j3,i4)
-                  z=z*z*nii
-C                  z=th(i1,i2,i3,i4)-th(j1,j2,j3,j4)
-C                  z=z*z*ni(i1,i2,i3,i4)/lambda
-C                  call spenalty(th(i1,i2,i3,i4),th(j1,j2,j3,j4),
-C     1                          s2inv(i1,i2,i3,i4),ncoil,z)
-C                  z=z*ni(i1,i2,i3,i4)/lambda
-C    ni(i1,i2,i3,i4) contains normalization by siinv
-                  if(z.ge.1.d0) CYCLE
-                  z=w(i)*min(1.d0,2.d0-2.d0*z)
-                  z=z*s2inv(j1,j2,j3,j4)
-                  sw(i4)=sw(i4)+z
-                  yj=y(j1,j2,j3,j4)
-                  swy(i4)=swy(i4)+z*yj
-                  swy2(i4)=swy2(i4)+z*yj*yj
-               END DO
-               DO i4=1,ngrad
-                  swyi = swy(i4)
-                  nii=sw(i4)
-                  thn(i1,i2,i3,i4) = swyi/nii
-                  ni(i1,i2,i3,i4) = nii
-                  if(nii.gt.s2inv(i1,i2,i3,i4)) THEN
-                     r(i1,i2,i3,i4)=swyi/sqrt(nii*swy2(i4)-swyi*swyi)
-                  ELSE
-                     r(i1,i2,i3,i4)=0.d0
-                  END IF
-               END DO
-               call rchkusr()
             END DO
          END DO
       END DO
-      RETURN
-      END
-      subroutine adrsmse3(y,th,ni,mask,n1,n2,n3,ngrad,lambda,ind,w,n,
-     1                    thn,sigma,sw,swy)
-C
-C   perform adaptive smoothing on SE(3) 
-C   ind(.,i) contains coordinate indormation corresponding to positive
-C   location weights in w(i)
-C   ind(.,i)[1:5] are j1-i1,j2-i2,j3-i3, i4 and j4 respectively 
-C
-      implicit logical (a-z)
-      integer n1,n2,n3,ngrad,n,ind(5,n)
-      logical mask(n1,n2,n3),adsphere
-      real*8 y(n1,n2,n3,ngrad),th(n1,n2,n3,ngrad),ni(n1,n2,n3,ngrad),
-     1       lambda,w(n),thn(n1,n2,n3,ngrad),sw(ngrad),swy(ngrad),
-     2       sigma
-      integer i,i1,i2,i3,i4,j1,j2,j3,j4
-      real*8 z,thi,nii
-      real*8 kldrice
-      external kldrice
       DO i1=1,n1
          DO i2=1,n2
             DO i3=1,n3
@@ -575,20 +454,24 @@ C   by construction ind(4,.) should have same values consequtively
                      i4 = ind(4,i)
                      thi = th(i1,i2,i3,i4)
                      nii = ni(i1,i2,i3,i4)/lambda
+                     ldfi=ldf(i1,i2,i3,i4)
+                     call ncstats0(thi,ldfi,sigma,df,
+     1                             model,lgfi,dgfi,fici)
                   END IF
                   j1=i1+ind(1,i)
-                  j2=i2+ind(2,i)
-                  j3=i3+ind(3,i)
                   if(j1.le.0.or.j1.gt.n1) CYCLE
+                  j2=i2+ind(2,i)
                   if(j2.le.0.or.j2.gt.n2) CYCLE
+                  j3=i3+ind(3,i)
                   if(j3.le.0.or.j3.gt.n3) CYCLE
                   if(.not.mask(j1,j2,j3)) CYCLE          
-C                  i4=ind(4,i)
                   j4=ind(5,i)
-
-C adaptation on the phere depending on adsphere
+C adaptation 
                   if(lambda.lt.1d10) THEN
-                     z=nii*kldrice(thi,th(j1,j2,j3,j4),sigma)
+                     thj=th(j1,j2,j3,j4)
+                     ldfj=ldf(j1,j2,j3,j4)
+                     z=nii*kldisnc1(lgfi,dgfi,fici,thj,
+     1                              ldfj,sigma,df,model)
 C  do not adapt on the sphere !!! 
                   ELSE
                      z=0.d0
@@ -605,22 +488,27 @@ C   by construction ind(4,.) should have same values consequtively
                      i4 = ind(4,i)
                      thi = th(i1,i2,i3,i4)
                      nii = ni(i1,i2,i3,i4)/lambda
+                     ldfi=ldf(i1,i2,i3,i4)
+                     call ncstats0(thi,ldfi,sigma,df,
+     1                             model,lgfi,dgfi,fici)
                   END IF
 C
 C   handle case j1-i1 < 0 which is not contained in ind 
 C   using axial symmetry
 C
                   j1=i1-ind(1,i)
-                  j2=i2-ind(2,i)
-                  j3=i3-ind(3,i)
                   if(j1.le.0.or.j1.gt.n1) CYCLE
+                  j2=i2-ind(2,i)
                   if(j2.le.0.or.j2.gt.n2) CYCLE
+                  j3=i3-ind(3,i)
                   if(j3.le.0.or.j3.gt.n3) CYCLE
                   if(.not.mask(j1,j2,j3)) CYCLE          
                   j4=ind(5,i)
-C adaptation on the phere depending on adsphere
                   if(lambda.lt.1d10) THEN
-                     z=nii*kldrice(thi,th(j1,j2,j3,j4),sigma)
+                     thj=th(j1,j2,j3,j4)
+                     ldfj=ldf(j1,j2,j3,j4)
+                     z=nii*kldisnc1(lgfi,dgfi,fici,thj,
+     1                              ldfj,sigma,df,model)
 C  do not adapt on the sphere !!! 
                   ELSE
                      z=0.d0
@@ -640,33 +528,39 @@ C  do not adapt on the sphere !!!
       END DO
       RETURN
       END
-      subroutine asmse3s0(y0,th,th0,ni,ni0,mask,n1,n2,n3,ngrad,ns0,
-     1                    lambda,ind,w,n,starts,nstarts,thn0,sigma)
-C
-C   perform adaptive smoothing on SE(3) 
+      subroutine asmse3s0(y,th,ni,mask,n1,n2,n3,ns0,
+     1                    lambda,ncoils,ind,w,n,starts,nstarts,
+     2                    thn,ldf,sigma,swi,model)
+C   model=1 takes noncentral Chi-sq values in y0
+C   model=0 takes noncentral Chi values in y0
+C   perform adaptive smoothing on R^3
 C   ind(.,i) contains coordinate indormation corresponding to positive
 C   location weights in w(i)
 C   ind(.,i)[1:5] are j1-i1,j2-i2,j3-i3, i4 and j4 respectively 
 C
       implicit logical (a-z)
-      integer n1,n2,n3,ngrad,n,ind(5,n),ns0,starts(1),nstarts
+      integer n1,n2,n3,n,ind(5,n),ns0,starts(1),nstarts,ncoils,model
       logical mask(n1,n2,n3)
-      real*8 y0(n1,n2,n3),th0(n1,n2,n3),th(n1,n2,n3,ngrad),
-     1       ni(n1,n2,n3,ngrad),ni0(n1,n2,n3),thn0(n1,n2,n3),
-     2       lambda,w(n),sw0,swy0,sigma
-      integer i,i0,i1,i2,i3,i4,j1,j2,j3,l1,l2,l3,k1,k2,k3
-      real*8 z,swi,ng,ng0
-      real*8 kldrice
-      external kldrice
-      k1=0
-      k2=0
-      k3=0
-      ng=ngrad
-      ng0=ngrad+ns0
-      DO i=1,nstarts
-         k1=max(k1,ind(1,starts(i)))
-         k2=max(k2,abs(ind(2,starts(i))))
-         k3=max(k3,abs(ind(3,starts(i))))
+      real*8 y(n1,n2,n3),th(n1,n2,n3),ni(n1,n2,n3),thn(n1,n2,n3),
+     1       lambda,w(n),sw0,swy0,sigma,swi(nstarts),ldf(n1,n2,n3)
+      integer i,i0,i1,i2,i3,j1,j2,j3,l1,l2,l3
+      real*8 z,lgfi,dgfi,fici,ns0sc,df
+      real*8 kldisnc1
+      external kldisnc1
+      df=2.d0*ncoils
+      DO i1=1,n1
+         DO i2=1,n2
+            DO i3=1,n3
+               call lgstats(th(i1,i2,i3),sigma,df,model,ldf(i1,i2,i3))
+            END DO
+         END DO
+      END DO
+      DO i0=1,nstarts
+         swi(i0)=0.d0
+         DO i=starts(i0)+1,starts(i0+1)
+            swi(i0)=swi(i0)+w(i)
+         END DO
+         swi(i0)=swi(i0)/(starts(i0+1)-starts(i0))
       END DO
       DO i1=1,n1
          DO i2=1,n2
@@ -674,127 +568,203 @@ C
                if(.not.mask(i1,i2,i3)) CYCLE
                sw0=0.d0
                swy0=0.d0
+               ns0sc = ns0*lambda/ni(i1,i2,i3)
+               call ncstats0(th(i1,i2,i3),ldf(i1,i2,i3),sigma,df,
+     1                       model,lgfi,dgfi,fici)
                DO i0=1,nstarts
                   l1=ind(1,1+starts(i0))
-                  l2=ind(2,1+starts(i0))
-                  l3=ind(3,1+starts(i0))
-                  z=0.d0
-                  swi=0d0
                   j1=i1+l1
                   if(j1.le.0.or.j1.gt.n1) CYCLE
+                  l2=ind(2,1+starts(i0))
                   j2=i2+l2
                   if(j2.le.0.or.j2.gt.n2) CYCLE
+                  l3=ind(3,1+starts(i0))
                   j3=i3+l3
                   if(j3.le.0.or.j3.gt.n3) CYCLE
-                  ng = starts(i0+1)-starts(i0)
-                  ng0=ng+ns0
-                  DO i=starts(i0)+1,starts(i0+1)
-                     i4=ind(4,i)
-                     z=z+ni(i1,i2,i3,i4)/lambda*
-     1                  kldrice(th(i1,i2,i3,i4),th(j1,j2,j3,i4),sigma)
-                     if(z.ge.ng0) EXIT
-                     swi=swi+w(i)
-                  END DO
-                  z=z+ns0*ni0(i1,i2,i3)*
-     1                kldrice(th0(i1,i2,i3),th0(j1,j2,j3),sigma)
-                  if(z.lt.ng0) THEN
-                     z=swi/ng*min(1.d0,2.d0-2.d0*z/ng0)
+                  z=ns0*kldisnc1(lgfi,dgfi,fici,th(j1,j2,j3),
+     1                            ldf(j1,j2,j3),sigma,df,model)
+                  if(z.ge.ns0sc) CYCLE
+                  if(z.lt.ns0sc) THEN
+                     z=swi(i0)*min(1.d0,2.d0-2.d0*z/ns0sc)
                      sw0=sw0+z
-                     swy0=swy0+z*y0(j1,j2,j3)
+                     swy0=swy0+z*y(j1,j2,j3)
                   END IF
                END DO
                DO i0=1,nstarts
                   l1=ind(1,1+starts(i0))
                   if(l1.eq.0) CYCLE
 C  this part for negative l1 only (opposite directions)
-                  l2=ind(2,1+starts(i0))
-                  l3=ind(3,1+starts(i0))
-                  z=0.d0
-                  swi=0d0
                   j1=i1-l1
                   if(j1.le.0.or.j1.gt.n1) CYCLE
+                  l2=ind(2,1+starts(i0))
                   j2=i2-l2
                   if(j2.le.0.or.j2.gt.n2) CYCLE
+                  l3=ind(3,1+starts(i0))
                   j3=i3-l3
                   if(j3.le.0.or.j3.gt.n3) CYCLE
-                  ng = starts(i0+1)-starts(i0)
-                  ng0=ng+ns0
-                  DO i=starts(i0)+1,starts(i0+1)
-                     i4=ind(4,i)
-                     z=z+ni(i1,i2,i3,i4)/lambda*
-     1                  kldrice(th(i1,i2,i3,i4),th(j1,j2,j3,i4),sigma)
-                     if(z.ge.ng0) EXIT
-                     swi=swi+w(i)
-                  END DO
-                  z=z+ns0*ni0(i1,i2,i3)*
-     1                kldrice(th0(i1,i2,i3),th0(j1,j2,j3),sigma)
-                  if(z.lt.ng0) THEN
-                     z=swi/ng*min(1.d0,2.d0-2.d0*z/ng0)
+                  z=ns0*kldisnc1(lgfi,dgfi,fici,th(j1,j2,j3),
+     1                           ldf(j1,j2,j3),sigma,df,model)
+                  if(z.ge.ns0sc) CYCLE
+                  if(z.lt.ns0sc) THEN
+                     z=swi(i0)*min(1.d0,2.d0-2.d0*z/ns0sc)
                      sw0=sw0+z
-                     swy0=swy0+z*y0(j1,j2,j3)
+                     swy0=swy0+z*y(j1,j2,j3)
                   END IF
                END DO
-               thn0(i1,i2,i3) = swy0/sw0
-               ni0(i1,i2,i3) = sw0
+               thn(i1,i2,i3) = swy0/sw0
+               ni(i1,i2,i3) = sw0
                call rchkusr()
             END DO
          END DO
       END DO
       RETURN
       END
-      real*8 function kldrice(th1,th2,sigma)
-C Approximate Kullback Leibler distance for Rician distributions
-C Approximation with abs error less than 0.19 for th1 <10 or th2 <10
-C Approximation with abs error less than 0.08 for th2 >.2
-C Approximation with abs error less than 0.036 for th2 >1
-C Approximation with abs error less than 0.025 for th2 >1 and th1 >.1
-C values for th1 < 5 & th2>10 or th1>10 & th2 < 5 may be inaccurate but 
-C very large ... 
+C
+C   Kullback-leibler distance for noncentral-Chi-distributions
+C   with parameters thi/sigma and thj/sigma and 2*nc degrees of freedom
+C
+C
+C   variant with precomputed quantities
+C
+      subroutine lgstats(thi,sigma,df,model,lgfi)
       implicit logical (a-z)
-      real*8 th1,th2
-      real*8 sigma,a,b,la,lb,ai,bi,ai2,bi2,
-     1       ab,ab2,aab,bab,a2ab,alab,blab,aab2,
-     2       bab2,b2ab2,alab2,blab2,al2ab2,bl2ab2
-      a = th1/sigma
-      b = th2/sigma
-      ab = a-b
-      ab2 = ab*ab
-      kldrice = ab2/2.d0
-      if(max(th1,th2).lt.1d1.and.min(th1,th2).lt.5d0) THEN
-         la = 1.d0/dlog(th1+2.49d0)
-         lb = 1.d0/dlog(th2+1.82d0)
-         ai = 1.d0/(th1+0.54d0)
-         bi = 1.d0/(th2+1.27d0)
-         ai2 = ai*ai
-         bi2 = bi*bi
-         aab = ab*ai
-         bab = ab*bi
-         a2ab = ab*ai2
-         alab = ab*la
-         blab = ab*lb
-         aab2 = ab2*ai
-         bab2 = ab2*bi
-         b2ab2 = ab2*bi2
-         alab2 = ab2*la
-         blab2 = ab2*lb
-         al2ab2 = alab2*la*bi
-         bl2ab2 = blab2*lb*ai
-         kldrice=-5.235761d0*aab   + 4.398806d0*bab + 0.47777d0*a2ab -
-     -            6.988761d0*alab  + 7.10324d0 *blab + 
-     +            0.066667d0*aab2  + 0.591248d0*bab2 + 
-     +            0.090564d0*b2ab2 - 0.092317d0*blab2 - 
-     -           10.11165d0*al2ab2 - 1.352277d0*bl2ab2 +kldrice
-      ENDIF
+      integer model
+      real*8 thi,sigma,lgfi,df
+      real*8 mu2i,z1,z2,fi
+      real*8 lgammaf,digammaf
+      external lgammaf, digammaf
+      mu2i = thi/sigma
+      if(model.eq.0) mu2i = mu2i*mu2i
+      mu2i = max(0.d0,mu2i-df)
+      z1 = df + mu2i
+      z2 = z1 + mu2i
+      fi = z1*z1/z2
+      lgfi = lgammaf(fi/2.d0)
       RETURN
       END
-      subroutine skldrice(th1,th2,n,sigma,dist)
+      subroutine ncstats0(thi,lgfi0,sigma,df,model,lgfi,dgfi,fici)
       implicit logical (a-z)
-      integer n
-      real*8 th1(n),th2(n),dist(n),sigma
-      integer i
-      real*8 kldrice
-      DO i=1,n
-         dist(i)=kldrice(th1(i),th2(i),sigma)
+      integer model
+      real*8 thi,sigma,lgfi0,lgfi,dgfi,fici,df
+      real*8 mu2i,z1,z2,dlci,fi,ci
+      real*8 lgammaf,digammaf
+      external lgammaf, digammaf
+      mu2i = thi/sigma
+      if(model.eq.0) mu2i = mu2i*mu2i
+      mu2i = max(0.d0,mu2i-df)
+      z1 = df + mu2i
+      z2 = z1 + mu2i
+      ci = z2/z1
+      fi = z1/ci
+      fici = fi*ci
+      dlci = dlog(ci)
+      dgfi = digammaf(0.5d0*fi)+dlci
+      lgfi = lgfi0+0.5d0*(fi*dlci+fi-fi*dgfi)
+      RETURN
+      END
+      real*8 function kldisnc1(lgfi,dgfi,fici,thj,lgfj,sigma,df,
+     1                          model)
+C    for smoothing noncentral Chi values
+C    thi,thj  current estimates
+C    sigma    estimated scale parameter 
+C    df= 2 * number of coils
+C    model = 0   smoothing of chi values
+C    model = 1   smoothing of chi^2 values
+      implicit logical (a-z)
+      integer model
+      real*8 lgfi,dgfi,fici,thj,sigma,df,lgfj
+      real*8 mu2j,fj,cj,z1,z2
+      real*8 lgammaf
+      external lgammaf
+C  use Chi^2 instead of Chi for KL distance
+      mu2j = thj/sigma
+      if(model.eq.0) mu2j = mu2j*mu2j
+      mu2j = max(0.d0,mu2j-df)
+C  Approximation by Patnaik (1949)
+      z1 = df + mu2j
+      z2 = z1 + mu2j
+      cj = z2/z1
+      fj = z1/cj
+      kldisnc1 = lgfj-lgfi+0.5d0*(fj*dlog(cj)+
+     1                 fici/cj-fj*dgfi)
+      RETURN
+      END
+      subroutine awsvchi2(y,th,ni,mask,n1,n2,n3,lambda,ncoils,
+     1                    thn,th2,ni2,ldf,sigma,h,vext)
+C   model=1 takes noncentral Chi-sq values in y0
+C   model=0 takes noncentral Chi values in y0
+C   perform adaptive smoothing on R^3
+C   ind(.,i) contains coordinate indormation corresponding to positive
+C   location weights in w(i)
+C   ind(.,i)[1:5] are j1-i1,j2-i2,j3-i3, i4 and j4 respectively 
+C
+      implicit logical (a-z)
+      integer n1,n2,n3,ncoils
+      logical mask(n1,n2,n3)
+      real*8 y(n1,n2,n3),th(n1,n2,n3),ni(n1,n2,n3),thn(n1,n2,n3),
+     1       th2(n1,n2,n3),ni2(n1,n2,n3),lambda,sigma,h,vext(2),
+     2       ldf(n1,n2,n3)
+      integer i1,i2,i3,j1,j2,j3,cw1,cw2,cw3
+      real*8 z,lgfi,dgfi,fici,df,kval,w,w0,h2,sw,sw2,swy,swy2,yj,
+     1       z1,z2,z3
+      real*8 kldisnc1
+      external kldisnc1
+      df=2.d0*ncoils
+      h2=h*h
+      cw1=h
+      cw2=h/vext(1)
+      cw3=h/vext(2)
+C  precompute values of lgamma(corrected df/2) in each voxel
+      DO i1=1,n1
+         DO i2=1,n2
+            DO i3=1,n3
+               call lgstats(th(i1,i2,i3),sigma,df,1,ldf(i1,i2,i3))
+            END DO
+         END DO
       END DO
-      RETURN 
-      END 
+      DO i1=1,n1
+         DO i2=1,n2
+           DO i3=1,n3
+               if(.not.mask(i1,i2,i3)) CYCLE
+               sw=0.d0
+               swy=0.d0
+               sw2=0.d0
+               swy2=0.d0
+               kval = lambda/ni(i1,i2,i3)
+               call ncstats0(th(i1,i2,i3),ldf(i1,i2,i3),sigma,df,
+     1                       1,lgfi,dgfi,fici)
+               DO j1=max(1,i1-cw1),min(i1+cw1,n1)
+                  z1=j1-i1
+                  z1=z1*z1
+                  DO j2=max(1,i2-cw2),min(i2+cw2,n2)
+                     z2=(j2-i2)*vext(1)
+                     z2=z2*z2
+                     DO j3=max(1,i3-cw3),min(i3+cw3,n3)
+                        if(.not.mask(j1,j2,j3)) CYCLE
+                        z3=(j3-i3)*vext(2)
+                        w0=z1+z2+z3*z3
+                        if(w0.ge.h2) CYCLE
+                        w0=1.d0-w0/h2 
+                        z=kldisnc1(lgfi,dgfi,fici,th(j1,j2,j3),
+     1                             ldf(j1,j2,j3),sigma,df,1)
+                        if(z.ge.kval) CYCLE
+                        w=w0*min(1.d0,2.d0-2.d0*z/kval)
+                        sw=sw+w
+                        sw2=sw2+w*w
+                        yj=y(j1,j2,j3)
+                        swy=swy+w*yj
+                        swy2=swy2+w*yj*yj
+                     END DO
+                  END DO
+               END DO
+               thn(i1,i2,i3) = swy/sw
+               th2(i1,i2,i3) = swy2/sw
+               ni(i1,i2,i3) = sw
+               ni2(i1,i2,i3) = sw2
+               call rchkusr()
+            END DO
+         END DO
+      END DO
+      RETURN
+      END
+      
