@@ -13,7 +13,6 @@ function (kstar, gradstats, kappa=NULL, vext = c(1, 1))
                      as.integer(i),#i4
                      as.integer(kstar),#kstar
                      as.double(gradstats$k456),
-                     as.double(gradstats$nbg),
                      as.integer(ngrad),
                      as.double(kappa),#kappa
                      as.double(vext),#vext

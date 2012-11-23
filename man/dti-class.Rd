@@ -17,6 +17,7 @@
     \item{ \code{.Data}: }{ Object of class \code{"list"}, usually empty. }
     \item{ \code{gradient}: }{ Object of class \code{"matrix"}, matrix of dimension \code{c(3,ngrad)} containing gradient directions. }
     \item{ \code{btb}: }{ Object of class \code{"matrix"}, matrix of dimension \code{c(6,ngrad)} obtained from gradient directions. }
+    \item{ \code{bvalue}: }{ Object of class \code{"numeric"}, of length \code{ngrad} containing b-values if available.}
     \item{ \code{ngrad}: }{ Object of class \code{"integer"}, number of gradients (including zero gradients). }
     \item{ \code{s0ind}: }{ Object of class \code{"integer"}, index of zero gradients within the sequence \code{1:ngrad}. }
     \item{ \code{replind}: }{ Object of class \code{"integer"}, index (identifier) of unique gradient directions. Used to characterize replications in the gradient design by identical indices. length is \code{ngrad}. }
@@ -72,6 +73,8 @@ For class \code{"dwiQball"}:
 
 \describe{
     \item{ \code{order}: }{ Object of class \code{"integer"}, maximal order of Spherical Harmonics to use, needs to be even.} 
+    \item{ \code{forder}: }{ Object of class \code{"integer"}, maximal order Gaussian-Laguerre functions in SPF basis (for EAP estimation)} 
+    \item{ \code{zeta}: }{ Object of class \code{"numeric"}, Scale parameter used in Gaussian-Laguerre functions (for EAP estimation)}
     \item{ \code{lambda}: }{ Object of class \code{"numeric"}, nonnegative regularization parameter.} 
     \item{ \code{sphcoef}: }{ Object of class \code{"array"}, estimated coefficients for spherical harmonics, dimension \code{c((order+1)*(order+2)/2,ddim)}.} 
     \item{ \code{sigma}: }{ Object of class \code{"array"}, estimated error variances if \code{method=="linear"}, zero otherwise.} 

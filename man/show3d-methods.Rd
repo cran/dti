@@ -19,7 +19,7 @@
          minalpha=1, nn=1, normalize=FALSE, box=FALSE, title=FALSE, \dots)
 \S4method{show3d}{dtiTensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, minfa=.3, mask=NULL, fibers=FALSE, 
          maxangle = 30,level=0, quant=.8, scale=.4, bgcolor="black", add=FALSE, 
-         subdivide=2, maxobjects=729, what="tensor", odfscale = 3, 
+         subdivide=2, maxobjects=729, what="tensor", odfscale = 1, 
          minalpha=.25, normalize=NULL, box=FALSE, title=FALSE,\dots)
 \S4method{show3d}{dtiIndices}(obj, index="FA", nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, 
          minfa=0, bgcolor="black", add=FALSE, lwd=1, box=FALSE, 
@@ -27,10 +27,10 @@
 \S4method{show3d}{dwiMixtensor}(obj, nx=NULL, ny=NULL, nz=NULL, 
          center=NULL, minfa=.3, minorder = 1, mineo=1, fibers=FALSE, maxangle=30, level=0,           
          quant=.8, scale=.4, bgcolor="black", add=FALSE, 
-         subdivide=3, maxobjects=729, what="ODF", odfscale=3, 
+         subdivide=3, maxobjects=729, what="ODF", odfscale=1, 
          minalpha=1, lwd=3, box=FALSE, title=FALSE, \dots) 
 \S4method{show3d}{dwiQball}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, level=0, quant=.8,                 
-         scale=0.4, odfscale=3, bgcolor="black", add=FALSE, 
+         scale=0.4, odfscale=1, bgcolor="black", add=FALSE, 
          subdivide=3, maxobjects=729, minalpha=1, box=FALSE, 
          title=FALSE, \dots)
 \S4method{show3d}{dwiFiber}(obj, add=FALSE, bgcolor="black", box=FALSE, title=FALSE, lwd=1, \dots)

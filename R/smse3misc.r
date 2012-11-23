@@ -6,13 +6,10 @@ betagamma <- function(g){
                 as.integer(ngrad),
                 double(2*ngrad),
                 bghat = double(2*ngrad*ngrad),
-                nbg = double(9*ngrad),
                 DUPL = FALSE,
-                PACKAGE = "dti")[c("bghat", "nbg")]
+                PACKAGE = "dti")[c("bghat")]
   dim(z$bghat) <- c(2, ngrad, ngrad)
   ## sphaerische Coordinaten fuer Gradienten-Paare
-  dim(z$nbg) <- c(3, 3, ngrad)
-  ## normalen-vektoren n1,n2,n3 Gradienten
   z
 }
 
@@ -123,7 +120,7 @@ getkappas <- function(grad, trace = 0, dist = 1){
       zbg <- betagamma(grad)
       for(i in 1:ngrad) kappa456[1,i,] <- 1-(grad[,i]%*%grad)^2
   }
-  list(k456 = kappa456, bghat = zbg$bghat, nbg = zbg$nbg, dist=dist)
+  list(k456 = kappa456, bghat = zbg$bghat, dist=dist)
 }
 ##
 ##  Correction for Rician Bias in variance estimates 

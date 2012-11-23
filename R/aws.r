@@ -38,20 +38,10 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
   ddim0 <- object@ddim0
   ddim <- object@ddim
   nvox <- prod(ddim)
-  z <- .Fortran("outlier",
-                as.double(object@si),
-                as.integer(prod(ddim)),
-                as.integer(ngrad),
-                as.logical((1:ngrad)%in%s0ind),
-                as.integer(ns0),
-                si=integer(prod(ddim)*ngrad),
-                index=integer(prod(ddim)),
-                lindex=integer(1),
-                DUPL=FALSE,
-                PACKAGE="dti")[c("si","index","lindex")]
-  si <- array(z$si,c(ddim,ngrad))
+  z <- sioutlier(object@si,s0ind)
+  si <- aperm(array(z$si,c(ngrad,ddim)),c(2:4,1))
   object@si <- si
-  index <- if(z$lindex>0) z$index[1:z$lindex] else numeric(0)
+  index <- z$index
   s0 <- si[,,,s0ind]
   if(length(s0ind)>1) s0 <- apply(s0,1:3,mean) 
   si <- si[,,,-s0ind]
@@ -275,13 +265,7 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
     lambda0 <- lambda*lseq[k]*scorrfactor     
   }
 #  replace non-tensors (with negative eigenvalues) by a small isotropic tensor 
-      ind <- array(.Fortran("dti3Dev",
-                           as.double(z$D),
-                           as.integer(n1*n2*n3),
-                           as.logical(mask),
-                           ev=double(3*n1*n2*n3),
-                           DUPL=FALSE,
-                           PACKAGE="dti")$ev,c(3,n1,n2,n3))[1,,,]<1e-6
+      ind <- array(dti3Dev(D,mask),c(3,n1,n2,n3))[1,,,]<1e-6
        if(sum(ind&mask)>0){
            dim(z$D) <- c(6,n1*n2*n3)
            z$D[c(1,4,6),ind&mask] <- 1e-6
@@ -295,6 +279,7 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
                 D     = z$D,
                 th0   = th0,
                 gradient = object@gradient,
+                bvalue = object@bvalue,
                 btb   = btb,
                 sigma = z$sigma2hat, 
                 scorr = scorr,

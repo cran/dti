@@ -40,22 +40,11 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
   ngrad <- object@ngrad
   ddim0 <- object@ddim0
   ddim <- object@ddim
-  z <- .Fortran("outlier",
-                as.double(object@si),
-                as.integer(prod(ddim)),
-                as.integer(ngrad),
-                as.logical((1:ngrad)%in%s0ind),
-                as.integer(length(s0ind)),
-                si=integer(prod(ddim)*ngrad),
-                index=integer(prod(ddim)),
-                lindex=integer(1),
-                DUP=FALSE,
-                PACKAGE="dti")[c("si","index","lindex")]
-  si <- array(z$si,c(ddim,ngrad))
-  index <- if(z$lindex>0) z$index[1:z$lindex] else numeric(0)
+  z <- sioutlier(object@si,s0ind)
+  si <- array(z$si,c(ngrad,ddim))
+  index <- z$index 
   rm(z)
   gc()
-  si <- aperm(si,c(4,1:3))
   xind <- object@xind
   yind <- object@yind
   zind <- object@zind
@@ -306,6 +295,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
                 bw = h0,
                 mask = mask,
                 gradient = object@gradient,
+                bvalue = object@bvalue,
                 btb   = btb,
                 hmax  = hmax,
                 ngrad = ngrad, # = dim(btb)[2]
@@ -328,6 +318,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
                 si = aperm(array(as.integer(z$sihat),dimsi),c(2:4,1)),
                 sdcoef = sdcoef,
                 gradient = object@gradient,
+                bvalue = object@bvalue,
                 btb    = btb,
                 ngrad  = ngrad, # = dim(btb)[2]
                 s0ind  = object@s0ind, # indices of s0 images

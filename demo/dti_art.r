@@ -48,6 +48,7 @@ cat("Using ",ns0," S0  and ",ngrad,"diffusion weighted images\n")
 # bvec <- read.table(system.file("dat/b-directions.txt",package="dti"))
 data(optgradients)
 bvec <- rbind(matrix(0,ns0,3),t(optgrad[[ngrad-5]]))
+bvalue <- c(rep(0,ns0),rep(1000,ngrad))
 
 #
 #  generate files containing the phantom- and noisy diffusion weighted images
@@ -74,7 +75,7 @@ dt0aniso <- dtiIndices(dt0)
 
 # Read noisy data 
 
-dtobj <- dtiData(bvec,tmpfile2,mins0value=mins0value,ddim,voxelext=c(1,1,2.5))
+dtobj <- dtiData(bvec,tmpfile2,mins0value=mins0value,ddim,bvalue=bvalue,voxelext=c(1,1,2.5))
 dtobj <- sdpar(dtobj,interactive=FALSE)
 
 # Estimate tensors
@@ -180,7 +181,7 @@ graphics.off()
 if(toupper(z)!="N"){
 file.remove(tmpfile1)
 file.remove(tmpfile2)
-file.remove(paste(tmpfile3,".nii",sep=""))
+file.remove(paste(tmpfile3,".nii.gz",sep=""))
 rm(a,btb,bvec,cphi,createdata.dti,ddim,dt0,dt0aniso,dt0obj,dthat1,dthat1aniso,
 dthat4,dthat4aniso,dthat4b,dtiso,dtobj,eta,etai,etas,factor,i,ind,j,lambda,method,
 mins0value,ngrad,phi,project.cylinder,rad,rad1,rad2,rho,s0,s0offa,sigma,sphi,x,y,z,tmpfile1,tmpfile2,tmpfile3,w1,w2,w3)

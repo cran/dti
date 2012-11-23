@@ -10,7 +10,7 @@
 }
 \usage{
   \S4method{dtiTensor}{dtiData}(object, method="nonlinear", varmethod="replicates", 
-                                varmodel="local", mc.cores = getOption("mc.cores", 2L))
+                                varmodel="local", mc.cores = getOption("mc.cores", 1L))
 }
 \arguments{
   \item{object}{ Object of class \code{"dtiData"}}

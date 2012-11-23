@@ -34,6 +34,9 @@ setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive
     A1 <- quantile(s0[s0>0],.98)
   }
   if(interactive) {
+    par(mfrow=c(1,3),mar=c(3,3,3,1),mgp=c(2,1,0))
+    img <- if(ls0ind>1) s0mean[,,(object@ddim[3]-1)%/%2+1] else s0[,,(object@ddim[3]-1)%/%2+1]
+    maximg <- max(img)
     accept <- FALSE
     ddim <- object@ddim
     ddm1 <- ddim-1
@@ -65,6 +68,10 @@ setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive
       legend(min(A0,0.25*max(z$x)),ylim[2],c("Full cube",paste("Central",(n1*100)%/%n,"%"),
       paste("Central",(n2*100)%/%n,"%"),paste("Central",(n3*100)%/%n,"%")),col=1:4,lwd=rep(1,4))
       cat("A good cut off point should be left of support of the density of grayvalues within the head\n")
+      show.image(make.image(img/maximg))
+      title("Central slice: Intensity values")
+      show.image(make.image((img<A0)))
+      title("Central slice: voxel not in mask")
       a <- readline(paste("Accept current cut off point",A0," (Y/N):"))
       if (toupper(a) == "N") {
         cutpoint <-  readline("Provide value for cut off point:")
@@ -202,6 +209,7 @@ setMethod("[","dtiData",function(x, i, j, k, drop=FALSE){
                 call   = args,
                 si     = x@si[i,j,k,,drop=FALSE],
                 gradient = gradient,
+                bvalue = x@bvalue,
                 btb    = x@btb,
                 ngrad  = x@ngrad,
                 s0ind  = x@s0ind,
@@ -219,6 +227,92 @@ setMethod("[","dtiData",function(x, i, j, k, drop=FALSE){
                 source = x@source)
             )
 })
+
+
+subsetg <- function(x, ind){
+  args <- sys.call(-1)
+  args <- c(x@call,args)
+  if (missing(ind)) ind <- 1:x@ngrad
+  s0ind <- (1:length(ind))[ind%in%x@s0ind]  
+  invisible(new("dtiData",
+                call   = args,
+                si     = x@si[,,,ind,drop=FALSE],
+                gradient = x@gradient[,ind],
+                bvalue = x@bvalue[ind],
+                btb    = x@btb[,ind],
+                ngrad  = as.integer(length(ind)),
+                s0ind  = s0ind,
+                replind = replind(x@gradient[,ind]),
+                ddim   = x@ddim,
+                ddim0  = x@ddim0,
+                xind   = x@xind,
+                yind   = x@yind,
+                zind   = x@zind,
+                sdcoef = x@sdcoef,
+                level  = x@level,
+                voxelext = x@voxelext,
+                orientation = as.integer(x@orientation),
+                rotation = x@rotation,
+                source = x@source)
+            )
+}
+
+combineDWIdata <- function(x1, x2, s0strategy="first"){
+# s0 strategies: "first", "second", "both", "rfirst", "rsecond", "rboth"
+  args <- sys.call(-1)
+  args <- c(x1@call,x2@call,args)
+  if(any(x1@ddim!=x2@ddim)) return(warning("Incompatible dimensions"))
+  s01 <- x1@si[,,,x1@s0ind]
+  s02 <- x2@si[,,,x2@s0ind]
+  ls01 <- length(x1@s0ind)
+  ls02 <- length(x2@s0ind)
+  if(s0strategy%in%c("both","rfirst","rboth")) dim(s01) <- c(prod(x1@ddim),ls01)
+  if(s0strategy%in%c("both","rsecond","rboth")) dim(s02) <- c(prod(x2@ddim),ls02)
+  grad1 <- x1@gradient[,-x1@s0ind]
+  grad2 <- x2@gradient[,-x2@s0ind]
+  s0 <- switch(s0strategy,"first" = s01, 
+                          "second" = s02, 
+                          "both" = array(c(s01,s02),c(x1@ddim,ls01+ls02)),
+                          "rfirst" = s01%*%rep(1/ls01,ls01), 
+                          "rsecond" = s02%*%rep(1/ls02,ls02), 
+                          "rboth" = cbind(s01,s02)%*%rep(1/(ls01+ls02),ls01+ls02))
+  ls0 <- switch(s0strategy,"first" = ls01, 
+                          "second" = ls02, 
+                          "both" = ls01+ls02,
+                          "rfirst" = 1, 
+                          "rsecond" = 1, 
+                          "rboth" = 1)
+  ns1 <- x1@ngrad-ls01
+  ns2 <- x2@ngrad-ls02
+  si <- array(c(s0,x1@si[,,,-x1@s0ind],x2@si[,,,-x2@s0ind]),c(x1@ddim,ls0+ns1+ns2))
+  gradient <- matrix(c(rep(0,3*ls0),x1@gradient[,-x1@s0ind],
+                      x2@gradient[,-x2@s0ind]),c(3,ls0+ns1+ns2))
+  bvalue <- c(rep(0,ls0),x1@bvalue[-x1@s0ind],x2@bvalue[-x2@s0ind])
+  btb <- matrix(c(rep(0,6*ls0),x1@btb[,-x1@s0ind],
+                      x2@btb[,-x2@s0ind]),c(6,ls0+ns1+ns2))
+  invisible(new("dtiData",
+                call   = args,
+                si     = si,
+                gradient = gradient,
+                bvalue = bvalue,
+                btb    = btb,
+                ngrad  = as.integer(ls0+ns1+ns2),
+                s0ind  = 1:ls0,
+                replind = replind(gradient),
+                ddim   = x1@ddim,
+                ddim0  = as.integer(c(x1@ddim0[1:3],ls0+ns1+ns2)),
+                xind   = x1@xind,
+                yind   = x1@yind,
+                zind   = x1@zind,
+                sdcoef = x1@sdcoef,
+                level  = x1@level,
+                voxelext = x1@voxelext,
+                orientation = as.integer(x1@orientation),
+                rotation = x1@rotation,
+                source = x1@source)
+            )
+  
+}
 
 ##############
 
@@ -278,6 +372,7 @@ setMethod("[","dtiTensor",function(x, i, j, k, drop=FALSE){
                 mask = x@mask[i,j,k,drop=FALSE],
                 hmax = x@hmax,
                 gradient = gradient,
+                bvalue = x@bvalue,
                 btb   = btb,
                 ngrad = x@ngrad,
                 s0ind = x@s0ind,
@@ -366,6 +461,7 @@ setMethod("[","dwiMixtensor",function(x, i, j, k, drop=FALSE){
                 mask = x@mask[i,j,k,drop=FALSE],
                 hmax = x@hmax,
                 gradient = gradient,
+                bvalue = x@bvalue,
                 btb   = btb,
                 ngrad = x@ngrad,
                 s0ind = x@s0ind,
@@ -432,6 +528,7 @@ setMethod("[","dtiIndices",function(x, i, j, k, drop=FALSE){
                 andir = andir[,i,j,k,drop=FALSE],
                 bary = x@bary[,i,j,k,drop=FALSE],
                 gradient = gradient,
+                bvalue = x@bvalue,
                 btb   = btb,
                 ngrad = x@ngrad,
                 s0ind = x@s0ind,
@@ -482,8 +579,10 @@ setMethod("[","dwiQball",function(x, i, j, k, drop=FALSE){
   invisible(new("dwiQball",
                 call  = args, 
                 order = x@order,
+                forder = x@forder,
                 lambda = x@lambda,
-                sphcoef = x@sphcoef[,i,j,k,drop=FALSE],
+                sphcoef = if(x@what%in%c("sqrtODF")) x@sphcoef[,,i,j,k,drop=FALSE] else  x@sphcoef[,i,j,k,drop=FALSE],
+                varsphcoef = x@varsphcoef,
                 th0   = x@th0[i,j,k,drop=FALSE],
                 sigma = x@sigma[i,j,k,drop=FALSE],
                 scorr = x@scorr, 
@@ -492,6 +591,7 @@ setMethod("[","dwiQball",function(x, i, j, k, drop=FALSE){
                 hmax = x@hmax,
                 gradient = x@gradient,
                 btb   = x@btb,
+                bvalue = x@bvalue,
                 ngrad = x@ngrad,
                 s0ind = x@s0ind,
                 replind = x@replind,
@@ -638,29 +738,7 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
 
   z <- list(NULL)
   if(needall){
-    erg <- if(mc.cores<=1||prod(ddim)<=mc.cores)
-           .Fortran("dti3Dall",
-                    as.double(x@D),
-                    as.integer(nvox),
-                    as.logical(x@mask),
-                    fa=double(nvox),
-                    ga=double(nvox),
-                    md=double(nvox),
-                    andir=double(3*nvox),
-                    ev=double(3*nvox),
-                    DUP=FALSE,
-                    PACKAGE="dti")[c("fa","ga","md","andir","ev")]
-    else {
-          D <- matrix(x@D,6,prod(ddim))[,x@mask]
-                res <- matrix(0,9,prod(ddim))
-                res[,x@mask] <- pmatrix(D,pdti3Dall,mc.cores=mc.cores,mc.silent = TRUE)
-                list(andir=res[4:6,],
-                     fa=res[1,],
-                     ga=res[2,],
-                     md=res[3,],
-                     ev=res[7:9,])
-      
-    }
+    erg <- dti3Dall(x@D,x@mask,mc.cores=mc.cores)
     if("fa" %in% what) z$fa <- array(erg$fa,x@ddim)
     if("ga" %in% what) z$ga <- array(erg$ga,x@ddim)
     if("md" %in% what) z$md <- array(erg$md,x@ddim)
@@ -668,19 +746,8 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
     if("andir" %in% what) z$andir <- array(erg$andir,c(3,n1,n2,n3))
   } else {
     if(needev){
-      if(mc.cores<=1) ev <- array(.Fortran("dti3Dev",
-                           as.double(x@D),
-                           as.integer(nvox),
-                           as.logical(x@mask),
-                           ev=double(3*nvox),
-                           DUP=FALSE,
-                           PACKAGE="dti")$ev,c(3,n1,n2,n3))
-          else {
-            ev <- matrix(0,3,nvox)
-            D <- matrix(x@D,6,nvox)[,x@mask]
-            ev[,x@mask] <- pmatrix(D,pdti3Dev,mc.cores=mc.cores,mc.silent = TRUE)
-         }
-     if("fa" %in% what) {
+      ev <- array(dti3Dev(x@D,x@mask,mc.cores=mc.cores),c(3,n1,n2,n3))
+      if("fa" %in% what) {
         dd <- apply(ev^2,2:4,sum)
         md <- (ev[1,,,]+ev[2,,,]+ev[3,,,])/3
         sev <- sweep(ev,2:4,md)
@@ -698,18 +765,7 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
       if("evalues" %in% what) z$evalues <- array(ev,c(3,x@ddim))
     }
     if("andir" %in% what){
-      if(mc.cores<=1) z$andir <- array(.Fortran("dti3Dand",
-                                as.double(x@D),
-                                as.integer(nvox),
-                                as.logical(x@mask),
-                                andir=double(3*nvox),
-                                DUP=FALSE,
-                                PACKAGE="dti")$andir,c(3,nvox))
-          else {
-            z$andir <- matrix(0,3,nvox)
-            D <- matrix(x@D,6,nvox)[,x@mask]
-            z$andir[,x@mask] <- pmatrix(D,pdti3Dand,mc.cores=mc.cores,mc.silent = TRUE)
-         }
+      ev <- array(dti3Dand(x@D,x@mask,mc.cores=mc.cores),c(3,nvox))
     }
   }
   if("tensor" %in% what) z$tensor <- array(x@D,c(6,x@ddim))
@@ -832,6 +888,34 @@ z <- .Fortran("getmask",
 z <- list(s0=object@si[,,,object@s0ind],mask=array(TRUE,object@ddim))
 }
 dim(z$s0) <- dim(z$mask) <- object@ddim
+z
+}
+)
+setMethod("getmask","array",function(object, level=NULL, prop=.4, size=3){
+if(length(dim(object))!=3){
+level <- NULL
+warning("array dimension need to be of length 3, returning trivial mask")
+} else {
+ddim <- dim(object)
+}
+if(!is.null(level)){ 
+z <- .Fortran("getmask",
+              as.integer(object),
+              as.integer(ddim[1]),
+              as.integer(ddim[2]),
+              as.integer(ddim[3]),
+              as.integer(1),
+              as.double(level),
+              as.integer(size),
+              as.double(prop),
+              s0=double(prod(ddim)),
+              mask=logical(prod(ddim)),
+              DUP=FALSE,
+              PACKAGE="dti")[c("s0","mask")]
+} else {
+z <- list(s0=object,mask=array(TRUE,dim(object)))
+}
+dim(z$s0) <- dim(z$mask) <- dim(object)
 z
 }
 )

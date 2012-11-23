@@ -1,6 +1,21 @@
+2012-11-23 version 1.1-0
+
+  This is a mayor release using parallized code (openMP or using package parallel where appropriate).
+  Experimental code for Jian Chengs method for  non-negative definte EAP and ODF estimates
+  (MICCAI 2012) has been added.
+  - Several bugfixes (parallelization in dwiMixtensor, ODF estimation (Aganji)
+  - Default in show3d habe been changed from odfscale=3 (constant volume) to odfscale=1
+    (radial distances == ODF values)
+  - further parallelization (openMP) and code optimization (avoiding multiple aperms on si)
+  - optimization for Jian Chengs non-negative definte EAP and ODF estimates
+  - Bugfix in ODF estimation (Aganji)
+
+2012-09-12 version 1.0-7
+  - package no longer depends on fmri, but oro.nifti for IO. 
+  
 2012-05-21
 
-  -added function awssigmc for estimation of noise standard deviation.
+  -added function awssigmc for estimation of noise standard deviation (experimental).
 
 2012-01-31 
 

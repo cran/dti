@@ -108,7 +108,7 @@ setMethod("show3d","dtiData", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,q
 })
 ##############
 
-setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,method=1,minfa=.3,mask=NULL,fibers=FALSE,maxangle=30,level=0,quant=.8,scale=.4,bgcolor="black",add=FALSE,subdivide=2,maxobjects=729,what="tensor",odfscale=3,minalpha=.25,normalize=NULL,box=FALSE,title=FALSE,...){
+setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,method=1,minfa=.3,mask=NULL,fibers=FALSE,maxangle=30,level=0,quant=.8,scale=.4,bgcolor="black",add=FALSE,subdivide=2,maxobjects=729,what="tensor",odfscale=1,minalpha=.25,normalize=NULL,box=FALSE,title=FALSE,...){
   if(!require(rgl)) stop("Package rgl needs to be installed for 3D visualization")
   if(!exists("icosa0")) data("polyeders")
   if(subdivide<0||subdivide>4) subdivide <- 3
@@ -244,7 +244,7 @@ setMethod("show3d","dtiTensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL
   invisible(rgl.cur())
 })
 
-setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,minfa=.3,minorder=1,mineo=1,fibers=FALSE,maxangle=30,level=0,quant=.8,scale=.4,bgcolor="black",add=FALSE,subdivide=3,maxobjects=729,what="ODF",odfscale=3,minalpha=1,lwd=3,box=FALSE,title=FALSE,...){
+setMethod("show3d","dwiMixtensor", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,minfa=.3,minorder=1,mineo=1,fibers=FALSE,maxangle=30,level=0,quant=.8,scale=.4,bgcolor="black",add=FALSE,subdivide=3,maxobjects=729,what="ODF",odfscale=1,minalpha=1,lwd=3,box=FALSE,title=FALSE,...){
   if(!require(rgl)) stop("Package rgl needs to be installed for 3D visualization")
   if(!exists("icosa0")) data("polyeders")
   if(subdivide<0||subdivide>4) subdivide <- 3
@@ -464,7 +464,7 @@ setMethod("show3d","dtiIndices",function(obj, index="FA", nx=NULL, ny=NULL, nz=N
 
 ##############
 
-setMethod("show3d","dwiQball", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,level=0,quant=.8,scale=.4,odfscale=3,bgcolor="black",add=FALSE,subdivide=3,maxobjects=729,minalpha=1,box=FALSE,title=FALSE,...){
+setMethod("show3d","dwiQball", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,level=0,quant=.8,scale=.4,odfscale=1,bgcolor="black",add=FALSE,subdivide=3,maxobjects=729,minalpha=1,box=FALSE,title=FALSE,...){
   if(!require(rgl)) stop("Package rgl needs to be installed for 3D visualization")
   if(!exists("icosa0")) data("polyeders")
   if(subdivide<0||subdivide>4) subdivide <- 3
@@ -502,24 +502,36 @@ setMethod("show3d","dwiQball", function(obj,nx=NULL,ny=NULL,nz=NULL,center=NULL,
   obj <- obj[xind,yind,zind]
   vext <- obj@voxelext
   center <- center*vext
-  sphcoef <- obj@sphcoef
-  dim(sphcoef) <- c(dim(sphcoef)[1],prod(dim(sphcoef)[-1]))
   tmean <- array(0,c(3,n1,n2,n3))
   tmean[1,,,] <- xind*vext[1]
   tmean[2,,,] <- outer(rep(1,n1),yind)*vext[2]
   tmean[3,,,] <- outer(rep(1,n1),outer(rep(1,n2),zind))*vext[3]
   dim(tmean) <- c(3,n)
   polyeder <- switch(subdivide+1,icosa0,icosa1,icosa2,icosa3,icosa4)
-  sphdesign <- design.spheven(obj@order,polyeder$vertices,obj@lambda)$design
-  radii <- t(sphdesign)%*%sphcoef
-  radii <- array(pmax(0,radii),dim(radii))
+  if(obj@what=="sqrtODF"){
+     sphdesign <- design.spheven(obj@order,polyeder$vertices,obj@lambda)$design
+     radii <- 0
+     for(i in (0:obj@forder)+1){
+     sphcoef <- obj@sphcoef[,i,,,]
+     dim(sphcoef) <- c(dim(sphcoef)[1],prod(dim(sphcoef)[-1]))
+     radii <- radii+(t(sphdesign)%*%sphcoef)^2
+     }
+# integration over fourier frequencies (in radial direction)
+  } else {
+     sphcoef <- obj@sphcoef
+     sphdesign <- design.spheven(obj@order,polyeder$vertices,obj@lambda)$design
+     dim(sphcoef) <- c(dim(sphcoef)[1],prod(dim(sphcoef)[-1]))
+     cat("dim(sphcoef)",dim(sphcoef),"dim(sphdesign)",dim(sphdesign),"\n")
+     radii <- t(sphdesign)%*%sphcoef
+     radii <- array(pmax(0,radii),dim(radii))
+     mradii <- apply(radii,2,mean)
+     radii <- sweep(radii,2,mradii,"/")+level
+  }
 #  avoid negative ODF's, otherwise scaling by volume produces
 #  strange results
-  mradii <- apply(radii,2,mean)
 #
 #   rescale and use a sphere of radius level as baseline for the ODF
 #
-  radii <- sweep(radii,2,mradii,"/")+level
   radii[is.na(radii)] <- 0
 #
 #   to display results in a form that the volumes are comparable,

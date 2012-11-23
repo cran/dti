@@ -82,6 +82,7 @@ if(!(is.null(roix)&&is.null(roiy)&&is.null(roiz)&&is.null(mask))){
                 startind = as.integer(fiberstart),
                 roimask = as.raw(roimask),
                 gradient = obj@gradient,
+                bvalue = obj@bvalue,
                 btb   = obj@btb,
                 ngrad = obj@ngrad, # = dim(btb)[2]
                 s0ind = obj@s0ind,

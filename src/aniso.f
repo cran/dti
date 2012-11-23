@@ -220,7 +220,7 @@ C    ia,ie -  rane of x values (restricted to the grid)
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
-C    Compute DTI-Indices for a slice
+C    Compute FA for a slice  (used in plot.r only)
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine dti2Dfa(D,n,mask,fa,md,adir)
@@ -260,6 +260,10 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       END DO
       RETURN
       END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C    Compute GA for a slice  (used in plot.r only)
+C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine dti2Dga(D,n,mask,ga,md,adir)
       implicit logical (a-z)
@@ -303,249 +307,37 @@ C
 C    Compute DTI-Indices for a volume
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dtiind3D(D,n,mask,fa,ga,md,adir,bary)
+      subroutine dtiind3D(D,n,fa,ga,md,adir,bary)
       implicit logical (a-z)
       integer n
-      logical mask(n)
       real*8 D(6,n),fa(n),md(n),adir(3,n),bary(3,n),ga(n)
       integer i,ierr
-      real*8 lambda(3),evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
+      real*8 lambda(3),evec(9),trc,d1,d2,d3,a1,a2,a3,dd
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(D,n,fa,ga,md,adir,bary)
+C$OMP& PRIVATE(i,ierr,lambda,evec,trc,d1,d2,d3,a1,a2,a3,dd)
+C$OMP DO SCHEDULE(GUIDED)
       DO i=1,n
-         if(mask(i)) THEN
-            call eigen3(D(1,i),lambda,evec,ierr)
-            a1=lambda(1)
-            a2=lambda(2)
-            a3=lambda(3)
-            trc=(a1+a2+a3)/3.d0
-            adir(1,i)=evec(1,3)
-            adir(2,i)=evec(2,3)
-            adir(3,i)=evec(3,3)
-            md(i)=trc
-            d1=a1-trc
-            d2=a2-trc
-            d3=a3-trc
-            dd=a1*a1+a2*a2+a3*a3
-            IF(dd.gt.1.d-12) THEN
-               fa(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
-               bary(1,i)=(a3-a2)/trc/3.d0
-               bary(2,i)=2.d0*(a2-a1)/trc/3.d0
-               bary(3,i)=a1/trc
-            ELSE
-               fa(i)=0.d0
-               bary(1,i)=0.d0
-               bary(2,i)=0.d0
-               bary(3,i)=1.d0
-            ENDIF
-            d1=log(a1)
-            d2=log(a2)
-            d3=log(a3)
-            dd=(d1+d2+d3)/3.d0
-            d1=d1-dd
-            d2=d2-dd
-            d3=d3-dd
-            ga(i)=sqrt(d1*d1+d2*d2+d3*d3)
-         ELSE
-            md(i)=0.d0
-            fa(i)=0.d0
-            ga(i)=0.d0
-            adir(1,i)=1.d0
-            adir(2,i)=0.d0
-            adir(3,i)=0.d0
-            bary(1,i)=0.d0
-            bary(2,i)=0.d0
-            bary(3,i)=1.d0
-         END IF
-      END DO
-      RETURN
-      END
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C
-C    Compute DTI-Indices for a volume (version for parallelization code)
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dtiind3p(D,n,ergs)
-      implicit logical (a-z)
-      integer n
-      real*8 D(6,n),ergs(9,n)
-      integer i,ierr
-      real*8 lambda(3),evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
-      DO i=1,n
-            call eigen3(D(1,i),lambda,evec,ierr)
-            a1=lambda(1)
-            a2=lambda(2)
-            a3=lambda(3)
-            trc=(a1+a2+a3)/3.d0
-            ergs(1,i)=evec(1,3)
-            ergs(2,i)=evec(2,3)
-            ergs(3,i)=evec(3,3)
-            ergs(6,i)=trc
-            d1=a1-trc
-            d2=a2-trc
-            d3=a3-trc
-            dd=a1*a1+a2*a2+a3*a3
-            IF(dd.gt.1.d-12) THEN
-               ergs(4,i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
-               ergs(7,i)=(a3-a2)/trc/3.d0
-               ergs(8,i)=2.d0*(a2-a1)/trc/3.d0
-               ergs(9,i)=a1/trc
-            ELSE
-               ergs(4,i)=0.d0
-               ergs(7,i)=0.d0
-               ergs(8,i)=0.d0
-               ergs(9,i)=1.d0
-            ENDIF
-            d1=log(a1)
-            d2=log(a2)
-            d3=log(a3)
-            dd=(d1+d2+d3)/3.d0
-            d1=d1-dd
-            d2=d2-dd
-            d3=d3-dd
-            ergs(5,i)=sqrt(d1*d1+d2*d2+d3*d3)
-      END DO
-      RETURN
-      END
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C
-C    Compute subset of DTI-Indices for a volume
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dtieigen(D,n,mask,fa,ev,adir)
-      implicit logical (a-z)
-      integer n
-      logical mask(n)
-      real*8 D(6,n),fa(n),ev(3,n),adir(3,2,n)
-      integer i,ierr
-      real*8 lambda(3),evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
-      DO i=1,n
-         if(mask(i)) THEN
-            call eigen3(D(1,i),lambda,evec,ierr)
-            ev(1,i)=lambda(3)
-            ev(2,i)=lambda(2)
-            ev(3,i)=lambda(1)
-            a1=lambda(1)
-            a2=lambda(2)
-            a3=lambda(3)
-            trc=(a1+a2+a3)/3.d0
-            adir(1,1,i)=evec(1,3)
-            adir(2,1,i)=evec(2,3)
-            adir(3,1,i)=evec(3,3)
-            adir(1,2,i)=evec(1,2)
-            adir(2,2,i)=evec(2,2)
-            adir(3,2,i)=evec(3,2)
-            d1=a1-trc
-            d2=a2-trc
-            d3=a3-trc
-            dd=a1*a1+a2*a2+a3*a3
-            IF(dd.gt.1.d-12) THEN
-               fa(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
-            ELSE
-               fa(i)=0.d0
-            ENDIF
-         ELSE
-            fa(i)=0.d0
-            adir(1,1,i)=1.d0
-            adir(2,1,i)=0.d0
-            adir(3,1,i)=0.d0
-            adir(1,2,i)=0.d0
-            adir(2,2,i)=1.d0
-            adir(3,2,i)=0.d0
-         END IF
-      END DO
-      RETURN
-      END
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C
-C    Compute DTI-Indices for a volume
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti3Dall(D,n,mask,fa,ga,md,adir,ev)
-      implicit logical (a-z)
-      integer n
-      logical mask(n)
-      real*8 D(6,n),fa(n),md(n),adir(3,n),ev(3,n),ga(n)
-      integer i,ierr
-      real*8 evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
-      DO i=1,n
-         if(mask(i)) THEN
-            call eigen3(D(1,i),ev(1,i),evec,ierr)
-            a1=ev(1,i)
-            a2=ev(2,i)
-            a3=ev(3,i)
-            trc=(a1+a2+a3)/3.d0
-            adir(1,i)=evec(1,3)
-            adir(2,i)=evec(2,3)
-            adir(3,i)=evec(3,3)
-            md(i)=trc
-            d1=a1-trc
-            d2=a2-trc
-            d3=a3-trc
-            dd=a1*a1+a2*a2+a3*a3
-            IF(dd.gt.1.d-12) THEN
-               fa(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
-            ELSE
-               fa(i)=0.d0
-               ev(1,i)=0.d0
-               ev(2,i)=0.d0
-               ev(3,i)=0.d0
-            ENDIF
-            d1=log(a1)
-            d2=log(a2)
-            d3=log(a3)
-            dd=(d1+d2+d3)/3.d0
-            d1=d1-dd
-            d2=d2-dd
-            d3=d3-dd
-            ga(i)=sqrt(d1*d1+d2*d2+d3*d3)
-         ELSE
-            md(i)=0.d0
-            fa(i)=0.d0
-            ga(i)=0.d0
-            adir(1,i)=1.d0
-            adir(2,i)=0.d0
-            adir(3,i)=0.d0
-            ev(1,i)=0.d0
-            ev(2,i)=0.d0
-            ev(3,i)=0.d0
-         END IF
-      END DO
-      RETURN
-      END
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C
-C    Compute DTI-Indices for a volume (parallelized version)
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti3Dalp(D,n,ergs)
-C
-C  components of ergs: 1:fa 2:ga 3:md, 4:6 adir, 7:9 ev
-C
-      implicit logical (a-z)
-      integer n
-      real*8 D(6,n),ergs(9,n)
-      integer i,ierr
-      real*8 evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
-      DO i=1,n
-         call eigen3(D(1,i),ergs(7,i),evec,ierr)
-         a1=ergs(7,i)
-         a2=ergs(8,i)
-         a3=ergs(9,i)
+         call eigen3(D(1,i),lambda,evec,ierr)
+         a1=lambda(1)
+         a2=lambda(2)
+         a3=lambda(3)
          trc=(a1+a2+a3)/3.d0
-         ergs(4,i)=evec(1,3)
-         ergs(5,i)=evec(2,3)
-         ergs(6,i)=evec(3,3)
-         ergs(3,i)=trc
+         md(i)=trc
          d1=a1-trc
          d2=a2-trc
          d3=a3-trc
          dd=a1*a1+a2*a2+a3*a3
          IF(dd.gt.1.d-12) THEN
-            ergs(1,i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
+            fa(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
+            bary(1,i)=(a3-a2)/trc/3.d0
+            bary(2,i)=2.d0*(a2-a1)/trc/3.d0
+            bary(3,i)=a1/trc
          ELSE
-            ergs(1,i)=0.d0
-            ergs(4,i)=0.d0
-            ergs(5,i)=0.d0
-            ergs(6,i)=0.d0
+            fa(i)=0.d0
+            bary(1,i)=0.d0
+            bary(2,i)=0.d0
+            bary(3,i)=1.d0
          ENDIF
          d1=log(a1)
          d2=log(a2)
@@ -554,23 +346,111 @@ C
          d1=d1-dd
          d2=d2-dd
          d3=d3-dd
-         ergs(2,i)=sqrt(d1*d1+d2*d2+d3*d3)
+         ga(i)=sqrt(d1*d1+d2*d2+d3*d3)
+         adir(1,i)=evec(7)
+         adir(2,i)=evec(8)
+         adir(3,i)=evec(9)
       END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(fa,ga,md,adir,bary)
       RETURN
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
-C    Compute DTI-eigenvalues for a volume (parallel version)
+C    Compute subset of DTI-Indices for a volume
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti3Devp(D,n,ev)
+      subroutine dtieigen(D,n,fa,ev,adir)
       implicit logical (a-z)
       integer n
-      real*8 D(6,n),ev(3,n)
+      real*8 D(6,n),fa(n),ev(3,n),adir(6,n)
       integer i,ierr
+      real*8 lambda(3),evec(9),trc,d1,d2,d3,a1,a2,a3,dd,fai
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(D,n,fa,ev,adir)
+C$OMP& PRIVATE(i,ierr,lambda,evec,trc,d1,d2,d3,a1,a2,a3,dd,fai)
+C$OMP DO SCHEDULE(STATIC)
       DO i=1,n
-         call eigen30(D(1,i),ev(1,i),ierr)
+         call eigen3(D(1,i),lambda,evec,ierr)
+         a1=lambda(1)
+         a2=lambda(2)
+         a3=lambda(3)
+         trc=(a1+a2+a3)/3.d0
+         d1=a1-trc
+         d2=a2-trc
+         d3=a3-trc
+         dd=a1*a1+a2*a2+a3*a3
+         IF(dd.gt.1.d-12) THEN
+            fai=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
+         ELSE
+            fai=0.d0
+         ENDIF
+         adir(1,i)=evec(7)
+         adir(2,i)=evec(8)
+         adir(3,i)=evec(9)
+         adir(4,i)=evec(4)
+         adir(5,i)=evec(5)
+         adir(6,i)=evec(6)
+         ev(1,i)=a3
+         ev(2,i)=a2
+         ev(3,i)=a1
+         fa(i)=fai
       END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(fa,adir,ev)
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C    Compute DTI-Indices for a volume
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine dti3Dall(D,n,fa,ga,md,adir,ev)
+      implicit logical (a-z)
+      integer n
+      real*8 D(6,n),fa(n),md(n),adir(3,n),ev(3,n),ga(n)
+      integer i,ierr
+      real*8 evec(3,3),trc,d1,d2,d3,a1,a2,a3,dd
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(D,n,mask,fa,ga,md,adir,ev)
+C$OMP& PRIVATE(i,ierr,evec,trc,d1,d2,d3,a1,a2,a3,dd)
+C$OMP DO SCHEDULE(STATIC)
+      DO i=1,n
+         call eigen3(D(1,i),ev(1,i),evec,ierr)
+         a1=ev(1,i)
+         a2=ev(2,i)
+         a3=ev(3,i)
+         trc=(a1+a2+a3)/3.d0
+         adir(1,i)=evec(1,3)
+         adir(2,i)=evec(2,3)
+         adir(3,i)=evec(3,3)
+         md(i)=trc
+         d1=a1-trc
+         d2=a2-trc
+         d3=a3-trc
+         dd=a1*a1+a2*a2+a3*a3
+         IF(dd.gt.1.d-12) THEN
+            fa(i)=sqrt(1.5d0*(d1*d1+d2*d2+d3*d3)/dd)
+         ELSE
+            fa(i)=0.d0
+            ev(1,i)=0.d0
+            ev(2,i)=0.d0
+            ev(3,i)=0.d0
+         ENDIF
+         d1=log(a1)
+         d2=log(a2)
+         d3=log(a3)
+         dd=(d1+d2+d3)/3.d0
+         d1=d1-dd
+         d2=d2-dd
+         d3=d3-dd
+         ga(i)=sqrt(d1*d1+d2*d2+d3*d3)
+      END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(fa,ga,md,adir,ev)
       RETURN
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -578,40 +458,47 @@ C
 C    Compute DTI-eigenvalues for a volume
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti3Dev(D,n,mask,ev)
+      subroutine dti3Dev(D,n,ev)
       implicit logical (a-z)
       integer n
-      logical mask(n)
       real*8 D(6,n),ev(3,n)
       integer i,ierr
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(D,n,ev)
+C$OMP& PRIVATE(i,ierr)
+C$OMP DO SCHEDULE(STATIC)
       DO i=1,n
-         if(mask(i)) THEN
             call eigen30(D(1,i),ev(1,i),ierr)
-         ELSE
-            ev(1,i)=0.d0
-            ev(2,i)=0.d0
-            ev(3,i)=0.d0
-         END IF
       END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(ev)
       RETURN
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
-C    Compute DTI-eigenvectors for a volume (parallel version)
+C    Compute DTI-eigenvectors for a volume 
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti3Danp(D,n,andir)
+      subroutine dti3Dand(D,n,andir)
       implicit logical (a-z)
       integer n
       real*8 D(6,n),andir(3,n)
       integer i,ierr
       real*8 lambda(3),evec(3,3)
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(D,n,andir)
+C$OMP& PRIVATE(i,lambda,evec,ierr)
+C$OMP DO SCHEDULE(STATIC)
       DO i=1,n
          call eigen3(D(1,i),lambda,evec,ierr)
          andir(1,i)=evec(1,3)
          andir(2,i)=evec(2,3)
          andir(3,i)=evec(3,3)
       END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(andir)
       RETURN
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -625,10 +512,14 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       real*8 D(6,n)
       integer i,ierr
       real*8 lam(3),evec(3,3)
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(D,n)
+C$OMP& PRIVATE(i,lam,evec,ierr)
+C$OMP DO SCHEDULE(STATIC)
       DO i=1,n
          call eigen3(D(1,i),lam,evec,ierr)
-         if(lam(1).lt.0.d0) lam(1)=0.d0
-         if(lam(2).lt.0.d0) lam(2)=0.d0
+         lam(1)=max(0.d0,lam(1))
+         lam(2)=max(0.d0,lam(2))
          D(1,i) = lam(1)*evec(1,1)*evec(1,1)+
      1          lam(2)*evec(1,2)*evec(1,2)+lam(3)*evec(1,3)*evec(1,3)
          D(2,i) = lam(1)*evec(1,1)*evec(2,1)+
@@ -642,32 +533,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
          D(6,i) = lam(1)*evec(3,1)*evec(3,1)+
      1          lam(2)*evec(3,2)*evec(3,2)+lam(3)*evec(3,3)*evec(3,3)
       END DO
-      RETURN
-      END
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-C
-C    Compute DTI-eigenvectors for a volume
-C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-      subroutine dti3Dand(D,n,mask,andir)
-      implicit logical (a-z)
-      integer n
-      logical mask(n)
-      real*8 D(6,n),andir(3,n)
-      integer i,ierr
-      real*8 lambda(3),evec(3,3)
-      DO i=1,n
-         if(mask(i)) THEN
-            call eigen3(D(1,i),lambda,evec,ierr)
-            andir(1,i)=evec(1,3)
-            andir(2,i)=evec(2,3)
-            andir(3,i)=evec(3,3)
-         ELSE
-            andir(1,i)=0.d0
-            andir(2,i)=0.d0
-            andir(3,i)=0.d0
-         END IF
-      END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(D)
       RETURN
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

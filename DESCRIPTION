@@ -1,12 +1,15 @@
 Package: dti
-Version: 1.0-3
-Date: 2012-03-29
+Version: 1.1-0
+Date: 2012-11-23
 Title: Analysis of diffusion weighted imaging (DWI) data
-Author: Karsten Tabelow <tabelow@wias-berlin.de> Joerg Polzehl
-        <polzehl@wias-berlin.de>
-Maintainer: Karsten Tabelow <tabelow@wias-berlin.de>
-Depends: R (>= 2.14.0), methods, awsMethods, adimpro, oro.nifti,
-        oro.dicom, rgl, gsl, parallel, fmri
+Authors@R:
+        c(person("Karsten","Tabelow",role=c("aut","cre"),email="karsten.tabelow@wias-berlin.de"),
+        person("Joerg","Polzehl",role=c("aut"),email="joerg.polzehl@wias-berlin.de"))
+Author: Karsten Tabelow <karsten.tabelow@wias-berlin.de> Joerg Polzehl
+        <joerg.polzehl@wias-berlin.de>
+Maintainer: Karsten Tabelow <karsten.tabelow@wias-berlin.de>
+Depends: R (>= 2.14.0), methods, awsMethods (>= 1.0-1), adimpro,
+        oro.nifti, oro.dicom, rgl, gsl, parallel
 Description: Diffusion Weighted Imaging (DWI) is a Magnetic Resonance
         Imaging modality, that measures diffusion of water in tissues
         like the human brain.  The package contains R-functions to
@@ -17,13 +20,13 @@ Description: Diffusion Weighted Imaging (DWI) is a Magnetic Resonance
         Smoothing, Neuroimage 39(4), 1763-1773 (2008)), modeling for
         high angular resolution diffusion weighted imaging (HARDI)
         using Q-ball-reconstruction and tensor mixture models and a
-        stremaline fiber tracking for tensor and tensor mixture models.
+        streamline fiber tracking for tensor and tensor mixture models.
         The package provides functionality to manipulate and visualize
         results in 2D and 3D.
 License: GPL (>= 2)
-Copyright: This package is Copyright (C) 2005-2011 Weierstrass
+Copyright: This package is Copyright (C) 2005-2012 Weierstrass
         Institute for Applied Analysis and Stochastics.
 URL: http://www.wias-berlin.de/projects/matheon_a3
-Packaged: 2012-05-23 12:02:30 UTC; tabelow
+Packaged: 2012-11-27 20:43:42 UTC; tabelow
 Repository: CRAN
-Date/Publication: 2012-05-23 19:07:43
+Date/Publication: 2012-11-28 09:42:10

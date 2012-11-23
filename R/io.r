@@ -4,13 +4,20 @@
 #                                                              #
 ################################################################
 
-dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=0,mins0value=0,maxvalue=32000,voxelext=c(1,1,1),orientation=c(0,2,5),rotation=diag(3)) {
+dtiData <- function(gradient,imagefile,ddim,bvalue=NULL,xind=NULL,yind=NULL,zind=NULL,level=0,mins0value=0,maxvalue=32000,voxelext=c(1,1,1),orientation=c(0,2,5),rotation=diag(3)) {
   args <- list(sys.call())
   if (any(sort((orientation)%/%2) != 0:2)) stop("invalid orientation \n")
   if (dim(gradient)[2]==3) gradient <- t(gradient)
   if (dim(gradient)[1]!=3) stop("Not a valid gradient matrix")
   ngrad <- dim(gradient)[2]
   s0ind <- (1:ngrad)[apply(abs(gradient),2,max)==0] 
+  if (is.null(bvalue)){
+     bvalue <- rep(1,ngrad)
+     bvalue[s0ind] <- 0
+  } else {
+     if(length(bvalue)!=ngrad || max(bvalue[s0ind]) > 10*min(bvalue[-s0ind])) 
+        stop("invalid b-values")
+  }   
   if (!(file.exists(imagefile))) stop("Image file does not exist")
   cat("Start Data reading",format(Sys.time()), "\n")
   zz <- file(imagefile,"rb")
@@ -84,7 +91,8 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
                 call = args,
                 si     = si,
                 gradient = gradient,
-                btb    = create.designmatrix.dti(gradient),
+                bvalue = bvalue,
+                btb    = sweep( create.designmatrix.dti(gradient), 2, bvalue, "*"),
                 ngrad  = ngrad, # = dim(btb)[2]
                 s0ind  = s0ind, # indices of S_0 images
                 replind = rind,
@@ -109,10 +117,11 @@ dtiData <- function(gradient,imagefile,ddim,xind=NULL,yind=NULL,zind=NULL,level=
 ##       the loop over files contains many not neccessary operations (voxelext etc)
 readDWIdata <- function(gradient, dirlist, 
                         format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), 
-                        nslice = NULL, order = NULL,
+                        nslice = NULL, order = NULL, bvalue = NULL,
                         xind = NULL, yind = NULL, zind = NULL,
                         level = 0, mins0value = 0, maxvalue = 32000,
                         voxelext = NULL, orientation = c(0L, 2L, 5L), rotation = NULL,
+#                        SPM = FALSE, 
                         verbose = FALSE) {
 
   args <- list(sys.call())
@@ -127,7 +136,13 @@ readDWIdata <- function(gradient, dirlist,
   ngrad <- dim(gradient)[2]
   s0ind <- (1:ngrad)[apply(abs(gradient), 2, max) == 0]
   if (length(s0ind) < 1) stop("readDWIdata: No b0 gradients found.")
-
+  if (is.null(bvalue)){
+     bvalue <- rep(1,ngrad)
+     bvalue[s0ind] <- 0
+  } else {
+     if(length(bvalue)!=ngrad || max(bvalue[s0ind]) > 10*min(bvalue[-s0ind])) 
+        stop("invalid b-values")
+  }   
   ## generate file list in specified order
   filelist <- NULL
   for (dd in dirlist) filelist <- c(filelist, paste(dd, list.files(dd), sep = .Platform$file.sep))
@@ -150,24 +165,24 @@ readDWIdata <- function(gradient, dirlist,
     if (format == "AFNI") filelist <- filelist[regexpr("\\.HEAD$", filelist) != -1]
     if (format == "NIFTI") {
       if ((length(filelist) != ngrad) & (length(filelist) != 1))
-	stop("readDWIdata: Number of found NIfTI files (", length(filelist),") does not match ngrad and is larger then 1\nPlease provide each gradient cube in a separate file or one 4D file.")
-	if (length(filelist) == ngrad) {
-	  if (is.null(order)) {
-	    order <- 1:ngrad
-	  } else {
-	    if (length(order) != ngrad)
-	      stop("readDWIdata: Length of order vector does not match ngrad")
-	  }
-	  filelist <- filelist[order]
-	}
+        stop("readDWIdata: Number of found NIfTI files (", length(filelist),") does not match ngrad and is larger then 1\nPlease provide each gradient cube in a separate file or one 4D file.")
+        if (length(filelist) == ngrad) {
+          if (is.null(order)) {
+             order <- 1:ngrad
+          } else {
+          if (length(order) != ngrad)
+            stop("readDWIdata: Length of order vector does not match ngrad")
+          }
+          filelist <- filelist[order]
+        }
     } else {
       if (length(filelist) != ngrad)
-	stop("readDWIdata: Number of found files does not match ngrad",length(filelist),"\nPlease provide each gradient cube in a separate file.")
+      stop("readDWIdata: Number of found files does not match ngrad",length(filelist),"\nPlease provide each gradient cube in a separate file.")
       if (is.null(order)) {
-	order <- 1:ngrad
+         order <- 1:ngrad
       } else {
-	if (length(order) != ngrad)
-	  stop("readDWIdata: Length of order vector does not match ngrad")
+         if (length(order) != ngrad)
+         stop("readDWIdata: Length of order vector does not match ngrad")
       }
       filelist <- filelist[order]
     }
@@ -205,6 +220,11 @@ readDWIdata <- function(gradient, dirlist,
       imageOrientationPatient <- t(matrix(c(dd@srow_x[1:3]/dd@pixdim[2:4], dd@srow_y[1:3]/dd@pixdim[2:4], dd@srow_z[1:3]/dd@pixdim[2:4]), 3, 3))
     } else if (format == "ANALYZE") {
       dd <- readANALYZE(ff)
+  #    dd <- readANALYZE(ff, SPM = SPM)
+  ## this is an SPM hack, as it uses funused1 as scaling factor:
+  ## if (dd@funused1 != 0) dd@.Data <- dd@.Data * dd@funused1
+  ## END HACK. Hope, typically funused is either 1 or 0!
+  ## no longer needed since oro.nifti version 0.3.5
       nslice <- dim(dd)[3]
       if (is.null(zind)) zind <- 1:nslice
       delta <- dd@pixdim[2:4]
@@ -220,10 +240,10 @@ readDWIdata <- function(gradient, dirlist,
 
     if (is.null(voxelext)) {
       if (length(delta) == 3) {
-	voxelext <- delta
+         voxelext <- delta
       } else {
-	voxelext <- c(1, 1, 1)
-	warning("readDWIdata: Could not find voxel size. Setting default.")
+         voxelext <- c(1, 1, 1)
+         warning("readDWIdata: Could not find voxel size. Setting default.")
       }
     } else {
       if (length(delta) == 3) {
@@ -234,9 +254,9 @@ readDWIdata <- function(gradient, dirlist,
 
     if (is.null(rotation)) {
       if (any(imageOrientationPatient != 0)) {
-	rotation <- imageOrientationPatient
+         rotation <- imageOrientationPatient
       } else {
-	rotation <- diag(3)
+         rotation <- diag(3)
       }
     } else {
       if (any(imageOrientationPatient != rotation)) {
@@ -259,18 +279,18 @@ readDWIdata <- function(gradient, dirlist,
       }
     } else {
       if (length(filelist) > 1) { # list of 3D files
-	if (first) { 
-	  ttt <- dd[xind, yind, zind]
-	  nttt <- dim(ttt)
-	  si <- numeric(nfiles * prod(nttt))
-	  dim(si) <- c(nttt, nfiles)
-	  si[ , , , 1] <- ttt
-	  first <- FALSE
-	} else {
-	  si[ , , , i] <- dd[xind, yind, zind]
-	}
+        if (first) { 
+          ttt <- dd[xind, yind, zind]
+          nttt <- dim(ttt)
+          si <- numeric(nfiles * prod(nttt))
+          dim(si) <- c(nttt, nfiles)
+          si[ , , , 1] <- ttt
+          first <- FALSE
+        } else {
+          si[ , , , i] <- dd[xind, yind, zind]
+        }
       } else { # this is a 4D file
-	si <- dd[xind, yind, zind,]
+        si <- dd[xind, yind, zind,]
       }
     }
   }
@@ -325,7 +345,8 @@ readDWIdata <- function(gradient, dirlist,
                 call        = args,
                 si          = si,
                 gradient    = gradient,
-                btb         = create.designmatrix.dti(gradient),
+                bvalue      = as.vector(bvalue),
+                btb         = sweep( create.designmatrix.dti(gradient), 2, bvalue, "*"),
                 ngrad       = ngrad,
                 s0ind       = s0ind,
                 replind     = replind(gradient),
@@ -664,7 +685,6 @@ function(object){
 ################################################################
 
 tensor2medinria <- function(obj, filename, xind=NULL, yind=NULL, zind=NULL) {
-  if (!require(fmri)) stop("cannot execute function without package fmri, because of missing write.NIFTI() function")
 
   if (is.null(xind)) xind <- 1:obj@ddim[1]
   if (is.null(yind)) yind <- 1:obj@ddim[2]
@@ -672,54 +692,56 @@ tensor2medinria <- function(obj, filename, xind=NULL, yind=NULL, zind=NULL) {
   if (obj@orientation[1]==1) xind <- min(xind)+max(xind)-xind
   if (obj@orientation[2]==3) yind <- min(yind)+max(yind)-yind
   if (obj@orientation[3]==4) zind <- min(zind)+max(zind)-zind
-  header <- list()
-  header$dimension <- c(5,length(xind),length(yind),length(zind),1,6,0,0)
-  header$pixdim <- c(-1, obj@voxelext[1:3], 0, 0, 0, 0)
-  header$intentcode <- 1007
-  header$datatype <- 16
-  header$bitpix <- 192
-  header$sclslope <- 1
-  header$xyztunits <- "\002" # ???
-  header$qform <- 1
-  header$sform <- 1
-  header$quaternd <- 1
-  header$srowx <- c(-2,0,0,0)
-  header$srowy <- c(0,2,0,0)
-  header$srowz <- c(0,0,2,0)
 
-  write.NIFTI(aperm(obj@D,c(2:4,1))[xind,yind,zind,c(1,2,4,3,5,6)],header,filename)
-  return(NULL)
+  D <- aperm( obj@D, c( 2:4, 1))[ xind, yind, zind, c( 1, 2, 4, 3, 5, 6)]
+  dim(D) <- c( length(xind), length(yind), length(zind), 1, 6)
+  nim <- nifti(D,
+		       dim_ = c( 5, length(xind), length(yind), length(zind), 1, 6, 1, 1),
+			   pixdim = c( -1, obj@voxelext[1:3], 1, 1, 0, 0),
+			   intent_code = 1007,
+			   datatype = 16,
+			   bitpix = 32, ## must correspond to datatype
+			   sclslope = 1,
+			   xyztunits = "\002", # ???
+	           qform = 1,
+	           sform = 1,
+	           quatern_d = 1,
+	           srow_x = c( -obj@voxelext[1], 0, 0, 0),
+	           srow_y = c( 0, obj@voxelext[2], 0, 0),
+	           srow_z = c( 0, 0, obj@voxelext[3], 0)
+			   )
+  
+  writeNIfTI( nim, filename)
 }
 
 medinria2tensor <- function(filename) {
-  if (!require(fmri)) stop("cannot execute function without package fmri, because of missing read.NIFTI() function")
-  args <- sys.call() 
-  data <- read.NIFTI(filename)
- 
-  invisible(new("dtiTensor",
-                call  = list(args),
-                D     = aperm(extract.data(data),c(4,1:3))[c(1,2,4,3,5,6),,,],
-                sigma = array(0,data$dim[1:3]),
-                scorr = array(0,c(1,1,1)),
-                bw    = rep(0,3),
-                mask  = array(TRUE,data$dim[1:3]),
-                method = "unknown",
-                hmax  = 1,
-                th0   = array(0,dim=data$dim[1:3]),
-                gradient = matrix(0,1,1),
-                btb   = matrix(0,1,1),
-                ngrad = as.integer(0), # = dim(btb)[2]
-                s0ind = as.integer(0),
-                ddim  = data$dim[1:3],
-                ddim0 = data$dim[1:3],
-                xind  = 1:data$dim[1],
-                yind  = 1:data$dim[2],
-                zind  = 1:data$dim[3],
-                voxelext = data$delta,
-                orientation = as.integer(c(0,2,5)),
-                rotation = diag(3),
-                scale = 1,
-                source= "unknown")
+	args <- sys.call() 
+	data <- readNIfTI(filename, reorient = FALSE)
+    
+    invisible(new("dtiTensor",
+    	          call  = list(args),
+        	      D     = aperm(data, c( 5, 1:4))[ c( 1, 2, 4, 3, 5, 6), , , , , drop = TRUE],
+                  sigma = array(0, dim(data)[1:3]),
+                  scorr = array(0, c( 1, 1, 1)),
+                  bw    = rep( 0, 3),
+                  mask  = array(TRUE, dim(data)[1:3]),
+                  method = "unknown",
+                  hmax  = 1,
+                  th0   = array(0, dim = dim(data)[1:3]),
+                  gradient = matrix(0,1,1),
+                  btb   = matrix(0,1,1),
+                  ngrad = as.integer(0), # = dim(btb)[2]
+                  s0ind = as.integer(0),
+                  ddim  = dim(data)[1:3],
+                  ddim0 = dim(data)[1:3],
+                  xind  = 1:dim(data)[1],
+                  yind  = 1:dim(data)[2],
+                  zind  = 1:dim(data)[3],
+                  voxelext = data@pixdim[2:4],
+                  orientation = as.integer(c(0,2,5)),
+                  rotation = diag(3),
+                  scale = 1,
+                  source= "unknown")
             )
 
 }

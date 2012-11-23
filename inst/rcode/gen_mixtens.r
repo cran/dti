@@ -1,4 +1,4 @@
-tdatamixtens <- function(w,th,alpha,beta,grad,sigma,ns0){
+tdatamixtens <- function(w,th,alpha,beta,grad,bvalue,sigma,ns0){
 #  
 #  w  - matrix of wghts (m+1,n1,n2,n3)
 #  th - ev-parameters (2,n1,n2,n3) lambda1 = th[1]+th[2]
@@ -23,14 +23,13 @@ cbe <- cos(beta)
 d[1,,,,] <- sal*cbe
 d[2,,,,] <- sal*sbe
 d[3,,,,] <- cal
-el1 <- exp(-th[1,,,]-th[2,,,])
 s0 <- array(10000,ddim)
 for(i in 1:ns0) sb[,,,i] <- s0
 for(i in (ns0+1):ngrad){
-   sb[,,,i] <- w[1,,,]*el1
+   sb[,,,i] <- w[1,,,]*exp(-bvalue[i]*(th[1,,,]+th[2,,,]))
    for(j in 1:m){
-      dg <- d[1,j,,,]*grad[1,i]+d[2,j,,,]*grad[2,i]+d[3,j,,,]*grad[3,i]
-      sb[,,,i] <- sb[,,,i]+w[j+1,,,]*exp(-th[2,,,]-th[1,,,]*dg^2)
+      dg <- (d[1,j,,,]*grad[1,i]+d[2,j,,,]*grad[2,i]+d[3,j,,,]*grad[3,i])
+      sb[,,,i] <- sb[,,,i]+w[j+1,,,]*exp(-bvalue[i]*(th[2,,,]+th[1,,,]*dg^2))
    }
    sb[,,,i] <- sb[,,,i]*s0
 }
@@ -41,7 +40,8 @@ invisible(new("dtiData",
                 call = args,
                 si     = sb,
                 gradient = grad,
-                btb    = create.designmatrix.dti(grad),
+                btb    = sweep( create.designmatrix.dti(grad), 2, bvalue, "*"),
+                bvalue = bvalue,
                 ngrad  = as.integer(ngrad), # = dim(btb)[2]
                 s0ind  = as.integer(1:ns0), # indices of S_0 images
                 replind = as.integer(c(rep(1,ns0),(ns0+1):ngrad)),
@@ -58,7 +58,7 @@ invisible(new("dtiData",
                 source = "artificial")
             )
 }
-truemixtens <- function(w,th,alpha,beta,grad,sigma,ns0){
+truemixtens <- function(w,th,alpha,beta,grad,bvalue,sigma,ns0){
 #  
 #  w  - matrix of wghts (m+1,n1,n2,n3)
 #  th - ev-parameters (2,n1,n2,n3) lambda1 = th[1]+th[2]
@@ -74,7 +74,6 @@ if(any(dim(th)!=c(2,ddim))) return("wrong dimension of th")
 if(any(dim(alpha)!=c(m,ddim))) return("wrong dimension of alpha")
 if(any(dim(beta)!=c(m,ddim))) return("wrong dimension of beta")
 if(any(dim(grad)!=c(3,ngrad))) return("wrong dimension of grad")
-grad <- cbind(rep(0,3),grad)
 ddim0 <- ddim
 orient <- array(0,c(2,m,ddim))
 orient[1,,,,] <- alpha
@@ -95,7 +94,8 @@ orient[2,,,,] <- beta
                 mask   = array(TRUE,ddim),
                 hmax   = 1,
                 gradient = grad,
-                btb    = create.designmatrix.dti(grad),
+                btb    = sweep( create.designmatrix.dti(grad), 2, bvalue, "*"),
+                bvalue = bvalue,
                 ngrad  = as.integer(ngrad), # = dim(btb)[2]
                 s0ind  = as.integer(1:ns0),
                 replind = as.integer(c(rep(1,ns0),(ns0+1):ngrad)),
@@ -114,7 +114,7 @@ orient[2,,,,] <- beta
                 method = "mixtensor")
             )
 }
-create.designmatrix.dti <- function(gradient, bvalue=1) {
+create.designmatrix.dti <- function(gradient) {
   dgrad <- dim(gradient)
   if (dgrad[2]==3) gradient <- t(gradient)
   if (dgrad[1]!=3) stop("Not a valid gradient matrix")
@@ -126,8 +126,7 @@ create.designmatrix.dti <- function(gradient, bvalue=1) {
   btb[2,] <- 2*gradient[1,]*gradient[2,]
   btb[3,] <- 2*gradient[1,]*gradient[3,]
   btb[5,] <- 2*gradient[2,]*gradient[3,]
-
-  btb * bvalue
+  btb
 }
 odfdist <- function(obj1,obj2,poly=4,mask=NULL){
   if(any(obj1@ddim!=obj2@ddim)) return(warning("incompatible dimensions"))

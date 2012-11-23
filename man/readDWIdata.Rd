@@ -6,10 +6,10 @@
   The functions create a \code{"dtiData"} object from Diffusion Weighted Data from medicial imaging files in a list of directories or from an imagefile, where the diffusion weighted data is given as 2-byte integer.
 }
 \usage{
-dtiData(gradient, imagefile, ddim, xind = NULL, yind = NULL, zind = NULL, 
+dtiData(gradient, imagefile, ddim, bvalue = NULL, xind = NULL, yind = NULL, zind = NULL, 
         level = 0, mins0value = 0, maxvalue = 32000, voxelext = c(1, 1, 1), 
         orientation = c(0, 2, 5), rotation = diag(3))
-readDWIdata(gradient, dirlist, format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), nslice = NULL, order = NULL, 
+readDWIdata(gradient, dirlist, format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), nslice = NULL, order = NULL, bvalue = NULL,
         xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 0, 
         maxvalue = 32000, voxelext = NULL, orientation = c(0, 2, 5), 
         rotation = NULL, verbose = FALSE)
@@ -23,6 +23,7 @@ readDWIdata(gradient, dirlist, format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), 
   \item{format}{ string specifying the medical imaging format, one of ''DICOM'', ''NIFTI'', ''ANALYZE'', or ''AFNI'' }
   \item{nslice}{ number of slices (usually z-direction) }
   \item{order}{ vector, specifying a different order of the data files, i.e. other than alphabetic order in the directories given by \code{dirlist}. If not given, 1:n is used for n data files (no order change). }
+  \item{bvalue}{ vector of b-values (default 0 for S0 and 1 for Si)}
   \item{xind}{ subindex for x-direction }
   \item{yind}{ subindex for y-direction }
   \item{zind}{ subindex for z-direction }

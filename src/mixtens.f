@@ -1341,45 +1341,118 @@ C   generate mask
 C   sweep s0 from si to generate  siq
 C   calculate variance of siq
 C
-      integer n,ng0,ng1,si(n,ng1),s0(n,ng0),level
-      real*8 siq(n,ng1),ms0(n),vsi(n)
+      integer n,ng0,ng1,si(ng1,n),s0(ng0,n),level
+      real*8 siq(ng1,n),ms0(n),vsi(n)
       logical mask(n),maskk
       integer i,k
-      real*8 s,z,z2,thresh,cv,s0mean
+      real*8 s,z,z2,thresh,cv,s0mean,tvsi
       thresh = max(1,level*ng0)
       cv=ng1*(ng1-1)
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(si,s0,n,ng0,ng1,level,siq,ms0,vsi,mask)
+C$OMP& FIRSTPRIVATE(thresh,cv)
+C$OMP& PRIVATE(i,k,maskk,s,z,z2,s0mean,tvsi)
+C$OMP DO SCHEDULE(STATIC)
       DO i=1,n
          z=0.d0
          DO k=1,ng0
-            z=z+s0(i,k)
+            z=z+s0(k,i)
          END DO
          s0mean = z/ng0
-         ms0(i) = s0mean
          maskk = z.ge.thresh
          IF(maskk) THEN
             z=0.d0
             z2=0.d0
             DO k=1,ng1
-               s=si(i,k)/s0mean
+               s=si(k,i)/s0mean
                if(s.gt.0.99d0) s=0.99d0
                z=z+s
                z2=z2+s*s
-               siq(i,k)=s
+               siq(k,i)=s
             END DO
-            vsi(i)=(ng1*z2-z)/cv
-            if(vsi(i).lt.1d-8) THEN
+            tvsi=(ng1*z2-z)/cv
+            if(tvsi.lt.1d-8) THEN
                maskk = .FALSE.
-               vsi(i)=0.d0
+               tvsi=0.d0
             END IF
          ELSE
-            vsi(i)=0.d0
+            tvsi=0.d0
             DO k=1,ng1
-               siq(i,k)=1.d0
+               siq(k,i)=1.d0
             END DO
          END IF
+         ms0(i) = s0mean
          mask(i) = maskk
-         call rchkusr()
+         vsi(i) = tvsi
       END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(mask,siq,vsi,ms0)
+      RETURN
+      END
+C
+C __________________________________________________________________
+C
+      subroutine sweeps0p(si,s0,n,ng0,ng1,level,siq,ng2)
+C
+C   calculate mean s0 value
+C   generate mask
+C   sweep s0 from si to generate  siq
+C   calculate variance of siq
+C
+      integer n,ng0,ng1,ng2,si(ng1,n),s0(ng0,n),level
+      real*8 siq(ng2,n)
+      logical maskk
+      integer i,k
+      real*8 s,z,z2,thresh,cv,s0mean,tvsi,siqi(253)
+      thresh = max(1,level*ng0)
+      cv=ng1*(ng1-1)
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(si,s0,n,ng0,ng1,level,siq,ng2)
+C$OMP& FIRSTPRIVATE(thresh,cv)
+C$OMP& PRIVATE(i,k,maskk,s,z,z2,s0mean,tvsi,siqi)
+C$OMP DO SCHEDULE(STATIC)
+      DO i=1,n
+         z=0.d0
+         DO k=1,ng0
+            z=z+s0(k,i)
+         END DO
+         s0mean = z/ng0
+         maskk = z.ge.thresh
+         IF(maskk) THEN
+            z=0.d0
+            z2=0.d0
+            DO k=1,ng1
+               s=si(k,i)/s0mean
+               s=min(s,0.99d0)
+               z=z+s
+               z2=z2+s*s
+               siqi(k)=s
+            END DO
+            tvsi=(ng1*z2-z)/cv
+            if(tvsi.lt.1d-8) THEN
+               maskk = .FALSE.
+               tvsi=0.d0
+            END IF
+         ELSE
+            tvsi=0.d0
+            DO k=1,ng1
+               siqi(k)=1.d0
+            END DO
+         END IF
+         siqi(ng1+1) = s0mean
+         siqi(ng1+2) = tvsi
+         if(maskk) THEN
+            siqi(ng2) = 1
+         ELSE
+            siqi(ng2) = 0
+         ENDIF
+         DO k=1,ng2
+            siq(k,i)=siqi(k)
+         END DO
+      END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
       RETURN
       END
 C
@@ -1387,7 +1460,7 @@ C __________________________________________________________________
 C
       subroutine iandir(vico,nvico,andir,nvox,landir,iandi)
       implicit logical(a-z)
-      integer nvico,nvox,iandi(2,nvox)
+      integer nvico,nvox,iandi(nvox)
       real*8 vico(3,nvico),andir(3,2,nvox)
       logical landir(nvox)
       integer i,j,jmax
@@ -1404,7 +1477,7 @@ C
                   jmax=j
                END IF
             END DO
-            iandi(1,i)=jmax
+            iandi(i)=jmax
          END IF
       END DO
       RETURN

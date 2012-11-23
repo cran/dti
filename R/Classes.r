@@ -2,6 +2,7 @@ setClass("dwi",
          representation(.Data = "list",
                         call = "list",
                         gradient = "matrix",
+                        bvalue = "numeric",
                         btb    = "matrix",
                         ngrad  = "integer", # = dim(btb)[2] = dim(gradient)[2]
                         s0ind  = "integer", # indices of s0 images
@@ -146,6 +147,8 @@ setClass("dtiIndices",
 setClass("dwiQball",
          representation(what = "character",
                         order  = "integer",
+                        forder = "integer",
+                        D0 = "numeric",
                         lambda = "numeric",
                         sphcoef = "array",
                         varsphcoef = "array",
@@ -163,8 +166,14 @@ setClass("dwiQball",
             cat("invalid order of spherical harmonics \n")
             return(invisible(FALSE))
           }
-          if(object@what%in%c("ODF","wODF","aODF")&any(dim(object@sphcoef)!=c((object@order+1)*(object@order+2)/2,object@ddim))) {
+          if(object@what%in%c("ODF","wODF","aODF")&&any(dim(object@sphcoef)!=c((object@order+1)*(object@order+2)/2,object@ddim))) {
             cat("invalid dimension of ceofficient array \n")
+            return(invisible(FALSE))
+          }
+          Lind <- (object@order+1)*(object@order+2)/2
+          nf <- object@forder+1
+          if(object@what=="sqrtODF"&&any(dim(object@sphcoef)!=c(Lind,nf,object@ddim))) {
+            cat("invalid dimension of ceofficient array (sqrtODF)\n")
             return(invisible(FALSE))
           }
           if (object@lambda<0) {
@@ -189,8 +198,8 @@ setClass("dwiQball",
             cat("invalid length of bw\n")
             return(invisible(FALSE))
           }
-          if (!(object@what %in% c("ODF","wODF","aODF","ADC"))) {
-            cat("what should specify ODF, wODF, aODF or ADC\n")
+          if (!(object@what %in% c("ODF","wODF","aODF","sqrtODF"))) {
+            cat("what should specify ODF, wODF, aODF or sqrtODF\n")
             return(invisible(FALSE))
           }
          }

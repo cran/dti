@@ -19,19 +19,9 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
   s0ind <- object@s0ind
   ns0 <- length(s0ind)
   sdcoef <- object@sdcoef
-  z <- .Fortran("outlier",
-                as.double(object@si),
-                as.integer(prod(ddim)),
-                as.integer(ngrad),
-                as.logical((1:ngrad)%in%s0ind),
-                as.integer(ns0),
-                si=integer(prod(ddim)*ngrad),
-                index=integer(prod(ddim)),
-                lindex=integer(1),
-                DUP=FALSE,
-                PACKAGE="dti")[c("si","index","lindex")]
-  si <- array(z$si,c(ddim,ngrad))
-  index <- if(z$lindex>0) z$index[1:z$lindex] else numeric(0)
+  z <- sioutlier(object@si,s0ind)
+  si <- aperm(array(z$si,c(ngrad,ddim)),c(2:4,1))
+  index <- z$index
   rm(z)
   gc()
 
@@ -103,11 +93,11 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
      # see Aganj et al. (2009)
      # include FRT(SH) -> P_l(0)
      sicoef <- z$matrix%*% si
-     plz <- plzero(order)/2/pi
+     plz <- plzeroaganji(order)
      sphcoef <- plz%*%L%*%sicoef
      coef0 <- sphcoef[1,]
      sphcoef[1,] <- 1/2/sqrt(pi)
-     sphcoef[-1,] <- sphcoef[-1,]/8/pi
+     sphcoef[-1,] <- - sphcoef[-1,]/8/pi
      cat("Estimated coefficients for wODF (order=",order,") ",format(Sys.time()),"\n")
   } else if (what=="aODF") {
      cat("Data transformation started ",format(Sys.time()),"\n")
@@ -156,6 +146,7 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
   rss <- res[1,]^2
   for(i in 2:ngrad0) rss <- rss + res[i,]^2
   sigma2 <- rss/(ngrad0-length(lord))
+  cat("Mean residual sum of squares for SPH approximation",mean(rss),"\n")
   if(what %in% c("ODF","aODF")){
      varcoef <- outer(diag(plzero(order))^2*diag(z$matrix%*%t(z$matrix)),sigma2,"*")
   } else if(what=="wODF"){
@@ -173,45 +164,26 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
   th0 <- array(s0,object@ddim)
   th0[!mask] <- 0
   gc()
-  lags <- c(5,5,3)
-  scorr <- .Fortran("mcorr",as.double(res),
-                   as.logical(mask),
-                   as.integer(ddim[1]),
-                   as.integer(ddim[2]),
-                   as.integer(ddim[3]),
-                   as.integer(ngrad0),
-                   double(prod(ddim)),
-                   double(prod(ddim)),
-                   scorr = double(prod(lags)),
-                   as.integer(lags[1]),
-                   as.integer(lags[2]),
-                   as.integer(lags[3]),
-                   PACKAGE="dti",DUP=FALSE)$scorr
-  dim(scorr) <- lags
-  scorr[is.na(scorr)] <- 0
-  cat("estimated spatial correlations",format(Sys.time()),"\n")
-  cat("first order  correlation in x-direction",signif(scorr[2,1,1],3),"\n")
-  cat("first order  correlation in y-direction",signif(scorr[1,2,1],3),"\n")
-  cat("first order  correlation in z-direction",signif(scorr[1,1,2],3),"\n")
-
-  scorr[is.na(scorr)] <- 0
-  bw <- optim(c(2,2,2),corrrisk,method="L-BFGS-B",lower=c(.2,.2,.2),
-  upper=c(3,3,3),lag=lags,data=scorr)$par
-  bw[bw <= .25] <- 0
-  cat("estimated corresponding bandwidths",format(Sys.time()),"\n")
+#
+#   get spatial correlation
+#
+  scorr <- mcorr(res,mask,ddim,ngrad0,lags=c(5,5,3))
   invisible(new("dwiQball",
                 call  = args,
                 order = as.integer(order),
+                forder = as.integer(0),
+                D0  = 1e-3,
                 lambda = lambda,
                 sphcoef = sphcoef,
                 varsphcoef = varcoef,
                 th0   = th0,
                 sigma = sigma2,
-                scorr = scorr, 
-                bw = bw, 
+                scorr = scorr$scorr, 
+                bw = scorr$bw, 
                 mask = mask,
                 hmax = 1,
                 gradient = object@gradient,
+                bvalue = object@bvalue,
                 btb   = object@btb,
                 ngrad = object@ngrad, # = dim(btb)[2]
                 s0ind = object@s0ind,
@@ -235,6 +207,7 @@ setMethod("dwiQball","dtiData",function(object,what="wODF",order=4,lambda=0){
 design.spheven <- function(order,gradients,lambda){
 #
 #  compute design matrix for Q-ball
+#  (symmetric modified SH Basis used by Descoteaux (2008))
 #
   order <- as.integer(max(0,order))
   if(order%%2==1){
@@ -266,9 +239,25 @@ design.spheven <- function(order,gradients,lambda){
 }
 
 plzero <- function(order){
+#
+#  computes  2 pi P_l(0)
+#  addititional factor of -l*(l+1) see aganji (2009)
+#
+  if(order<2) return(2*pi)
   l <- seq(2,order,2)
   pl <- l
   for(i in 1:length(l)) pl[i] <- (-1)^(l[i]/2)*prod(seq(1,(l[i]-1),2))/prod(seq(2,l[i],2))
   2*pi*diag(rep(c(1,pl),2*seq(0,order,2)+1))
+}
+plzeroaganji <- function(order){
+#
+#  computes - 2 pi l(l+1)P_l(0)
+#  addititional factor of -l*(l+1) see Aganji (2009)
+#
+  if(order<2) return(-1)
+  l <- seq(2,order,2)
+  pl <- -l
+  for(i in 1:length(l)) pl[i] <- -(-1)^(l[i]/2)*prod(seq(1,(l[i]-1),2))/prod(seq(2,l[i],2))*l[i]*(l[i]+1)
+  diag(rep(c(1,pl),2*seq(0,order,2)+1))
 }
 

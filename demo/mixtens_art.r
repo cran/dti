@@ -1,4 +1,4 @@
-cat("Demo for mix-tensor models\n")
+cat("Demo for mix-tensor models (single shell, bvalue 1000 \n")
 set.seed(1)
 source(system.file("rcode/gen_mixtens.r",package="dti"))
 ngrad <- readline("Provide number of gradients (default: 136 minimum: 6  maximum: 162):")
@@ -40,8 +40,8 @@ alpha <- array(0,c(3,n,n,n))
 beta <- array(0,c(3,n,n,n))
 mix[1,,,] <- 0
 if(scenario==1){
-th[1,,,] <- 4
-th[2,,,] <- .8
+th[1,,,] <- 4*1e-3
+th[2,,,] <- .8*1e-3
 alpha[1,,,] <- 0
 beta[1,,,] <- 0
 # first component in x -direction
@@ -93,17 +93,17 @@ fa <- seq(.5,.9,length=n^3)
 cfa <- fa*fa/(1-fa*fa)
 l1 <- cfa+sqrt(cfa^2+3*cfa)
 l2 <- (3.2/(1+l1))^(1/3)
-th[2,,,] <- l2
-th[1,,,] <- l1*l2
-
+th[2,,,] <- l2*1e-3
+th[1,,,] <- l1*l2*1e-3
+bvalue <- c(rep(0,ns0),rep(1000,ngrad))
 
 maxcomp <- readline("maximal order of mix-tensor model (default 3)") 
 
 if (is.null(maxcomp)) maxcomp <- 3 else maxcomp <- as.numeric(maxcomp)
 if(is.na(maxcomp)) maxcomp <- 3 else maxcomp <- min(5,max(1,maxcomp))
 
-z0 <- truemixtens(mix,th,alpha,beta,grad,sigma,ns0)
-z <- tdatamixtens(mix,th,alpha,beta,grad,sigma,ns0)
+z0 <- truemixtens(mix,th,alpha,beta,grad,bvalue,sigma,ns0)
+z <- tdatamixtens(mix,th,alpha,beta,grad,bvalue,sigma,ns0)
 zt <- dtiTensor(z)
 zmix <- dwiMixtensor(z,maxcomp=1)
 summary(zmix)
@@ -123,11 +123,11 @@ vodf <- readline("Visualize and compare estimated ODF's (Y/N) :")
 if(toupper(vodf)!="N"){
 source(system.file("rcode/mousecallbacks.r",package="dti"))
 size <- 500
-w1 <- show3d(z0,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(1, 1, size, size))
-w2 <- show3d(zt,what="odf",minalpha=1,minfa=0,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(size+11, 1, 2*size+10, size))
-w3 <- show3d(zmix,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(1, size+11 , size, 2*size+10))
+w1 <- show3d(z0,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(1, 1, size, size),odfscale=1)
+w2 <- show3d(zt,what="odf",minalpha=1,minfa=0,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(size+11, 1, 2*size+10, size),odfscale=1)
+w3 <- show3d(zmix,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(1, size+11 , size, 2*size+10),odfscale=1)
 if(gslexists){ 
-w4 <- show3d(zqball,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(size+11, size+11, 2*size+10, 2*size+10))
+w4 <- show3d(zqball,scale=.5,maxobjects=n^3,FOV=1,windowRect = c(size+11, size+11, 2*size+10, 2*size+10),odfscale=1)
 mouseTrackball(dev=c(w1,w2,w3,w4))
 mouseZoom(2,dev=c(w1,w2,w3,w4))
 mouseFOV(3,dev=c(w1,w2,w3,w4))

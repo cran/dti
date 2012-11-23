@@ -250,6 +250,7 @@ setMethod("dwiMtImprove",c("dwiMixtensor","dtiData"), function(mtobj, dwiobj, ma
                 mask   = mtobj@mask,
                 hmax   = mtobj@hmax,
                 gradient = mtobj@gradient,
+                bvalue = mtobj@bvalue,
                 btb    = mtobj@btb,
                 ngrad  = mtobj@ngrad, # = dim(btb)[2]
                 s0ind  = mtobj@s0ind,
@@ -364,6 +365,7 @@ setMethod("dwiMtCombine",c("dwiMixtensor","dwiMixtensor"), function(mtobj1,mtobj
                 mask   = mtobj1@mask,
                 hmax   = mtobj1@hmax,
                 gradient = mtobj1@gradient,
+                bvalue = mtobj1@bvalue,
                 btb    = mtobj1@btb,
                 ngrad  = mtobj1@ngrad, # = dim(btb)[2]
                 s0ind  = mtobj1@s0ind,

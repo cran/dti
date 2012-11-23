@@ -105,6 +105,7 @@ mask=NULL, method="LINEPROP", minfa=0.3, maxangle=30, subsample=1)
                 startind = as.integer(z$startind),
                 roimask = as.raw(roimask),
                 gradient = obj@gradient,
+                bvalue = obj@bvalue,
                 btb   = obj@btb,
                 ngrad = obj@ngrad, # = dim(btb)[2]
                 s0ind = obj@s0ind,
@@ -217,6 +218,7 @@ setMethod("tracking","dtiIndices", function(obj, roix=NULL, roiy=NULL, roiz=NULL
                 startind = as.integer(z$startind),
                 roimask = as.raw(roimask),
                 gradient = obj@gradient,
+                bvalue = obj@bvalue,
                 btb   = obj@btb,
                 ngrad = obj@ngrad, # = dim(btb)[2]
                 s0ind = obj@s0ind,
@@ -337,6 +339,7 @@ function(obj, roix=NULL, roiy=NULL, roiz=NULL, mask=NULL, method="LINEPROP", min
                 startind = as.integer(z$startind),
                 roimask = as.raw(roimask),
                 gradient = obj@gradient,
+                bvalue = obj@bvalue,
                 btb   = obj@btb,
                 ngrad = obj@ngrad, # = dim(btb)[2]
                 s0ind = obj@s0ind,

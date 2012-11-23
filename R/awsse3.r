@@ -21,24 +21,12 @@ setMethod("dwi.smooth", "dtiData", function(object,kstar,lambda=6,kappa0=NULL,nc
   mask <- getmask(object,level)$mask
   sigma <- numeric(object@ngrad)
   for(i in 1:object@ngrad){
-  sigma[i] <- awssigmc(object@si[,,,i],12,mask,ncoils,vext,h0=1.25,verbose=verbose)
+  sigma[i] <- awssigmc(object@si[,,,i],12,mask,ncoils,vext,h0=1.25,verbose=verbose)$sigma
   cat("image ",i," estimated sigma",sigma[i],"\n")
   }
  cat("quantiles of estimated sigma values",quantile(sigma),"\n")
   sigma <- median(sigma)
  cat("using median estimated sigma",sigma,"\n")
-#  if(length(sdcoef)==4||all(sdcoef[5:8]==0)) object <- getsdofsb(object,qA0=.1,qA1=.95,nsb=1,level=NULL)
-#  sdcoef <- object@sdcoef
-#  get mode
-#   ind <- object@si>sdcoef[7]&object@si<sdcoef[8]
-#   dsi <- density(object@si[ind],n=512,bw=sum(ind)^(-1/5)*(sdcoef[8]-sdcoef[7]))
-#plot(dsi)
-#   maxdsi <- (2:511)[dsi$y[2:511]>pmax(dsi$y[1:510],dsi$y[3:512])]
-#cat("maxdsi",maxdsi,"\n","values",dsi$x[max(maxdsi)],"\n")
-#   sigma <- sdcoef[5]+sdcoef[6]*dsi$x[max(maxdsi)]
-#   cat("mode at",dsi$x[max(maxdsi)],"sigma",sigma,"\n")
-#   sigma <- sigmaRicecorrected(dsi$x[max(maxdsi)],sigma)
-#   cat("sdcoef",sdcoef,"estimated sigma",sigma,"\n")
   }
   model <- if(model=="Chi2") 1 else 0 
   if(!(is.null(xind)&is.null(yind)&is.null(zind))){
@@ -55,7 +43,7 @@ setMethod("dwi.smooth", "dtiData", function(object,kstar,lambda=6,kappa0=NULL,nc
   grad <- object@gradient[,-s0ind]
   sb <- object@si[,,,-s0ind]
   s0 <- object@si[,,,s0ind]
-  if(is.null(kappa)){
+  if(is.null(kappa0)){
 #  select kappa based on variance reduction on the sphere
    if(is.null(vred)) {
      warning("You need to specify either kappa0 or vred\n returning unsmoothed object")
@@ -65,7 +53,7 @@ setMethod("dwi.smooth", "dtiData", function(object,kstar,lambda=6,kappa0=NULL,nc
      warning("vred needs to be >= 1\n returning unsmoothed object")
      return(object)
    }
-   kappa0 <- suggestkappa(grad,vred,dist)
+   kappa0 <- suggestkappa(grad,vred,dist)$kappa
   }
   if(model==1){
 #
@@ -95,12 +83,13 @@ setMethod("dwi.smooth", "dtiData", function(object,kstar,lambda=6,kappa0=NULL,nc
   prt0 <- Sys.time()
   cat("adaptive smoothing in SE3, kstar=",kstar,if(verbose)"\n" else " ")
   kinit <- if(lambda<1e10) 1 else kstar
+  mc.cores <- setCores(,reprt=FALSE)
   for(k in kinit:kstar){
     gc()
     hakt <- hseq[,k]
     param <- lkfullse3(hakt,kappa/hakt,gradstats,vext,nind) 
     if(length(sigma)==1) {
-    z <- .Fortran("adrsmse3",
+    z <- .Fortran("adsmse3p",
                 as.single(sb),
                 as.single(z$th),
                 ni=as.single(z$ni),
@@ -111,14 +100,15 @@ setMethod("dwi.smooth", "dtiData", function(object,kstar,lambda=6,kappa0=NULL,nc
                 as.integer(ngrad),
                 as.double(lambda),
                 as.integer(ncoils),
+                as.integer(mc.cores),
                 as.integer(param$ind),
                 as.double(param$w),
                 as.integer(param$n),
                 th=single(prod(ddim)*ngrad),
                 single(prod(ddim)*ngrad),#ldf (to precompute lgamma)
                 as.double(sigma),
-                double(ngrad),
-                double(ngrad),
+                double(ngrad*mc.cores),
+                double(ngrad*mc.cores),
                 as.integer(model),
                 DUPL=FALSE,
                 PACKAGE="dti")[c("ni","th")]
@@ -137,7 +127,7 @@ if(verbose){
       cat(".")
     }
       param <- reduceparam(param)
-     z0 <- .Fortran("asmse3s0",
+     z0 <- .Fortran("asmse30p",
                     as.double(s0),
                     as.double(th0),
                     ni=as.double(ni0),
@@ -176,6 +166,7 @@ if(verbose){
   si[,,,-1] <- z$th
   object@si <- if(model==1) sqrt(si) else si
   object@gradient <- grad <- cbind(c(0,0,0),grad)
+  object@bvalue <- c(0,object@bvalue[-object@s0ind])
   object@btb <- create.designmatrix.dti(grad)
   object@s0ind <- as.integer(1)
   object@replind <- as.integer(1:ngrad)
@@ -212,7 +203,6 @@ lkfullse3 <- function(h,kappa,gradstats,vext,n){
                     as.double(h),
                     as.double(kappa),
                     as.double(gradstats$k456),
-                    as.double(gradstats$nbg),
                     as.integer(ngrad),
                     as.double(vext),
                     ind=integer(5*n),

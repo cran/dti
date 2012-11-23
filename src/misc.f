@@ -1,31 +1,3 @@
-      subroutine initdat0(si,n1,n2,n3,nb,maxvalue)
-C
-C   set si()==0 for all voxel that have si-values <=0 or > maxvalue
-C
-      integer n1,n2,n3,nb,maxvalue,si(n1,n2,n3,nb)
-      logical mask
-      integer i1,i2,i3,k,sii
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-               mask=.FALSE.
-               DO k=1,nb
-                  sii=si(i1,i2,i3,k)
-                  if(sii.le.0.or.sii.gt.maxvalue) THEN
-                     mask=.TRUE.
-                     CYCLE
-                  END IF
-               END DO
-               IF(mask) THEN
-                  DO k=1,nb
-                     si(i1,i2,i3,k)=0.d0
-                  END DO
-               END IF
-            END DO
-         END DO
-      END DO
-      RETURN
-      END
       subroutine initdata(si,n1,n2,n3,nb,maxvalue)
 C
 C   project all values to (1,maxvalue) to avoid infinite estimates
@@ -45,54 +17,99 @@ C
       END DO
       RETURN
       END
-      subroutine outlier(si,n,nb,s0ind,ls0,sinew,ind,lind)
+      subroutine outlier(si,n,nb,s0ind,siind,ls0,sinew,ind)
 C
 C   replace physically meaningless Si values by mean S0
 C
       implicit logical(a-z)
-      integer n,nb,ls0,sinew(n,nb),ind(n),lind
-      real*8 si(n,nb)
-      logical s0ind(nb)
-      integer i,j,ls0m1
+      integer n,nb,ls0,sinew(nb,n),s0ind(ls0),siind(1)
+      real*8 si(nb,n)
+      logical ind(n)
+      integer i,j1,j,ls0m1,sji
       real*8 s0
       logical changed
       ls0m1=ls0-1
-      lind=0
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(s0ind,siind,si,sinew,n,nb,ls0,ind)
+C$OMP& FIRSTPRIVATE(ls0m1)
+C$OMP& PRIVATE(i,j,changed,s0,sji)
+C$OMP DO SCHEDULE(STATIC)
       DO i=1,n
          s0=0
-         DO j=1,nb
-            if(s0ind(j)) THEN
-               s0=s0+si(i,j)
-               sinew(i,j)=si(i,j)
-            END IF
+         DO j1=1,ls0
+            j=s0ind(j1)
+            sji=si(j,i)
+            s0=s0+sji
+            sinew(j,i)=sji
          END DO
          s0=(s0+ls0m1)/ls0
          changed=.FALSE.
-         DO j=1,nb
-            if(.not.s0ind(j)) THEN 
-               if(si(i,j).gt.s0) THEN
-                  sinew(i,j)=s0
-                  changed=.TRUE.
-               ELSE 
-                  sinew(i,j)=si(i,j)
-               END IF
+         DO j1=1,nb-ls0
+            j=siind(j1)
+            sji=si(j,i)
+            if(sji.ge.s0) THEN
+               sji=s0
+               changed=.TRUE.
             END IF
+            sinew(j,i)=sji
          END DO
-         if(changed) THEN
-            lind=lind+1
-            ind(lind)=i
-         END IF
+         ind(i)=changed
       END DO
-      call rchkusr()
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
       RETURN
       END
+       subroutine outlierp(si,n,nb,s0ind,ls0,siind,lsi,sinew,nb1)
+C
+C   replace physically meaningless Si values by mean S0
+C
+      implicit logical(a-z)
+      integer n,nb,nb1,ls0,lsi,sinew(nb1,n),s0ind(ls0),siind(lsi)
+      real*8 si(nb,n)
+      integer i,j1,j,ls0m1,sji,changed,sinn(251)
+      real*8 s0
+      ls0m1=ls0-1
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(s0ind,siind,si,sinew,n,nb,ls0,nb1,lsi)
+C$OMP& FIRSTPRIVATE(ls0m1)
+C$OMP& PRIVATE(i,j,changed,s0,sji,sinn)
+C$OMP DO SCHEDULE(STATIC)
+      DO i=1,n
+         s0=0
+         DO j1=1,ls0
+            j=s0ind(j1)
+            sji=si(j,i)
+            s0=s0+sji
+            sinn(j)=sji
+         END DO
+         s0=(s0+ls0m1)/ls0
+         changed=0
+         DO j1=1,lsi
+            j=siind(j1)
+            sji=si(j,i)
+            if(sji.ge.s0) THEN
+               sji=s0
+               changed=1
+            END IF
+            sinn(j)=sji
+         END DO
+         sinn(nb1)=changed
+         DO j=1,nb1
+            sinew(j,i)=sinn(j)
+         END DO         
+      END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+      RETURN
+      END
+     
       subroutine mcorrlag(res,mask,n1,n2,n3,nv,sigma,mean,scorr,lag)
 
       implicit logical(a-z)
       integer n1,n2,n3,nv,lag(3)
       real*8 scorr,res(nv,n1,n2,n3),sigma(n1,n2,n3),mean(n1,n2,n3)
       logical mask(n1,n2,n3)
-      real*8 vrm,zcorr,z
+      real*8 vrm,zcorr,z,mi,mj
       integer i1,i2,i3,i4,l1,l2,l3,k,j1,j2,j3
       l1=lag(1)
       l2=lag(2)
@@ -107,79 +124,91 @@ C  correlation in x
             do i3=1,n3-l3
                j3=i3+l3
                if (.not.(mask(i1,i2,i3).and.mask(j1,j2,j3))) CYCLE
-               zcorr=0.d0
-               do i4=1,nv
-                  zcorr=zcorr+(res(i4,i1,i2,i3)-mean(i1,i2,i3))*
-     1                        (res(i4,j1,j2,j3)-mean(j1,j2,j3))
-               enddo
                vrm=sigma(i1,i2,i3)*sigma(j1,j2,j3)
-               if(vrm.gt.1e-10) THEN
-                  z=z+zcorr/vrm
-                  k=k+1
-               end if
+               if(vrm.le.1e-10) CYCLE
+               mi=mean(i1,i2,i3)
+               mj=mean(j1,j2,j3)
+               zcorr=(res(1,i1,i2,i3)-mi)*(res(1,j1,j2,j3)-mj)
+               do i4=2,nv
+                  zcorr=zcorr+(res(i4,i1,i2,i3)-mi)*
+     1                         (res(i4,j1,j2,j3)-mj)
+               enddo
+               z=z+zcorr/vrm
+               k=k+1
             enddo
          enddo
       enddo
       if( k.gt.0 ) then
          scorr=z/k/nv
       ELSE
-         scorr=0
+         scorr=0.d0
       END IF
       return
       end
 
-      subroutine msd(res,mask,n1,n2,n3,nv,sigma,mean)
+      subroutine msd(res,mask,n,nv,sigma,mean)
       implicit logical(a-z)
-      integer n1,n2,n3,nv
-      real*8 sigma(n1,n2,n3),res(nv,n1,n2,n3),mean(n1,n2,n3)
-      logical mask(n1,n2,n3)
-      integer i1,i2,i3,iv
-      real*8 z,resi,zm
-      DO i1=1,n1
-         DO i2=1,n2
-            DO i3=1,n3
-               if(mask(i1,i2,i3)) THEN
-                  z=0.d0
-                  zm=0.d0
-                  DO iv=1,nv
-                     resi=res(iv,i1,i2,i3)
-                     zm=zm+resi
-                     z=z+resi*resi
-                  END DO
-                  zm=zm/nv
-                  z=z/nv-zm*zm
-                  sigma(i1,i2,i3)=sqrt(z)
-                  mean(i1,i2,i3)=zm
-               ELSE
-                  sigma(i1,i2,i3)=0.d0
-               ENDIF
+      integer n,nv
+      real*8 sigma(n),res(nv,n),mean(n)
+      logical mask(n)
+      integer i,iv
+      real*8 z,resi,zm,sigi
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(res,n,mask,nv,sigma,mean)
+C$OMP& PRIVATE(z,iv,i,resi,zm,sigi)
+C$OMP DO SCHEDULE(GUIDED)
+      DO i=1,n
+         sigi=0.d0
+         zm=0.d0
+         if(mask(i)) THEN
+            z=0.d0
+            zm=0.d0
+            DO iv=1,nv
+               resi=res(iv,i)
+               zm=zm+resi
+               z=z+resi*resi
             END DO
-         END DO
+            zm=zm/nv
+            sigi=sqrt(z/nv-zm*zm)
+         ENDIF
+         mean(i)=zm
+         sigma(i)=sigi
       END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(mean,sigma)
       RETURN
       END
       
       subroutine mcorr(res,mask,n1,n2,n3,nv,sigma,mean,scorr,l1,l2,l3)
 
       implicit logical(a-z)
-      integer n1,n2,n3,nv,l1,l2,l3,lag(3)
+      integer n1,n2,n3,nv,l1,l2,l3,lag(3),n
       real*8 scorr(l1,l2,l3),res(nv,n1,n2,n3),sigma(n1,n2,n3),
      1       mean(n1,n2,n3)
       logical mask(n1,n2,n3)
       integer i1,i2,i3
-      call msd(res,mask,n1,n2,n3,nv,sigma,mean)
+      real*8 sci
+      n=n1*n2*n3
+      call msd(res,mask,n,nv,sigma,mean)
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(res,mask,n1,n2,n3,nv,sigma,mean,scorr,l1,l2,l3)
+C$OMP& PRIVATE(lag,i1,i2,i3,sci)
+C$OMP DO SCHEDULE(GUIDED)
       Do i1=1,l1
          lag(1)=i1-1
          DO i2=1,l2
             lag(2)=i2-1
             DO i3=1,l3
                lag(3)=i3-1
-               call mcorrlag(res,mask,n1,n2,n3,nv,sigma,mean,
-     1                       scorr(i1,i2,i3),lag)
-               call rchkusr()
+               call mcorrlag(res,mask,n1,n2,n3,nv,sigma,mean,sci,lag)
+               scorr(i1,i2,i3)=sci
             END DO
          END DO
       END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(scorr)
       return
       end
       subroutine thcorr(w,n1,n2,n3,scorr,l1,l2,l3)

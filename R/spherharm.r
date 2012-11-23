@@ -1,6 +1,7 @@
 getsphericalharmonicseven <- function(order,theta,phi){
 #
-#   compute spherical harmonics
+#   compute spherical harmonics 
+#  (symmetric modified SH Basis used by Descoteaux (2008))
 #
 order <- as.integer(max(0,order))
 if(order%%2==1){
@@ -32,34 +33,4 @@ warning("gsl package not available \n returning zeros instead of estimates")
 values
 }
 
-getsphericalharmonicsall <- function(order,theta,phi){
-#
-#   compute spherical harmonics
-#
-order <- as.integer(max(0,order))
-if(length(theta)!=length(phi)) stop("need same length of theta and phi")
-kseq <- 0:order
-n <- length(phi)
-values <- matrix(0,(order+1)^2,n)
-if(require(gsl)){
-l <- 1
-for(k in kseq){
-mseq <- (-k):k
-for(m in mseq){
-z <- legendre_sphPlm(k,abs(m),cos(theta))
-if(m < 0){
-z <- sqrt(2)*z*cos(m*phi)
-} 
-if(m > 0){
-z <- sqrt(2)*z*sin(m*phi)
-}
-values[l,] <- z
-l <- l+1
-}
-}
-} else {
-warning("gsl package not available \n returning zeros instead of estimates")
-}
-values
-}
 

@@ -5,6 +5,7 @@
 \alias{getmask-methods}
 \alias{getmask,ANY-method}
 \alias{getmask,dtiData-method}
+\alias{getmask,array-method}
 \title{ Methods for Function `getmask' in Package `dti' }
 \description{
 Create a mask containing voxel inside the head
@@ -29,6 +30,7 @@ Create a mask containing voxel inside the head
 
   \item{obj = "dtiData"}{Create a mask containing voxel inside the head }
 
+  \item{obj = "array"}{Create a mask containing voxel inside the head }
 }
 }
 \value{
