@@ -12,8 +12,8 @@
 \usage{
 \S4method{dti.smooth}{dtiData}(object, hmax=5, hinit=NULL, lambda=20, tau=10, rho=1, 
          graph=FALSE,slice=NULL, quant=.8, minfa=NULL, hsig=2.5, 
-         lseq=NULL, method="nonlinear", varmethod="residuals", rician=TRUE, 
-         niter=5, varmodel="local",result="Tensor")
+         lseq=NULL, method="nonlinear", rician=TRUE, 
+         niter=5,result="Tensor")
  }
 \arguments{
   \item{object}{ Either an object of class \code{"dtiData"} or an object of class \code{"dtiTensor"}}
@@ -29,8 +29,6 @@
   \item{hsig}{bandwidth for presmoothing of variance estimates}
   \item{lseq}{ sequence of correction factors for \code{lambda}}
   \item{method}{ Method for tensor estimation. May be \code{"linear"}, \code{"nonlinear"}}
-  \item{varmethod}{ Specifies the method for estimating the error variance. May be \code{varmethod=="replicates"}, or \code{"residuals"}. }
-  \item{varmodel}{ Specifies the model for the variance. May be \code{"global"}, or \code{"local"}. }
   \item{rician}{ "logical": apply a correction for Rician bias. This is still experimental and depends on spatial independence of errors.}
   \item{niter}{ Maximum number of iterations for tensor estimates using the nonlinear model.}
   \item{result}{ Determines the created object. Alternatives are \code{"Tensor"} for create a dtiTensor-object and \code{"dtiData"}

@@ -19,7 +19,8 @@ C               (X,y,z) ( A(theta)+ rho/bi I ) (X,y,z)^T  = h^2  defines the ell
 C   lambda   -  scale factor in the statistical penalty
 C   thnew    -  new smoothed diffusion tensor data
       implicit logical (a-z)
-      integer n1,n2,n3,ngrad,s0(n1,n2,n3),si(n1,n2,n3,ngrad)
+      integer n1,n2,n3,ngrad
+      real*8   s0(n1,n2,n3),si(n1,n2,n3,ngrad)
       real*8 th(6,n1,n2,n3),thnew(6,n1,n2,n3),h,rho,
      1       lambda,bi(n1,n2,n3),ani(n1,n2,n3),andir(3,n1,n2,n3),
      2       det(n1,n2,n3),bcov(6,6),sigma2(n1,n2,n3),vext(3),

@@ -140,8 +140,8 @@ C   swsi     -  auxiliary for sum_j w_j si(j)
 C   F        -  auxiliary for function values in LSE
 C   eps      -  something small and positive
       implicit logical (a-z)
-      integer n1,n2,n3,nb,si(nb,n1,n2,n3),niter,siest(nb,n1,n2,n3),
-     1       nw,nriter(nb),sisel(nb,nw),isel(3,nw)
+      integer n1,n2,n3,nb,niter,nw,nriter(nb),isel(3,nw)
+      real*8 siest(nb,n1,n2,n3),si(nb,n1,n2,n3),sisel(nb,nw)
       real*8 btb(6,nb),swsi2(nb),sdcoef(4),th0(n1,n2,n3),
      1       th0n(n1,n2,n3),sigma2r(n1,n2,n3),D(6,n1,n2,n3),
      2       Dn(6,n1,n2,n3),sipred(nb,n1,n2,n3),bi(n1,n2,n3),
@@ -378,7 +378,8 @@ C   this also adjusts for eliminating \theta by combining the second and 4th mom
       END
       real*8 function dtidisrg(si,sj,varinv,nb)
       implicit logical (a-z)
-      integer nb,si(nb)
+      integer nb
+      real*8 si(nb)
       real*8 sj(nb),varinv(nb)
       real*8 z,z1
       integer i
@@ -397,7 +398,8 @@ C  from Schwetlick (1979)
 C  same as solvedti except that s is double
 C
       implicit logical (a-z)
-      integer nb,s(nb),niter
+      integer nb,niter
+      real*8 s(nb)
       real*8 D(6),b(6,nb),varinv(nb),th0,F(nb),eps,sdcoef(4)
       integer i,j,k,info,iter,icount
       logical negdefin

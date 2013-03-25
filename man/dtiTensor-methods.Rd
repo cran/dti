@@ -9,16 +9,14 @@
   The method estimates, in each voxel, the diffusion tensor from the DWI data contained in an object of class \code{"dtiData"}.
 }
 \usage{
-  \S4method{dtiTensor}{dtiData}(object, method="nonlinear", varmethod="replicates", 
-                                varmodel="local", mc.cores = getOption("mc.cores", 1L))
+  \S4method{dtiTensor}{dtiData}(object, method=c( "nonlinear", "linear"),
+                     mc.cores = setCores( , reprt = FALSE))
 }
 \arguments{
   \item{object}{ Object of class \code{"dtiData"}}
   \item{method}{ Method for tensor estimation. May be \code{"linear"}, or \code{"nonlinear"}. }
-  \item{varmethod}{ Specifies the method for estimating the error variance. May be \code{"replicates"}. }
-  \item{varmodel}{ Specifies the model for the variance. May be \code{"global"}, or \code{"local"}. }
-   \item{mc.cores}{Number of cores to use. Defaults to getOption("mc.cores", 2L). 
-   This may be larger than the optimal value. Our experience suggests to use 4-6 cores if available.}
+   \item{mc.cores}{Number of cores to use. Defaults to number of threads specified for openMP, see documentation of package \pkg{awsMethods}. 
+   Our experience suggests to use 4-6 cores if available.}
 }
 \value{ 
   An object of class \code{"dtiTensor"}.

@@ -2,14 +2,15 @@
 C
 C   project all values to (1,maxvalue) to avoid infinite estimates
 C
-      integer n1,n2,n3,nb,maxvalue,si(n1,n2,n3,nb)
-      integer i1,i2,i3,k,sii
+      integer n1,n2,n3,nb
+      real*8   si(n1,n2,n3,nb),sii,maxvalue
+      integer i1,i2,i3,k
       DO i1=1,n1
          DO i2=1,n2
             DO i3=1,n3
                DO k=1,nb
                   sii=si(i1,i2,i3,k)
-                  if(sii.le.0) si(i1,i2,i3,k)=1
+                  if(sii.le.0.0) si(i1,i2,i3,k)=1
                   if(sii.gt.maxvalue) si(i1,i2,i3,k)=maxvalue
                END DO
             END DO
@@ -22,11 +23,11 @@ C
 C   replace physically meaningless Si values by mean S0
 C
       implicit logical(a-z)
-      integer n,nb,ls0,sinew(nb,n),s0ind(ls0),siind(1)
-      real*8 si(nb,n)
+      integer n,nb,ls0,s0ind(ls0),siind(1)
+      real*8 si(nb,n),sinew(nb,n)
       logical ind(n)
-      integer i,j1,j,ls0m1,sji
-      real*8 s0
+      integer i,j1,j,ls0m1
+      real*8 s0,sji
       logical changed
       ls0m1=ls0-1
 C$OMP PARALLEL DEFAULT(NONE)
@@ -59,15 +60,15 @@ C$OMP END DO NOWAIT
 C$OMP END PARALLEL
       RETURN
       END
-       subroutine outlierp(si,n,nb,s0ind,ls0,siind,lsi,sinew,nb1)
+      subroutine outlierp(si,n,nb,s0ind,ls0,siind,lsi,sinew,nb1)
 C
 C   replace physically meaningless Si values by mean S0
 C
       implicit logical(a-z)
-      integer n,nb,nb1,ls0,lsi,sinew(nb1,n),s0ind(ls0),siind(lsi)
-      real*8 si(nb,n)
-      integer i,j1,j,ls0m1,sji,changed,sinn(251)
-      real*8 s0
+      integer n,nb,nb1,ls0,lsi,s0ind(ls0),siind(lsi)
+      real*8 si(nb,n),sinew(nb1,n)
+      integer i,j1,j,ls0m1,changed
+      real*8 s0,sinn(251),sji
       ls0m1=ls0-1
 C$OMP PARALLEL DEFAULT(NONE)
 C$OMP& SHARED(s0ind,siind,si,sinew,n,nb,ls0,nb1,lsi)
@@ -359,7 +360,8 @@ C     first find pixel close to (i1,i2) with segm(j1,j2)=0
       END
       subroutine getmask(s0,n1,n2,n3,ns,level,msize,prop,s0m,mask)
       implicit logical (a-z) 
-      integer n1,n2,n3,ns,msize,s0(n1,n2,n3,ns)
+      integer n1,n2,n3,ns,msize
+      real*8  s0(n1,n2,n3,ns)
       real*8 s0m(n1,n2,n3),prop,level
       logical mask(n1,n2,n3)
       integer i1,i2,i3,j,j1,j2,j3

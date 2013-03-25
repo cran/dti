@@ -1341,7 +1341,8 @@ C   generate mask
 C   sweep s0 from si to generate  siq
 C   calculate variance of siq
 C
-      integer n,ng0,ng1,si(ng1,n),s0(ng0,n),level
+      integer n,ng0,ng1,level
+      real*8si(ng1,n),s0(ng0,n)
       real*8 siq(ng1,n),ms0(n),vsi(n)
       logical mask(n),maskk
       integer i,k
@@ -1400,7 +1401,8 @@ C   generate mask
 C   sweep s0 from si to generate  siq
 C   calculate variance of siq
 C
-      integer n,ng0,ng1,ng2,si(ng1,n),s0(ng0,n),level
+      integer n,ng0,ng1,ng2,level
+      real*8 si(ng1,n),s0(ng0,n)
       real*8 siq(ng2,n)
       logical maskk
       integer i,k
@@ -1453,6 +1455,34 @@ C$OMP DO SCHEDULE(STATIC)
       END DO
 C$OMP END DO NOWAIT
 C$OMP END PARALLEL
+      RETURN
+      END
+C
+C __________________________________________________________________
+C
+      subroutine sweeps00(si,s0,n,ng,mask,siq)
+C
+C   calculate mean s0 value
+C   generate mask
+C   sweep s0 from si to generate  siq
+C   calculate variance of siq
+C
+      integer n,ng
+      real*8 si(n,ng),s0(n),siq(n,ng)
+      logical mask(n)
+      integer i,j
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(si,s0,n,ng,siq,mask)
+C$OMP& PRIVATE(i,j)
+C$OMP DO SCHEDULE(GUIDED)
+      DO j=1,ng
+         DO i=1,n
+            if(mask(i)) siq(i,j) = si(i,j)/s0(i)
+         END DO
+      END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(siq)
       RETURN
       END
 C

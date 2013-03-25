@@ -110,7 +110,6 @@ summary(zmix)
 if(maxcomp>1) for(m in 2:maxcomp){
 zmix0 <- dwiMixtensor(z,maxcomp=m)
 zmix <- dwiMtCombine(zmix0,zmix)
-zmix <- dwiMtImprove(zmix,z,maxcomp=m)
 summary(zmix)
 }
 gslexists <- "gsl" %in% .packages(TRUE)

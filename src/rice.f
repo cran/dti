@@ -15,11 +15,12 @@ C  avoid transform to zero for numerical stability
       subroutine ricecorr(si,w,n,nb,sbind,ns0,niter,sw,th,s2,sigma2,
      1                    fw)
       implicit logical (a-z) 
-      integer n,nb,si(nb,n),niter(nb)
+      integer n,nb,niter(nb)
+      real*8 si(nb,n)
       real*8 w(n),th(nb),s2(nb),sigma2,sw,fw(10000)
       logical sbind(nb)
-      integer i,j,k,l,iter,sii,ns0,minsi
-      real*8 z,sth,th2,ss2,thk
+      integer i,j,k,l,iter,ns0
+      real*8 z,sth,th2,ss2,thk,sii,minsi
       iter=1
       DO k=1,nb
          iter=max(iter,niter(k))
@@ -60,11 +61,13 @@ C  just avoid extreme corrections caused by overestimated variances
       RETURN
       END
       real*8 function Lhalf(x)
-      real*8 x,mxh
-      real*8 besseli
-      external besseli
+      real*8 x,mxh,bi(10)
+      real*8 bessliex
+      external bessliex
       mxh = -0.5d0*x
-      Lhalf = (1.d0-x)*besseli(mxh,0.d0,2.d0)-x*besseli(mxh,1.d0,2.d0)
+C      Lhalf = (1.d0-x)*besseli(mxh,0.d0,2.d0)-x*besseli(mxh,1.d0,2.d0)
+      Lhalf = (1.d0-x)*bessliex(mxh,0.d0,2.d0,bi)-
+     1               x*bessliex(mxh,1.d0,2.d0,bi)
       Return
       End
       real*8 function erice(x)
@@ -85,6 +88,15 @@ C  just avoid extreme corrections caused by overestimated variances
       integer i,counter
       real*8 xt,xta,yt,erice
       external erice
+C ####################################################
+C  Attempt to parallelize causes errors
+C  " ****snapping into wrong generation "
+C  probably coming from http://svn.r-project.org/R/trunk/src/main/memory.c
+C ####################################################
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(x,n)
+C$OMP& PRIVATE(i,counter,xt,xta,yt)
+C$OMP DO SCHEDULE(GUIDED)
       DO i=1,n
          counter=0
          xta = 0
@@ -98,15 +110,18 @@ C  just avoid extreme corrections caused by overestimated variances
             ELSE
                xt = yt
             END IF
-            if(counter.eq.100) THEN
-               call intpr("maxit in i",10,i,1)
-               call dblepr("yt",2,yt,1)
-               call dblepr("xt",2,xt,1)
-               call dblepr("xta",3,xta,1)
-            END IF
+C            if(counter.eq.100) THEN
+C               call intpr("maxit in i",10,i,1)
+C               call dblepr("yt",2,yt,1)
+C               call dblepr("xt",2,xt,1)
+C               call dblepr("xta",3,xta,1)
+C            END IF
          END DO
          x(i) = xt
       END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(x)
       RETURN
       END
       

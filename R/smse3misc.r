@@ -38,7 +38,7 @@ getkappas <- function(grad, trace = 0, dist = 1){
 #
 #  dist = 1: k4^2+k5^2+|k6|
 #  dist = 2: k4^2+k5^2+k6^2
-#  dist = 3: sin^2(g_i,g_j)
+#  dist = 3: acos(g_i%*%g_j)
 # new version with analytic expm(par[1]*mx)
 #
   krit <- function(par, matm, beta){
@@ -118,7 +118,7 @@ getkappas <- function(grad, trace = 0, dist = 1){
   } else {
       kappa456 <- array(0, c(3, ngrad, ngrad))
       zbg <- betagamma(grad)
-      for(i in 1:ngrad) kappa456[1,i,] <- 1-(grad[,i]%*%grad)^2
+      for(i in 1:ngrad) kappa456[1,i,] <- acos(pmin(1,abs(grad[,i]%*%grad)))
   }
   list(k456 = kappa456, bghat = zbg$bghat, dist=dist)
 }

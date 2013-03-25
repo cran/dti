@@ -9,13 +9,12 @@
   The method creates estimates of the fractional anisotropy (FA) and relative anisotropy (RA) indices, the main directions of anisotropy and several statistics used for visualization.
 }
 \usage{
-  \S4method{dtiIndices}{dtiTensor}(object, which, mc.cores = getOption("mc.cores", 2L))
+  \S4method{dtiIndices}{dtiTensor}(object, mc.cores = setCores(,reprt=FALSE))
 }
 \arguments{
   \item{object}{ Object of class \code{"dtiTensor"} }
-  \item{which}{ Indices should be created, currently not implemented. }
-   \item{mc.cores}{Number of cores to use. Defaults to getOption("mc.cores", 2L). 
-   This may be larger than the optimal value. Our experience suggests to use 4-6 cores if available.}
+   \item{mc.cores}{Number of cores to use. Defaults to number of threads specified for openMP, see documentation of package \pkg{awsMethods}. 
+   Our experience suggests to use 4-6 cores if available.}
 }
 \value{
   An object of class \code{"dtiIndices"}.

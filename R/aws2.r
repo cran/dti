@@ -3,13 +3,13 @@
 #   this is also based on an a statistical penalty defined using log-likelihood difference
 #
 dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slice=NULL,quant=.8,
-                         minfa=NULL,hsig=2.5,lseq=NULL,varmethod="residuals",rician=TRUE,niter=5,varmodel="local",result="Tensor"){
+                         minfa=NULL,hsig=2.5,lseq=NULL,rician=TRUE,niter=5,result="Tensor"){
 #
 #     lambda and lseq adjusted for alpha=0.2
 #
   if(!is.null(object$ni)){
      warning("DWI object has been smoothed already, smoothing omitted")
-     return(if(result=="Tensor") dtiTensor(object,method="nonlinear",varmethod=varmethod,varmodel=varmodel) else object)
+     return(if(result=="Tensor") dtiTensor(object,method="nonlinear") else object)
   }
   eps <- 1e-6
   maxnw <- 10000
@@ -26,7 +26,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
     sdcoef <- sdpar(object,interactive=FALSE)@sdcoef
     object@sdcoef <- sdcoef
   }
-  dtobject <- dtiTensor(object,method="nonlinear",varmethod=varmethod,varmodel=varmodel)
+  dtobject <- dtiTensor(object,method="nonlinear")
   scale <- dtobject@scale
   mask <- dtobject@mask
   th0 <- dtobject@th0
@@ -94,12 +94,14 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      rg<-quantile(img,c(.01,.99))
      img[img>rg[2]]<-rg[2]
      img[img<rg[1]]<-rg[1]
+     img <- (img-rg[1])/(rg[2]-rg[1])
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dxy: min",signif(min(z$D[2,,,][mask]),3),"max",signif(max(z$D[2,,,][mask]),3)))
      img<-z$D[3,,,slice]
      rg<-quantile(img,c(.01,.99))
      img[img>rg[2]]<-rg[2]
      img[img<rg[1]]<-rg[1]
+     img <- (img-rg[1])/(rg[2]-rg[1])
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dxz: min",signif(min(z$D[3,,,][mask]),3),"max",signif(max(z$D[3,,,][mask]),3)))
      show.image(make.image(z$anindex[,,slice]),xaxt="n",yaxt="n")
@@ -114,6 +116,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      rg<-quantile(img,c(.01,.99))
      img[img>rg[2]]<-rg[2]
      img[img<rg[1]]<-rg[1]
+     img <- (img-rg[1])/(rg[2]-rg[1])
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dyz: min",signif(min(z$D[5,,,][mask]),3),"max",signif(max(z$D[5,,,][mask]),3)))
      andir2.image(z,slice,quant=quant,minfa=minfa,xaxt="n",yaxt="n")
@@ -160,8 +163,8 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
        cat("Correction factor for spatial correlation",signif(corrfactor,3),"\n")
     }
     z <- .Fortran("awsrgdti",
-                    as.integer(si),
-                    sihat=as.integer(z$sihat), # needed for statistical penalty
+                    as.double(si),
+                    sihat=as.double(z$sihat), # needed for statistical penalty
                     double(ngrad*n),# array for predicted Si's from the tensor model 
                     as.integer(ngrad),
                     as.integer(n1),
@@ -193,7 +196,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
                     as.logical(rician), 
                     as.integer(maxnw),# maximum number of positive weights
                     integer(ngrad),# auxiliary for number of iterations
-                    integer(maxnw*ngrad),# auxiliary for aktive data
+                    double(maxnw*ngrad),# auxiliary for aktive data
                     integer(maxnw*3),# auxiliary for index of aktive data
                     double(maxnw),# auxiliary for weights
                     double(ngrad),# auxiliary for variances
@@ -201,11 +204,13 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      dim(z$th0) <- dim(z$bi) <- dim(z$anindex) <- dim(z$det) <- dim(z$sigma2r) <- dimy[-1]
      dim(z$D) <- dimy
      dim(z$andirection) <- c(3,dimy[-1]) 
+     n <- n1*n2*n3
      if(any(is.na(z$th0))){
         indna <- is.na(z$th0)
 #        cat("found ",sum(indna),"NA's\n")
+#        cat("indna",(1:n)[indna],"\n")
         z$th0[indna] <- th0[indna]
-#        cat("th0",th0[indna])
+#        cat("th0",th0[indna],"\n")
         dim(z$D) <- dim(D) <- c(6,n1*n2*n3)
         z$D[,indna] <- D[,indna]
         dim(z$D) <- dim(D) <- c(6,n1,n2,n3)
@@ -219,9 +224,9 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
 ##
      det95 <- quantile(z$det[mask],.95)
      if(any(z$det[mask]>1e3*det95)){
-        n <- n1*n2*n3
-        indna <- (1:n)[z$det>1e3*det95]
+        indna <- (1:n)[z$det/1e3>det95&mask]
 #        cat("found ",length(indna),"voxel with extreme derterminat 's, keep initial estimates and do not use these voxel\n")
+#        cat("indna",indna,"\n")
         z$th0[indna] <- th0[indna]
         dim(z$D) <- dim(D) <- c(6,n1*n2*n3)
         z$D[,indna] <- D[,indna]
@@ -243,12 +248,14 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      rg<-quantile(img,c(.01,.99))
      img[img>rg[2]]<-rg[2]
      img[img<rg[1]]<-rg[1]
+     img <- (img-rg[1])/(rg[2]-rg[1])
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dxy: min",signif(min(z$D[2,,,][mask]),3),"max",signif(max(z$D[2,,,][mask]),3)))
      img<-z$D[3,,,slice]
      rg<-quantile(img,c(.01,.99))
      img[img>rg[2]]<-rg[2]
      img[img<rg[1]]<-rg[1]
+     img <- (img-rg[1])/(rg[2]-rg[1])
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dxz: min",signif(min(z$D[3,,,][mask]),3),"max",signif(max(z$D[3,,,][mask]),3)))
      show.image(make.image(z$anindex[,,slice]),xaxt="n",yaxt="n")
@@ -263,6 +270,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      rg<-quantile(img,c(.01,.99))
      img[img>rg[2]]<-rg[2]
      img[img<rg[1]]<-rg[1]
+     img <- (img-rg[1])/(rg[2]-rg[1])
      show.image(make.image(img),xaxt="n",yaxt="n")
      title(paste("Dyz: min",signif(min(z$D[5,,,][mask]),3),"max",signif(max(z$D[5,,,][mask]),3)))
      andir2.image(z,slice,quant=quant,minfa=minfa,xaxt="n",yaxt="n")
@@ -271,6 +279,8 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
      show.image(make.image(65535*ni/max(ni)),xaxt="n",yaxt="n")
      title(paste("sum of weights  mean=",signif(mean(z$bi[mask]),3)))
      img<-z$D[6,,,slice]
+     rg<-quantile(img,c(.01,.99))
+     img[img>rg[2]]<-rg[2]
      show.image(make.image(65535*img/max(img)),xaxt="n",yaxt="n")
      title(paste("Dzz: mean",signif(mean(z$D[6,,,][mask]),3),"max",signif(max(z$D[6,,,][mask]),3)))
      }
@@ -315,7 +325,7 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
             ) else invisible(new("dtiData",
                 list(s2rician=if(rician) z$sigma2r else NULL, ni=z$bi),
                 call = args,
-                si = aperm(array(as.integer(z$sihat),dimsi),c(2:4,1)),
+                si = aperm(array(z$sihat,dimsi),c(2:4,1)),
                 sdcoef = sdcoef,
                 gradient = object@gradient,
                 bvalue = object@bvalue,

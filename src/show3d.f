@@ -80,7 +80,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       RETURN
       END
 
-      real *8 function qform3(y,edir,ev)
+      real*8 function qform3(y,edir,ev)
       real*8 y(3),edir(3,3),ev(3)
       real*8 z1,z2,z3
       z1=y(1)*edir(1,1)+y(2)*edir(2,1)+y(3)*edir(3,1)

@@ -34,7 +34,7 @@ setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive
     A1 <- quantile(s0[s0>0],.98)
   }
   if(interactive) {
-    par(mfrow=c(1,3),mar=c(3,3,3,1),mgp=c(2,1,0))
+    oldpar <- par( mfrow = c( 1, 3), mar = c( 3, 3, 3, 1), mgp = c( 2, 1, 0))
     img <- if(ls0ind>1) s0mean[,,(object@ddim[3]-1)%/%2+1] else s0[,,(object@ddim[3]-1)%/%2+1]
     maximg <- max(img)
     accept <- FALSE
@@ -83,6 +83,7 @@ setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive
         accept <- TRUE
       }
     }
+	par( oldpar)
   } else {
     if(is.null(level)){
     ddim <- object@ddim
@@ -392,6 +393,9 @@ setMethod("[","dtiTensor",function(x, i, j, k, drop=FALSE){
                 method = x@method)
             )
 })
+
+
+
 #############
 setMethod("[","dwiMixtensor",function(x, i, j, k, drop=FALSE){
   args <- sys.call(-1)
@@ -619,8 +623,12 @@ setMethod("[","dwiQball",function(x, i, j, k, drop=FALSE){
 #setGeneric("extract", function(x, ...) standardGeneric("extract"))
 #setGeneric("extract", function(x, ...) cat("Data extraction not defined for this class:",class(x),"\n"), package="dti")
 
-setMethod("extract","dtiData",function(x, what="data", xind=TRUE, yind=TRUE, zind=TRUE){
+setMethod("extract","dtiData",function(x,
+           what=c("data","gradient","btb","s0","sb","siq"), 
+           xind=TRUE, yind=TRUE, zind=TRUE){
   what <- tolower(what) 
+  ## check what
+  what <- match.arg(what, several.ok = TRUE)
   swap <- rep(FALSE,3)
   if(is.numeric(xind)) swap[1] <- xind[1]>xind[length(xind)]
   if(is.numeric(yind)) swap[2] <- yind[1]>yind[length(yind)]
@@ -647,8 +655,12 @@ setMethod("extract","dtiData",function(x, what="data", xind=TRUE, yind=TRUE, zin
 
 #############
 
-setMethod("extract","dwiMixtensor",function(x, what="andir", xind=TRUE, yind=TRUE, zind=TRUE){
+setMethod("extract","dwiMixtensor",function(x, 
+   what=c("andir","order","ev","mix","s0","mask","fa","eorder","bic","aic"), 
+   xind=TRUE, yind=TRUE, zind=TRUE){
   what <- tolower(what) 
+  ## check what
+  what <- match.arg(what, several.ok = TRUE)
   swap <- rep(FALSE,3)
   if(is.numeric(xind)) swap[1] <- xind[1]>xind[length(xind)]
   if(is.numeric(yind)) swap[2] <- yind[1]>yind[length(yind)]
@@ -693,6 +705,9 @@ setMethod("extract","dwiMixtensor",function(x, what="andir", xind=TRUE, yind=TRU
      maxorder <- dim(x@mix)[1]
      mix <- x@mix
      dim(mix) <- c(maxorder,n1*n2*n3)     
+     smix <- rep(1,maxorder)%*%mix
+     mix <- sweep(mix,2,smix,"/")
+# the last two lines are needed for models with isotropic compartment
      z$eorder <- array((2*(1:maxorder)-1)%*%mix,x@ddim)
   }
   if("bic" %in% what) {
@@ -716,8 +731,12 @@ setMethod("extract","dwiMixtensor",function(x, what="andir", xind=TRUE, yind=TRU
 
 
 
-setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE, zind=TRUE,mc.cores=getOption("mc.cores", 2L)){
+setMethod("extract","dtiTensor",function(x, 
+   what=c("tensor","fa","ga","md","evalues","andir","s0","mask","bic","aic","outlier"), 
+   xind=TRUE, yind=TRUE, zind=TRUE,mc.cores=setCores(,reprt=FALSE)){
   what <- tolower(what) 
+  ## check what
+  what <- match.arg(what, several.ok = TRUE)
   swap <- rep(FALSE,3)
   if(is.numeric(xind)) swap[1] <- xind[1]>xind[length(xind)]
   if(is.numeric(yind)) swap[2] <- yind[1]>yind[length(yind)]
@@ -794,8 +813,11 @@ setMethod("extract","dtiTensor",function(x, what="tensor", xind=TRUE, yind=TRUE,
 
 ##############
 
-setMethod("extract","dtiIndices",function(x, what=c("fa","andir"), xind=TRUE, yind=TRUE, zind=TRUE){
+setMethod("extract","dtiIndices",function(x, 
+    what=c("fa","andir","ga","md","bary"), xind=TRUE, yind=TRUE, zind=TRUE){
   what <- tolower(what)
+  ## check what
+  what <- match.arg(what, several.ok = TRUE)
   swap <- rep(FALSE,3)
   if(is.numeric(xind)) swap[1] <- xind[1]>xind[length(xind)]
   if(is.numeric(yind)) swap[2] <- yind[1]>yind[length(yind)]
@@ -821,8 +843,12 @@ setMethod("extract","dtiIndices",function(x, what=c("fa","andir"), xind=TRUE, yi
 
 ##############
 
-setMethod("extract","dwiQball",function(x, what="sphcoef", xind=TRUE, yind=TRUE, zind=TRUE){
+setMethod("extract","dwiQball",function(x,     
+      what=c("sphcoef","s0","mask","bic","aic","outlier"),
+      xind=TRUE, yind=TRUE, zind=TRUE){
   what <- tolower(what) 
+  ## check what
+  what <- match.arg(what, several.ok = TRUE)
   swap <- rep(FALSE,3)
   if(is.numeric(xind)) swap[1] <- xind[1]>xind[length(xind)]
   if(is.numeric(yind)) swap[2] <- yind[1]>yind[length(yind)]
@@ -872,7 +898,7 @@ setMethod("getmask","dtiData",function(object, level=NULL, prop=.4, size=3){
 if(is.null(level)) level <- object@level
 if(!is.null(level)){ 
 z <- .Fortran("getmask",
-              as.integer(object@si[,,,object@s0ind]),
+              as.double(object@si[,,,object@s0ind]),
               as.integer(object@ddim[1]),
               as.integer(object@ddim[2]),
               as.integer(object@ddim[3]),
@@ -900,7 +926,7 @@ ddim <- dim(object)
 }
 if(!is.null(level)){ 
 z <- .Fortran("getmask",
-              as.integer(object),
+              as.double(object),
               as.integer(ddim[1]),
               as.integer(ddim[2]),
               as.integer(ddim[3]),
@@ -919,3 +945,45 @@ dim(z$s0) <- dim(z$mask) <- dim(object)
 z
 }
 )
+selectCube <- function(xind,yind,zind,ddim,maxobj){ 
+if(is.null(xind)) xind <- 1:ddim[1]
+if(is.null(yind)) yind <- 1:ddim[2]
+if(is.null(zind)) zind <- 1:ddim[3]
+n1 <- length(xind)
+n2 <- length(yind)
+n3 <- length(zind)
+if(any(c(xind[1],yind[1],zind[1]) < 1 || any(c(xind[n1]-ddim[1],yind[n2]-ddim[2],zind[n3]-ddim[3])>0))){
+   stop("Error in index specification, specified cube exceeds dimensions of object")
+}
+l1 <- (xind[n1]-xind[1]+1-n1) == 0
+l2 <- (yind[n2]-yind[1]+1-n2) == 0
+l3 <- (zind[n3]-zind[1]+1-n3) == 0
+if(!(l1&&l1&&l3)){
+   stop("Error in index specification, xind, yind and zind need to be increasing
+         and consecutive")
+}
+n <- n1*n2*n3
+if(n>maxobj) {
+  cat("size of data cube",n," exceeds maximum of",maxobj,"\n")
+  mod2 <- function(x) x==x%/%2*2
+  nz <- max(1,maxobj%/%(n1*n2))
+  nx <- min(n1,floor(sqrt(maxobj/nz)))
+  ny <- min(n2,maxobj%/%(nx*nz))
+  xm <- (xind[1]+xind[n1])%/%2
+  xd <- nx%/%2
+  xind <- if(mod2(nx)) (xm-xd+1):(xm+xd) else (xm-xd):(xm+xd)
+  ym <- (yind[1]+yind[n2])%/%2
+  yd <- ny%/%2
+  yind <- if(mod2(ny)) (ym-yd+1):(ym+yd) else (ym-yd):(ym+yd) 
+  zm <- (zind[1]+zind[n3])%/%2
+  zd <- nz%/%2
+  zind <- if(mod2(nz)) (zm-zd+1):(zm+zd) else (zm-zd):(zm+zd)
+  n1 <- length(xind)
+  n2 <- length(yind)
+  n3 <- length(zind)
+  n <- n1*n2*n3
+}
+if(n==0) stop("Empty cube specified")
+list(xind=xind,yind=yind,zind=zind, n=n, n1=n1, n2=n2, n3=n3)
+}
+

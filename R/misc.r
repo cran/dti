@@ -3,53 +3,55 @@
 #   function setCores in package spMC version 0.2.2
 #   written by Luca Sartore <drwolf85@gmail.com>
 #
-sioutlier <- function(si,s0ind,mc.cores=1){
-   dsi <- dim(si)
-   n <- prod(dsi[-length(dsi)])
-   ng <- dsi[length(dsi)]
-   ns0 <- length(s0ind)
-   siind <- (1:ng)[-s0ind]
-   dim(si) <- c(n,ng)
-   si <- t(si)
-   cat("outlier:")
-   if(mc.cores>1){
-   mc.cores.old <- setCores(,reprt=FALSE)
-   setCores(mc.cores)
-   }
-   siindex <- (1:ng)[-s0ind]
-   t1 <- Sys.time()
-   if(mc.cores==1||ng>250){
-   z <- .Fortran("outlier",
-                 as.double(si),
-                 as.integer(n),
-                 as.integer(ng),
-                 as.integer(s0ind),
-                 as.integer(siind),
-                 as.integer(ns0),
-                 si=integer(n*ng),
-                 index=logical(n),
-                 DUP=FALSE,
-                 PACKAGE="dti")[c("si","index")]
-                 } else {
-   zz <- matrix(.Fortran("outlierp",
-                 as.double(si),
-                 as.integer(n),
-                 as.integer(ng),
-                 as.integer(s0ind),
-                 as.integer(ns0),
-                 as.integer(siind),
-                 as.integer(ng-ns0),
-                 si=integer(n*(ng+1)),
-                 as.integer(ng+1),
-                 DUP=FALSE,
-                 PACKAGE="dti")$si,ng+1,n)
-  t2 <- Sys.time()
-  cat(difftime(t2,t1),"for",n,"voxel\n")
-  if(mc.cores>1) setCores(mc.cores.old,reprt=FALSE)
-  return(list(si=zz[1:ng,],index=(1:n)[as.logical(zz[ng+1,])]))         
+sioutlier <- function( si, s0ind, mc.cores = 1, verbose = TRUE){
+  dsi <- dim(si)
+  n <- prod(dsi[-length(dsi)])
+  ng <- dsi[length(dsi)]
+  ns0 <- length(s0ind)
+  siind <- (1:ng)[-s0ind]
+  dim(si) <- c(n,ng)
+  si <- t(si)
+  
+  if (verbose) cat("outlier: ")
+
+  if(mc.cores>1){
+    mc.cores.old <- setCores(,reprt=FALSE)
+    setCores(mc.cores)
+  }
+  siindex <- (1:ng)[-s0ind]
+  t1 <- Sys.time()
+  if(mc.cores==1||ng>250){
+    z <- .Fortran("outlier",
+                  as.double(si),
+                  as.integer(n),
+                  as.integer(ng),
+                  as.integer(s0ind),
+                  as.integer(siind),
+                  as.integer(ns0),
+                  si=double(n*ng),
+                  index=logical(n),
+                  DUP=FALSE,
+                  PACKAGE="dti")[c("si","index")]
+  } else {
+    zz <- matrix(.Fortran("outlierp",
+                          as.double(si),
+                          as.integer(n),
+                          as.integer(ng),
+                          as.integer(s0ind),
+                          as.integer(ns0),
+                          as.integer(siind),
+                          as.integer(ng-ns0),
+                          si=double(n*(ng+1)),
+                          as.integer(ng+1),
+                          DUP=FALSE,
+                          PACKAGE="dti")$si,ng+1,n)
+    t2 <- Sys.time()
+    if (verbose) cat( difftime( t2, t1), attr(difftime( t2, t1), "units"), "for", n, "voxel\n")
+    if(mc.cores>1) setCores(mc.cores.old,reprt=FALSE)
+    return(list(si=zz[1:ng,],index=(1:n)[as.logical(zz[ng+1,])]))         
   }
   t2 <- Sys.time()
-  cat(difftime(t2,t1),"for",n,"voxel\n")
+  if (verbose) cat( difftime( t2, t1), attr(difftime( t2, t1), "units"), "for", n, "voxel\n")
   if(mc.cores>1) setCores(mc.cores.old,reprt=FALSE)
   index <- (1:n)[z$index]
   dim(z$si) <- c(ng,dsi[-length(dsi)])
@@ -220,38 +222,39 @@ dtieigen <- function(D,mask,mc.cores=1){
    ev[,mask] <- z$ev
    list(fa=fa,ev=ev,andir=andir)
 }
-dtiind3D <- function(D,mask,mc.cores=1){
-   dimD <- dim(D)[-1]
-   nvox <- prod(dimD)
-   nvox0 <- sum(mask)
-   dim(D) <- c(6,nvox)
-   cat("dtiind3:")
-   if(mc.cores>1){
-   mc.cores.old <- setCores(,reprt=FALSE)
-   setCores(mc.cores)
-   }
-   bary <- andir <- matrix(0,3,nvox)
-   fa <- ga <- md <- numeric(nvox)
-   t1 <- Sys.time()
-   z <- .Fortran("dtiind3D",
-                   as.double(D[,mask]),
-                   as.integer(nvox0),
-                   fa=double(nvox0),
-                   ga=double(nvox0),
-                   md=double(nvox0),
-                   andir=double(3*nvox0),
-                   bary=double(3*nvox0),
-                   DUP=FALSE,
-                   PACKAGE="dti")[c("fa","ga","md","andir","bary")]
-   if(mc.cores>1) setCores(mc.cores.old,reprt=FALSE)
-   t2 <- Sys.time()
-   cat(difftime(t2,t1)," for",nvox0,"voxel\n")
-   fa[mask] <- z$fa
-   ga[mask] <- z$ga
-   md[mask] <- z$md
-   andir[,mask] <- z$andir
-   bary[,mask] <- z$bary
-   list(fa=fa,ga=ga,md=md,andir=andir,bary=bary)
+dtiind3D <- function( D, mask, mc.cores = 1, verbose = TRUE){
+  dimD <- dim(D)[-1]
+  nvox <- prod(dimD)
+  nvox0 <- sum(mask)
+  dim(D) <- c(6,nvox)
+  if (verbose) cat( "dtiind3: entering function", format( Sys.time()), "\n")
+  if(mc.cores>1){
+    mc.cores.old <- setCores(,reprt=FALSE)
+    setCores(mc.cores)
+  }
+  bary <- andir <- matrix(0,3,nvox)
+  fa <- ga <- md <- numeric(nvox)
+  t1 <- Sys.time()
+  z <- .Fortran("dtiind3D",
+                as.double(D[ , mask]),
+                as.integer(nvox0),
+                fa      = double(nvox0),
+                ga      = double(nvox0),
+                md      = double(nvox0),
+                andir   = double(3*nvox0),
+                bary    = double(3*nvox0),
+                DUP     = FALSE,
+                PACKAGE = "dti")[c( "fa", "ga", "md", "andir", "bary")]
+  if(mc.cores>1) setCores(mc.cores.old,reprt=FALSE)
+  t2 <- Sys.time()
+  if ( verbose) cat( "dtiind3: calculation took ", difftime( t2, t1), attr(difftime( t2, t1), "units"), " for", nvox0, "voxel\n")
+  fa[mask] <- z$fa
+  ga[mask] <- z$ga
+  md[mask] <- z$md
+  andir[,mask] <- z$andir
+  bary[,mask] <- z$bary
+  if (verbose) cat( "dtiind3: exiting function", format( Sys.time()), "\n")
+  list( fa = fa, ga = ga, md = md, andir = andir, bary = bary)
 }
 kldist <- function(L,eta1,eta2){
 #
@@ -289,6 +292,63 @@ replind <- function(gradient){
      replind[ind] <- i
   }
   as.integer(replind)
+}
+
+sofmchi <- function(L,to=50,delta=.01){
+minlev <- sqrt(2)*gamma(L+.5)/gamma(L)
+x <- seq(0,to,delta)
+mu <- sqrt(pi/2)*gamma(L+1/2)/gamma(1.5)/gamma(L)*hyperg_1F1(-0.5,L, -x^2/2, give=FALSE, strict=TRUE)
+s2 <- 2*L+x^2-mu^2
+s <- sqrt(s2)
+## return list containing values of noncentrality parameter (ncp),
+## mean (mu), standard deviation (sd) and variance (s2) to be used
+## in variance modeling
+list(ncp=x,mu=mu,s=s,s2=s2,minlev=minlev,L=L)
+}
+
+fncchir <- function(mu,varstats){
+#
+#  Bias-correction
+#
+mu <- pmax(varstats$minlev,mu)
+ind <- 
+findInterval(mu, varstats$mu, rightmost.closed = FALSE, all.inside = FALSE)
+varstats$s[ind]
+}
+
+fncchis <- function(mu,varstats){
+mu <- pmax(varstats$minlev,mu)
+ind <- 
+findInterval(mu, varstats$mu, rightmost.closed = FALSE, all.inside = FALSE)
+varstats$s[ind]
+}
+
+fncchiv <- function(mu,varstats){
+mu <- pmax(varstats$minlev,mu)
+ind <- 
+findInterval(mu, varstats$mu, rightmost.closed = FALSE, all.inside = FALSE)
+varstats$s2[ind]
+}
+
+fncchiL <- function(x,L){
+##
+##  standard deviation of a noncentral chi-distribution with
+##  2*L df and noncentrality-parameter x
+##
+require(gsl)
+x <- pmax(x,sqrt(2)*gamma(L+.5)/gamma(L))
+z <- sqrt(pi/2)*gamma(L+1/2)/gamma(1.5)/gamma(L)*hyperg_1F1(-0.5,L, -x^2/2, give=FALSE, strict=TRUE)
+sqrt(2*L+x^2-z^2)
+}
+fncchiL2 <- function(x,L){
+##
+##  variance of a noncentral chi-distribution with
+##  2*L df and noncentrality-parameter x
+##
+require(gsl)
+x <- pmax(x,sqrt(2)*gamma(L+.5)/gamma(L))
+z <- sqrt(pi/2)*gamma(L+1/2)/gamma(1.5)/gamma(L)*hyperg_1F1(-0.5,L, -x^2/2, give=FALSE, strict=TRUE)
+2*L+x^2-z^2
 }
 
 Spatialvar.gauss<-function(h,h0,d,interv=1){
@@ -522,6 +582,7 @@ gettriangles <- function(gradients){
 create.designmatrix.dti <- function(gradient) {
   dgrad <- dim(gradient)
   if (dgrad[2]==3) gradient <- t(gradient)
+  dgrad <- dim(gradient)
   if (dgrad[1]!=3) stop("Not a valid gradient matrix")
 
   btb <- matrix(0,6,dgrad[2])
@@ -535,7 +596,7 @@ create.designmatrix.dti <- function(gradient) {
   btb
 }
 
-identify.fa <- function(view,slice,xind,yind,zind){
+identifyFA <- function(view,slice,xind,yind,zind){
 n1 <- switch(view,"sagittal"=length(yind),length(xind))
 n2 <- switch(view,"axial"=length(yind),length(zind))
 x <- as.vector(outer(1:n1,rep(1,n2),"*"))
@@ -599,3 +660,14 @@ vcrossp <- function(a, b) {
      a[3] * b[1] - a[1] * b[3],
      a[1] * b[2] - a[2] * b[1])
 }
+
+showFAColorScale <- function(filename = "FAcolorscale.png") {
+  if(!exists("colqFA")) data("colqFA", envir = environment())
+  png( filename = filename, width = 800, height = 100, bg = "white", pointsize = 16)
+  par( mar = c( 2, 0.5, 0.1, 0.5))
+  image( matrix( seq( 0, 1, length = 256), 256, 1), col = colqFA, yaxt = "n")
+  axis(1, at = seq( 0, 1, by = 0.1))
+  text( 0.1, 0, "FA", pos = 4, cex = 2, font = 2, col = "white")
+  dev.off()
+}
+

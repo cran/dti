@@ -14,8 +14,8 @@ Parallelize columnwise computations on a matrix using forking
      but possibly different number of rows. 
 }
 \usage{
-pmatrix(x, FUN, ..., mc.cores = getOption("mc.cores", 2L))
-plmatrix(x, FUN, ..., mc.cores = getOption("mc.cores", 2L))
+pmatrix(x, FUN, ..., mc.cores = setCores(,reprt=FALSE))
+plmatrix(x, FUN, ..., mc.cores = setCores(,reprt=FALSE))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -30,7 +30,8 @@ plmatrix(x, FUN, ..., mc.cores = getOption("mc.cores", 2L))
    see documentation for function \code{pvec}
 }
   \item{mc.cores}{
-   see documentation for function \code{pvec}
+   number of threads to use. Defaults to number of threads specified for openMP,
+   see documentation of package \pkg{awsMethods}.
 }
 }
 \details{

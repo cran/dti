@@ -12,14 +12,14 @@ setGeneric("dti.smooth", function(object, ...) standardGeneric("dti.smooth"))
 
 setMethod("dti.smooth", "dtiData", function(object,hmax=5,hinit=NULL,lambda=20,tau=10,
                                             rho=1,graph=FALSE,slice=NULL,quant=.8,
-                                            minfa=NULL,hsig=2.5,lseq=NULL, method="nonlinear",varmethod="residuals",rician=TRUE,niter=5,varmodel="local",result="Tensor") {
-switch(method,"linear" = dtilin.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minfa,hsig,lseq,varmethod,varmodel),
-              "nonlinear" =  dtireg.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minfa,hsig,lseq,varmethod,rician,niter,varmodel,result))
+                                            minfa=NULL,hsig=2.5,lseq=NULL, method="nonlinear",rician=TRUE,niter=5,result="Tensor") {
+switch(method,"linear" = dtilin.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minfa,hsig,lseq),
+              "nonlinear" =  dtireg.smooth(object,hmax,hinit,lambda,rho,graph,slice,quant,minfa,hsig,lseq,rician,niter,result))
 }
 )
 dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
                                             rho=1,graph=FALSE,slice=NULL,quant=.8,
-                                            minfa=NULL,hsig=2.5,lseq=NULL,varmethod="residuals",varmodel="local"){
+                                            minfa=NULL,hsig=2.5,lseq=NULL){
 #
 #     lambda and lseq adjusted for alpha=0.2
 #
@@ -55,7 +55,7 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
   Bcov <- btb%*%t(btb)
   btbsvd <- svd(btb)
   solvebtb <- btbsvd$u %*% diag(1/btbsvd$d) %*% t(btbsvd$v)
-  dtobject <- dtiTensor(object,method="linear",varmethod=varmethod)
+  dtobject <- dtiTensor(object,method="linear")
   scale <- dtobject@scale
   mask <- dtobject@mask
   y <- dtobject@D
@@ -179,8 +179,8 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
        cat("Correction factor for spatial correlation",signif(corrfactor,3),"\n")
     }
      z <- .Fortran("awssidti",
-                as.integer(s0),
-                as.integer(si),
+                as.double(s0),
+                as.double(si),
                 as.logical(mask),
                 as.double(z$D),
                 bi=as.double(z$bi),

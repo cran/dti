@@ -15,7 +15,7 @@ cat("---> using",method,"tensor estimation!\n")
 a <- readline("Mask small non-diffusion weighted values ? (y/n)?")
 
 if (toupper(a) == "N") {
-  mins0value <- 0
+  mins0value <- 1
 } else {
   mins0value <- 100
 }
@@ -24,7 +24,7 @@ a <- readline("Provide standard deviation in K-space (default: 2400, example in 
 
 sigma <- if(a!="") as.numeric(a) else 2400
 if( is.na(sigma)) sigma <- 2400
-
+set.seed(1)
 
 
 
@@ -34,7 +34,7 @@ if( is.na(sigma)) sigma <- 2400
 rho <- 1
 ddim <- c(64,64,26)
 ngrad <- 25
-factor <- 2.5
+factor <- 1.3
 
 ngrad <- readline("Provide number of gradients (default: 21 minimum: 6  maximum: 162):")
 
@@ -57,13 +57,14 @@ a <- readline("Use phantom nr. 1, 2 or 3? (1/2/3)?")
 
 a <- if(a %in% c("1","2","3")) as.numeric(a) else 1
 
+scalefs0 <- 8
 switch(a,source(system.file("rcode/generatedata.r",package="dti")),
          source(system.file("rcode/generatedata2.r",package="dti")),
          source(system.file("rcode/generatedata3.r",package="dti")))
 # Read Phantom data 
 
 dt0obj <- dtiData(bvec,tmpfile1,mins0value=mins0value,ddim,voxelext=c(1,1,2.5))
-dt0obj <- sdpar(dt0obj,interactive=FALSE)
+dt0obj <- sdpar(dt0obj,interactive=FALSE,level=mins0value*scalefs0)
 
 # Compute phantom tensors
 
@@ -76,7 +77,7 @@ dt0aniso <- dtiIndices(dt0)
 # Read noisy data 
 
 dtobj <- dtiData(bvec,tmpfile2,mins0value=mins0value,ddim,bvalue=bvalue,voxelext=c(1,1,2.5))
-dtobj <- sdpar(dtobj,interactive=FALSE)
+dtobj <- sdpar(dtobj,interactive=FALSE,level=mins0value*scalefs0)
 
 # Estimate tensors
 
@@ -92,7 +93,8 @@ a <- readline("Provide bandwidth for adaptive smoothing (default 4)")
 hmax <- if(!is.null(a)) as.numeric(a) else 4
 if( is.na(hmax) || hmax<1) hmax <- 4
 
-dthat4 <- dti.smooth(dtobj,hmax=hmax,graph=TRUE,lambda=lambda,minfa=0,slice=15,rho=rho,lseq=NULL,method=method)
+dthat4 <- dti.smooth(dtobj,hmax=hmax,graph=TRUE,lambda=lambda,minfa=0,slice=15,rho=rho,
+                    lseq=NULL,method=method)
 
 # Compute indices of estimated smoothed tensors 
 
@@ -132,9 +134,9 @@ if(toupper(z)!="N"){
 dthat1@scale <- dt0@scale
 dthat4@scale <- dt0@scale 
 #  use same scale in all plots
-w1<-show3d(dt0,level=.3,nz=5,center=c(20,20,13),maxobjects=2000,FOV=1,windowRect = c(1, 1, size, size),what="tensor")
-w2<-show3d(dthat1,level=.3,nz=5,center=c(20,20,13),maxobjects=2000,FOV=1,windowRect = c(size+11, 1, 2*size+10, size),what="tensor")
-w3<-show3d(dthat4,level=.3,nz=5,center=c(20,20,13),maxobjects=2000,FOV=1,windowRect = c(2*size+21, 1, 3*size+20, size),what="tensor")
+w1<-show3d(dt0,level=.3,xind=11:30,yind=11:30,zind=11:15,maxobjects=2000,FOV=1,windowRect = c(1, 1, size, size),what="tensor")
+w2<-show3d(dthat1,level=.3,xind=11:30,yind=11:30,zind=11:15,maxobjects=2000,FOV=1,windowRect = c(size+11, 1, 2*size+10, size),what="tensor")
+w3<-show3d(dthat4,level=.3,xind=11:30,yind=11:30,zind=11:15,maxobjects=2000,FOV=1,windowRect = c(2*size+21, 1, 3*size+20, size),what="tensor")
 #
 #  from package rgl::demo(mouseCallbacks)
 #
@@ -149,9 +151,9 @@ cat("Estimated smoothed tensor in device",w3,"\n")
 z <- readline("Visualize smoothed estimated dtiIndex (Y/N) :")
 
 if(toupper(z)!="N"){
-w4<-show3d(dt0aniso,minfa=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(1, size+21, size, 2*size+20))
-w5<-show3d(dthat1aniso,minfa=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(size+11, size+21, 2*size+10, 2*size+20))
-w6<-show3d(dthat4aniso,minfa=.3,center=c(32,32,13),lwd=2,FOV=1,windowRect = c(2*size+21, size+21, 3*size+20, 2*size+20))
+w4<-show3d(dt0aniso,minfa=.3,lwd=2,FOV=1,windowRect = c(1, size+21, size, 2*size+20))
+w5<-show3d(dthat1aniso,minfa=.3,lwd=2,FOV=1,windowRect = c(size+11, size+21, 2*size+10, 2*size+20))
+w6<-show3d(dthat4aniso,minfa=.3,lwd=2,FOV=1,windowRect = c(2*size+21, size+21, 3*size+20, 2*size+20))
 mouseTrackball(dev=c(w4,w5,w6))
 mouseZoom(2,dev=c(w4,w5,w6))
 mouseFOV(3,dev=c(w4,w5,w6))

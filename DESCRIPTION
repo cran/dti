@@ -1,6 +1,6 @@
 Package: dti
-Version: 1.1-0
-Date: 2012-11-23
+Version: 1.1-4
+Date: 2013-03-25
 Title: Analysis of diffusion weighted imaging (DWI) data
 Authors@R:
         c(person("Karsten","Tabelow",role=c("aut","cre"),email="karsten.tabelow@wias-berlin.de"),
@@ -9,7 +9,8 @@ Author: Karsten Tabelow <karsten.tabelow@wias-berlin.de> Joerg Polzehl
         <joerg.polzehl@wias-berlin.de>
 Maintainer: Karsten Tabelow <karsten.tabelow@wias-berlin.de>
 Depends: R (>= 2.14.0), methods, awsMethods (>= 1.0-1), adimpro,
-        oro.nifti, oro.dicom, rgl, gsl, parallel
+        oro.nifti (>= 0.3.9), oro.dicom, rgl, gsl, parallel
+LazyData: TRUE
 Description: Diffusion Weighted Imaging (DWI) is a Magnetic Resonance
         Imaging modality, that measures diffusion of water in tissues
         like the human brain.  The package contains R-functions to
@@ -24,9 +25,10 @@ Description: Diffusion Weighted Imaging (DWI) is a Magnetic Resonance
         The package provides functionality to manipulate and visualize
         results in 2D and 3D.
 License: GPL (>= 2)
-Copyright: This package is Copyright (C) 2005-2012 Weierstrass
+Copyright: This package is Copyright (C) 2005-2013 Weierstrass
         Institute for Applied Analysis and Stochastics.
 URL: http://www.wias-berlin.de/projects/matheon_a3
-Packaged: 2012-11-27 20:43:42 UTC; tabelow
+Packaged: 2013-03-25 14:22:11 UTC; polzehl
+NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2012-11-28 09:42:10
+Date/Publication: 2013-03-25 15:41:10

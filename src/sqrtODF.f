@@ -201,14 +201,15 @@ C
       logical ndone
       integer i,k,ierr,thrnr
       real*8 mck,mck1
-      integer omp_get_thread_num
-      external omp_get_thread_num
+!$      integer omp_get_thread_num
+!$      external omp_get_thread_num
+      thrnr = 1
 C$OMP PARALLEL DEFAULT(NONE)
 C$OMP& SHARED(ei,kern,nk,ng,n,l,w,nablam,ck,ck1,cres)
 C$OMP& PRIVATE(i,k,ierr,mck,mck1,ndone,thrnr)
 C$OMP DO SCHEDULE(GUIDED)
       DO i=1,n
-         thrnr = omp_get_thread_num()+1
+!$         thrnr = omp_get_thread_num()+1
          ck(1,thrnr)=1.d0
          DO k=2,nk
             ck(k,thrnr)=0.d0

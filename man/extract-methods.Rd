@@ -20,11 +20,13 @@
   The methods extract and/or compute specified statistics from object of class \code{"dtiData"}, \code{"dtiTensor"}, and \code{"dtiIndices"}. This can be restricted to a subset of voxel.
 }
 \usage{
-  \S4method{extract}{dtiData}(x, what="data", xind=TRUE, yind=TRUE, zind=TRUE)
-  \S4method{extract}{dtiTensor}(x, what="tensor", xind=TRUE, yind=TRUE, zind=TRUE, mc.cores = getOption("mc.cores", 2L))
-  \S4method{extract}{dwiMixtensor}(x, what="andir", xind=TRUE, yind=TRUE, zind=TRUE)
-  \S4method{extract}{dtiIndices}(x, what=c("fa","andir"), xind=TRUE, yind=TRUE, zind=TRUE)
-  \S4method{extract}{dwiQball}(x, what="sphcoef", xind=TRUE, yind=TRUE, zind=TRUE)
+  \S4method{extract}{dtiData}(x, 
+    what=c("data","gradient","btb","s0","sb","siq"), xind=TRUE, yind=TRUE, zind=TRUE)
+  \S4method{extract}{dtiTensor}(x, what=c("tensor","fa","ga","md","evalues","andir","s0","mask","bic","aic","outlier"),
+  xind=TRUE, yind=TRUE, zind=TRUE, mc.cores = setCores(, reprt = FALSE))
+  \S4method{extract}{dwiMixtensor}(x, what=c("andir","order","ev","mix","s0","mask","fa","eorder","bic","aic"), xind=TRUE, yind=TRUE, zind=TRUE)
+  \S4method{extract}{dtiIndices}(x, what=c("fa","andir","ga","md","bary"), xind=TRUE, yind=TRUE, zind=TRUE)
+  \S4method{extract}{dwiQball}(x, what=c("sphcoef","s0","mask","bic","aic","outlier"), xind=TRUE, yind=TRUE, zind=TRUE)
   \S4method{[}{dtiData}(x, i, j, k, drop=FALSE)
   \S4method{[}{dtiTensor}(x, i, j, k, drop=FALSE)
   \S4method{[}{dtiIndices}(x, i, j, k, drop=FALSE)
@@ -40,8 +42,8 @@
   \item{zind}{ vector of z-coordinates, defaults to whole range. }
   \item{what}{ Statistic to extract. See Methods Section for details. }
   \item{drop}{ unused. }
-   \item{mc.cores}{Number of cores to use. Defaults to getOption("mc.cores", 2L). 
-   This may be larger than the optimal value. Our experience suggests to use 4-6 cores if available.}
+   \item{mc.cores}{Number of cores to use. Defaults to number of threads specified for openMP,
+   see documentation of package \pkg{awsMethods}. Our experience suggests to use 4-6 cores if available.}
 }
 \section{Methods}{
 \describe{

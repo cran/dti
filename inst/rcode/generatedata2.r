@@ -3,14 +3,18 @@
 #   create temporary file containing the data 
 #
 #
+#scalefs0 <- 20
+#
+#  Scalefactor for images to avoid discritisation problems
+#
 bvec <- t(bvec)
 btb <- matrix(0,6,dim(bvec)[2])
-btb[1,] <- bvec[1,]*bvec[1,]
-btb[4,] <- bvec[2,]*bvec[2,]
-btb[6,] <- bvec[3,]*bvec[3,]
-btb[2,] <- 2*bvec[1,]*bvec[2,]
-btb[3,] <- 2*bvec[1,]*bvec[3,]
-btb[5,] <- 2*bvec[2,]*bvec[3,]
+btb[1,] <- bvec[1,]*bvec[1,]*bvalue/1000
+btb[4,] <- bvec[2,]*bvec[2,]*bvalue/1000
+btb[6,] <- bvec[3,]*bvec[3,]*bvalue/1000
+btb[2,] <- 2*bvec[1,]*bvec[2,]*bvalue/1000
+btb[3,] <- 2*bvec[1,]*bvec[3,]*bvalue/1000
+btb[5,] <- 2*bvec[2,]*bvec[3,]*bvalue/1000
 
 # a useful function to create a tensor of specified anisotropy
 eta <- function(ai){
@@ -55,7 +59,7 @@ dtiso <- factor*dtiso
 # now we want to view the projection of the zylinders onto a plane
 # reset S0 image
 s0offa <- read.table(system.file("dat/S0ofFA.txt",package="dti"))
-s0 <- s0offa[as.integer(as.vector(ind)*500+1),2]
+s0 <- scalefs0*s0offa[as.integer(as.vector(ind)*500+1),2]
 dim(s0) <- dim(ind)
 
 # create noisy data
@@ -84,6 +88,6 @@ createdata.dti(tmpfile1,dtiso,btb,s0,0.5)
 
 # create noisy data
 cat("Creating noisy data with standard deviation ",sigma,"\n")
-set.seed(1)
+#set.seed(1)
 tmpfile2 <- tempfile("S_noise_all")
-createdata.dti(tmpfile2,dtiso,btb,s0,sigma)
+createdata.dti(tmpfile2,dtiso,btb,s0,scalefs0*sigma)

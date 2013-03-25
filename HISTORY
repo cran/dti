@@ -1,6 +1,16 @@
+2013-03-22 version 1.1-4
+  - corrections in openMP for MacOS X
+  - extended models for tensor mixtures (new models with isotropic comartment)
+    slight changes in parameters in dwiMixtensor, see documentation
+  - changes in  show3d: description of subcubes by indexvectors
+    xind, yind, zind instead of length's nx, ny, nz and centers
+
+2012-12-11 version 1.1-1
+  - sdpar() in interactive mode now resets old graphics parameters
+
 2012-11-23 version 1.1-0
 
-  This is a mayor release using parallized code (openMP or using package parallel where appropriate).
+  This is a major release using parallized code (openMP or using package parallel where appropriate).
   Experimental code for Jian Chengs method for  non-negative definte EAP and ODF estimates
   (MICCAI 2012) has been added.
   - Several bugfixes (parallelization in dwiMixtensor, ODF estimation (Aganji)

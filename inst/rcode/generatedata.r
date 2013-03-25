@@ -3,14 +3,18 @@
 #   create temporary file containing the data 
 #
 #
+#scalefs0 <- 25
+#
+#  Scalefactor for images to avoid discritisation problems
+#
 bvec <- t(bvec)
 btb <- matrix(0,6,dim(bvec)[2])
-btb[1,] <- bvec[1,]*bvec[1,]
-btb[4,] <- bvec[2,]*bvec[2,]
-btb[6,] <- bvec[3,]*bvec[3,]
-btb[2,] <- 2*bvec[1,]*bvec[2,]
-btb[3,] <- 2*bvec[1,]*bvec[3,]
-btb[5,] <- 2*bvec[2,]*bvec[3,]
+btb[1,] <- bvec[1,]*bvec[1,]*bvalue/1000
+btb[4,] <- bvec[2,]*bvec[2,]*bvalue/1000
+btb[6,] <- bvec[3,]*bvec[3,]*bvalue/1000
+btb[2,] <- 2*bvec[1,]*bvec[2,]*bvalue/1000
+btb[3,] <- 2*bvec[1,]*bvec[3,]*bvalue/1000
+btb[5,] <- 2*bvec[2,]*bvec[3,]*bvalue/1000
 
 # a useful function to create a tensor of specified anisotropy
 eta <- function(ai){
@@ -102,14 +106,14 @@ for(rad in seq(rad1,rad2,.25)){
    y <- as.integer(rad*cos(phi)+32.5)
    sphi <- sin(phi)
    cphi <- cos(phi)
-   for(i in 1:1000) ind[x[i],y[i],3:5] <- (1+sin(phi[i]))/3
-   for(i in 1:1000) ind[x[i],y[i],6:8] <- (1+cos(phi[i]))/3
+   for(i in 1:1000) ind[x[i],y[i],3:5] <- (1+sphi[i])/3
+   for(i in 1:1000) ind[x[i],y[i],6:8] <- (1+cphi[i])/3
    for(i in 1:1000) ind[x[i],y[i],9:11] <- 0
-   for(i in 1:1000) ind[x[i],y[i],12:13] <- (1+sin(phi[i]))/2
-   for(i in 1:1000) ind[x[i],y[i],14:15] <- (1+cos(phi[i]))/2
+   for(i in 1:1000) ind[x[i],y[i],12:13] <- (1+sphi[i])/2
+   for(i in 1:1000) ind[x[i],y[i],14:15] <- (1+cphi[i])/2
    for(i in 1:1000) ind[x[i],y[i],16:18] <- 0
-   for(i in 1:1000) ind[x[i],y[i],19:21] <- (2+sin(phi[i]))/3
-   for(i in 1:1000) ind[x[i],y[i],22:24] <- (2+cos(phi[i]))/3
+   for(i in 1:1000) ind[x[i],y[i],19:21] <- (2+sphi[i])/3
+   for(i in 1:1000) ind[x[i],y[i],22:24] <- (2+cphi[i])/3
    for(j in 1:26) {
       for(i in 1:1000){
          etai <- etas[ind[x[i],y[i],j]*1000+1]
@@ -142,8 +146,9 @@ project.cylinder <- function(obj,radius,phi=(1:1000)*2*pi/1000){
 
 # reset S0 image
 s0offa <- read.table(system.file("dat/S0ofFA.txt",package="dti"))
-s0 <- s0offa[as.integer(as.vector(ind)*500+1),2]
+s0 <- scalefs0*s0offa[as.integer(as.vector(ind)*500+1),2]
 dim(s0) <- dim(ind)
+#s0 <- array(as.integer(32000),dim(ind))
 for( i in 1:64) for (j in 1:64){
   if(max(ind[i,j,])==0&&((i-32.5)^2+(j-32.5)^2>26^2)) s0[i,j,]<-0
 }
@@ -169,11 +174,11 @@ createdata.dti <- function(file,dtensor,btb,s0,sigma,level=250){
 
 #   create phantom - object
 tmpfile1 <- tempfile("S_all")
-createdata.dti(tmpfile1,dtiso,btb,s0,.5)
+createdata.dti(tmpfile1,dtiso,btb,s0,1)
 
 
 # create noisy data
 cat("Creating noisy data with standard deviation ",sigma,"\n")
-set.seed(1)
+#set.seed(1)
 tmpfile2 <- tempfile("S_noise_all")
-createdata.dti(tmpfile2,dtiso,btb,s0,sigma)
+createdata.dti(tmpfile2,dtiso,btb,s0,sigma*scalefs0)

@@ -154,7 +154,8 @@ C   calculate mean s0 value
 C   sweep s0 from si to generate  siq
 C   calculate variance of siq
 C
-      integer n,ng0,ng1,si(n,ng1),s0(n,ng0)
+      integer n,ng0,ng1
+      real*8 si(n,ng1),s0(n,ng0)
       real*8 siq(n,ng1),ms0(n)
       integer i,k
       real*8 s0mean

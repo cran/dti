@@ -17,8 +17,7 @@ Estimate noise variance for multicoil MR systems
      the noncentrality parameter \eqn{\eta}.
 }
 \usage{
-awssigmc(y, steps, mask = NULL, ncoils = 1, vext = c(1, 1), lambda = 10, h0 = 2, verbose = FALSE, 
-         model = "chisq", sequence = FALSE, eps = 1e-05, hadj = 1, q = 0.25)
+awssigmc(y, steps, mask = NULL, ncoils = 1, vext = c(1, 1), lambda = 20, h0 = 2, verbose = FALSE, sequence = FALSE, hadj = 1, q = 0.25, qni = .8, method=c("VAR","MAD"))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -50,25 +49,22 @@ awssigmc(y, steps, mask = NULL, ncoils = 1, vext = c(1, 1), lambda = 10, h0 = 2,
    if \code{verbose==TRUE} density plots 
    and quantiles of local estimates of \code{sigma} are provided.
 }
-  \item{model}{
-   either \code{"chi"} or \code{"chisq"}. In the latter case 
-   smoothing and variance estimation are performed for \code{y^2}
-   instead of \code{y} which is considerably faster. 
-}
   \item{sequence}{
    if \code{sequence=TRUE} a vector of estimates for the noise
    standard deviation \code{sigma} for the individual steps is returned
    instead of the final value only.  
-}
-  \item{eps}{
-   accuracy when solving fixpoint equation for noncentrality parameter in case of
-   \code{model="chi"}.
 }
   \item{hadj}{
    adjustment factor for bandwidth (chosen by \code{bw.nrd}) in mode estimation 
 }
   \item{q}{
    quantile to be used for interquantile-differences. 
+}
+  \item{qni}{
+   quantile of distribution of actual sum of weights \eqn{N_i=\sum_j w_{ij}} in adaptive smoothing. Only voxel i with \eqn{N_i > q_{qni}(N_.)} are used for variance estimation. Should be larger than 0.5.  
+}
+  \item{method}{
+   method for variance estimation, either "VAR" (variance) or "MAD" (mean absolute deviation).
 }
 }
 \value{

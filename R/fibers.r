@@ -111,7 +111,7 @@ setMethod("reduceFibers","dwiFiber", function(obj, maxdist=1, ends=TRUE)
 {
    args <- sys.call(-1)
    args <- c(obj@call,args)
-   obj <- sort.fibers(obj)
+   obj <- sortFibers(obj)
    fibers <- obj@fibers[,1:3]
    nsegm <- dim(fibers)[1]
    startf <- obj@startind
@@ -169,7 +169,7 @@ ident.fibers <- function(mat){
    z$fiberstarts[1:z$nfibers]
 }
 
-sort.fibers <- function(obj){
+sortFibers <- function(obj){
 #
 #  sort fiber array such that longest fibers come first
 #

@@ -4,7 +4,8 @@ C
 C  this is based on a regularized tensor similar to Koay et.al. (2006)
 C
       implicit logical (a-z)
-      integer nb,n,s(nb,n),niter
+      integer nb,n,niter
+      real*8 s(nb,n)
       logical mask(n)
       real*8 D(6,n),b(6,nb),res(nb,n),th0(n),eps,rss(n),sdcoef(4),
      1       varinv(nb)
@@ -34,7 +35,8 @@ C  res(2:7,) used for D
 C  res(8,) used for rss
 C  res(9:npar,) used for residuals
       implicit logical (a-z)
-      integer nb,n,npar,s(nb,n),niter
+      integer nb,n,npar,niter
+      real*8 s(nb,n)
       real*8 b(6,nb),res(npar,n),th0(n),eps,sdcoef(4),varinv(nb)
       integer i
       DO i=1,n
@@ -54,7 +56,8 @@ C  Implements the regularized Gauss-Newton Algortithm (10.2.8)
 C  from Schwetlick (1979)
 C
       implicit logical (a-z)
-      integer nb,s(nb),niter
+      integer nb,niter
+      real*8 s(nb)
       real*8 D(6),rho(6),b(6,nb),th0,F(nb),eps
       integer i,j,k,info,iter,icount
       real*8 z,gamma,alpha,delta,varinv(nb),

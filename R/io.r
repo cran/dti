@@ -4,13 +4,15 @@
 #                                                              #
 ################################################################
 
-dtiData <- function(gradient,imagefile,ddim,bvalue=NULL,xind=NULL,yind=NULL,zind=NULL,level=0,mins0value=0,maxvalue=32000,voxelext=c(1,1,1),orientation=c(0,2,5),rotation=diag(3)) {
+dtiData <- function(gradient,imagefile,ddim,bvalue=NULL,xind=NULL,yind=NULL,zind=NULL,level=0,mins0value=1,maxvalue=32000,voxelext=c(1,1,1),orientation=c(0L,2L,5L),rotation=diag(3)) {
   args <- list(sys.call())
   if (any(sort((orientation)%/%2) != 0:2)) stop("invalid orientation \n")
   if (dim(gradient)[2]==3) gradient <- t(gradient)
   if (dim(gradient)[1]!=3) stop("Not a valid gradient matrix")
   ngrad <- dim(gradient)[2]
   s0ind <- (1:ngrad)[apply(abs(gradient),2,max)==0] 
+  d <- diag(t(gradient[,-s0ind])%*%gradient[,-s0ind])
+  gradient[,-s0ind] <- t(t(gradient[,-s0ind])/sqrt(d))
   if (is.null(bvalue)){
      bvalue <- rep(1,ngrad)
      bvalue[s0ind] <- 0
@@ -71,12 +73,12 @@ dtiData <- function(gradient,imagefile,ddim,bvalue=NULL,xind=NULL,yind=NULL,zind
 #   orientation set to radiological convention
 #
   si <- .Fortran("initdata",
-                 si=as.integer(si),
+                 si=as.double(si),
                  as.integer(dimsi[1]),
                  as.integer(dimsi[2]),
                  as.integer(dimsi[3]),
                  as.integer(dimsi[4]),
-                 as.integer(maxvalue),
+                 as.double(maxvalue),
                  PACKAGE="dti")$si
 #  this replaces the content off all voxel with elements <=0 or >maxvalue by 0
      dim(si) <- dimsi
@@ -86,13 +88,13 @@ dtiData <- function(gradient,imagefile,ddim,bvalue=NULL,xind=NULL,yind=NULL,zind
 
   cat("Create auxiliary statistics",format(Sys.time()), " \n")
   rind <- replind(gradient)
-  
+  design <- create.designmatrix.dti(gradient)
   invisible(new("dtiData",
                 call = args,
                 si     = si,
                 gradient = gradient,
                 bvalue = bvalue,
-                btb    = sweep( create.designmatrix.dti(gradient), 2, bvalue, "*"),
+                btb    = sweep( design, 2, bvalue, "*"),
                 ngrad  = ngrad, # = dim(btb)[2]
                 s0ind  = s0ind, # indices of S_0 images
                 replind = rind,
@@ -119,9 +121,9 @@ readDWIdata <- function(gradient, dirlist,
                         format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), 
                         nslice = NULL, order = NULL, bvalue = NULL,
                         xind = NULL, yind = NULL, zind = NULL,
-                        level = 0, mins0value = 0, maxvalue = 32000,
+                        level = 0, mins0value = 1, maxvalue = 32000,
                         voxelext = NULL, orientation = c(0L, 2L, 5L), rotation = NULL,
-#                        SPM = FALSE, 
+                        pattern = NULL,
                         verbose = FALSE) {
 
   args <- list(sys.call())
@@ -136,6 +138,8 @@ readDWIdata <- function(gradient, dirlist,
   ngrad <- dim(gradient)[2]
   s0ind <- (1:ngrad)[apply(abs(gradient), 2, max) == 0]
   if (length(s0ind) < 1) stop("readDWIdata: No b0 gradients found.")
+  d <- diag(t(gradient[,-s0ind])%*%gradient[,-s0ind])
+  gradient[,-s0ind] <- t(t(gradient[,-s0ind])/sqrt(d))
   if (is.null(bvalue)){
      bvalue <- rep(1,ngrad)
      bvalue[s0ind] <- 0
@@ -145,7 +149,8 @@ readDWIdata <- function(gradient, dirlist,
   }   
   ## generate file list in specified order
   filelist <- NULL
-  for (dd in dirlist) filelist <- c(filelist, paste(dd, list.files(dd), sep = .Platform$file.sep))
+  for (dd in dirlist) filelist <- c(filelist, list.files(dd, full.names = TRUE, pattern = pattern))
+  if ( length( filelist) == 0) stop( "readDWIdata: empty directories or directories do not exist!")
   if (format == "DICOM") {
     if (is.null(zind)) zind <- 1:nslice
     if (length(filelist) != ngrad * nslice)
@@ -164,8 +169,9 @@ readDWIdata <- function(gradient, dirlist,
     if (format == "ANALYZE") filelist <- unlist(strsplit(filelist[regexpr("\\.hdr$", filelist) != -1], "\\.hdr"))
     if (format == "AFNI") filelist <- filelist[regexpr("\\.HEAD$", filelist) != -1]
     if (format == "NIFTI") {
+      if ((length(filelist) == 2 * ngrad)) filelist <- unlist(strsplit(filelist[regexpr("\\.hdr$", filelist) != -1], "\\.hdr"))
       if ((length(filelist) != ngrad) & (length(filelist) != 1))
-        stop("readDWIdata: Number of found NIfTI files (", length(filelist),") does not match ngrad and is larger then 1\nPlease provide each gradient cube in a separate file or one 4D file.")
+        stop("readDWIdata: Number of files (", length(filelist),") does not match ngrad and is larger then 1\n Please provide each gradient cube in a separate file or one 4D file or use pattern to select.\n")
         if (length(filelist) == ngrad) {
           if (is.null(order)) {
              order <- 1:ngrad
@@ -207,8 +213,8 @@ readDWIdata <- function(gradient, dirlist,
       gradx <- dd$hdr[which((dd$hdr[, 1] == "0019") & (dd$hdr[, 2] == "10BB"))[1], 6]
       grady <- dd$hdr[which((dd$hdr[, 1] == "0019") & (dd$hdr[, 2] == "10BC"))[1], 6]
       gradz <- dd$hdr[which((dd$hdr[, 1] == "0019") & (dd$hdr[, 2] == "10BD"))[1], 6]
-      bvalue <- as.numeric(unlist(strsplit(dd$hdr[which((dd$hdr[, 1] == "0043") & (dd$hdr[, 2] == "1039"))[1], 6], " ")))[1]
-      if (verbose) cat("diffusion gradient", gradx, grady, gradz, "b-value", bvalue, "\n")
+      bvalueDCM <- as.numeric(unlist(strsplit(dd$hdr[which((dd$hdr[, 1] == "0043") & (dd$hdr[, 2] == "1039"))[1], 6], " ")))[1]
+      if (verbose) cat("diffusion gradient", gradx, grady, gradz, "b-value", bvalueDCM, "\n")
 #      ## WORKAROUND!!
 #      dd$img <- aperm(dd$img, c(2, 1))
 #      ## END WORKAROUND!!
@@ -220,15 +226,11 @@ readDWIdata <- function(gradient, dirlist,
       imageOrientationPatient <- t(matrix(c(dd@srow_x[1:3]/dd@pixdim[2:4], dd@srow_y[1:3]/dd@pixdim[2:4], dd@srow_z[1:3]/dd@pixdim[2:4]), 3, 3))
     } else if (format == "ANALYZE") {
       dd <- readANALYZE(ff)
-  #    dd <- readANALYZE(ff, SPM = SPM)
-  ## this is an SPM hack, as it uses funused1 as scaling factor:
-  ## if (dd@funused1 != 0) dd@.Data <- dd@.Data * dd@funused1
-  ## END HACK. Hope, typically funused is either 1 or 0!
-  ## no longer needed since oro.nifti version 0.3.5
       nslice <- dim(dd)[3]
       if (is.null(zind)) zind <- 1:nslice
       delta <- dd@pixdim[2:4]
       imageOrientationPatient <- diag(3)
+      if ( length( dim( dd)) == 4) if ( dim( dd)[ 4] == 1) dim( dd) <-  dim( dd)[ 1:3]
     } else if (format == "AFNI") {
       dd <- readAFNI(ff)
       nslice <- dim(dd)[3]
@@ -328,25 +330,26 @@ readDWIdata <- function(gradient, dirlist,
 
   ## this replaces the content off all voxel with elements <=0 or >maxvalue by 0
   si <- .Fortran("initdata",
-                 si = as.integer(si),
+                 si = as.double(si),
                  as.integer(dimsi[1]),
                  as.integer(dimsi[2]),
                  as.integer(dimsi[3]),
                  as.integer(dimsi[4]),
-                 as.integer(maxvalue),
+                 as.double(maxvalue),
                  PACKAGE = "dti")$si
   dim(si) <- dimsi
 
   ## set level to level*mean  of positive s_0 values
   level <- max(mins0value, level * mean(si[ , , , s0ind][si[ , , , s0ind] > 0]))
   cat("readDWIdata: Create auxiliary statistics",format(Sys.time()), " \n")
+  design <- create.designmatrix.dti(gradient)
 
   invisible(new("dtiData",
                 call        = args,
                 si          = si,
                 gradient    = gradient,
                 bvalue      = as.vector(bvalue),
-                btb         = sweep( create.designmatrix.dti(gradient), 2, bvalue, "*"),
+                btb         = sweep( design, 2, bvalue, "*"),
                 ngrad       = ngrad,
                 s0ind       = s0ind,
                 replind     = replind(gradient),
@@ -398,6 +401,8 @@ function(x){
     print(slotNames(x))
     invisible(NULL)
 })
+
+
 setMethod("print", "dwiMixtensor",
 function(x){
     cat("  Object of class", class(x),"\n")
@@ -489,6 +494,8 @@ function(object){
     print(slotNames(object))
     invisible(NULL)
 })
+
+
 setMethod("show", "dwiMixtensor",
 function(object){
     cat("  Object of class", class(object),"\n")
@@ -579,6 +586,8 @@ function(object, ...){
     cat("\n")
     invisible(NULL)
 })
+
+
 setMethod("summary", "dwiMixtensor",
 function(object, ...){
     cat("  Object of class", class(object),"\n")

@@ -9,12 +9,14 @@
  Correction for Rician Bias assuming known variance parameter
 }
 \usage{
-  \S4method{dwiRiceBias}{dtiData}(object, sigma=NULL, method="1stMoment")
+  \S4method{dwiRiceBias}{dtiData}(object, sigma=NULL, ncoils=1)
 }
 \arguments{
   \item{object}{ Object of class \code{"dtiData"}}
-  \item{sigma}{ Value for the second parameter of the Rician distribution. }
-  \item{method}{ method used to estimate the first parameter of the Rician distribution.}
+  \item{sigma}{ Scale parameter that relates the distribution of the signal to a
+               \eqn{\chi_{2L}} distribution}
+  \item{ncoils}{ number of effective coils in parallel imaging, the related \eqn{\chi}
+  distribution has \code{2*ncoils} degrees of freedom.}
 }
 \value{ 
   An object of class \code{"dtiData"}.

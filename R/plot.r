@@ -116,12 +116,14 @@ setMethod("plot", "dtiTensor", function(x, y, slice=1, view="axial", quant=0, mi
    rg<-quantile(img,qrange)
    img[img>rg[2]]<-rg[2]
    img[img<rg[1]]<-rg[1]
+   img <- (img-rg[1])/(rg[2]-rg[1])
    show.image(make.image(img))
    title(paste("Dxy: min",signif(min(D[2,,][mask]),3),"max",signif(max(D[2,,][mask]),3)))
    img<-D[3,,]
    rg<-quantile(img,qrange)
    img[img>rg[2]]<-rg[2]
    img[img<rg[1]]<-rg[1]
+   img <- (img-rg[1])/(rg[2]-rg[1])
    show.image(make.image(img))
    title(paste("Dxz: min",signif(min(D[3,,][mask]),3),"max",signif(max(D[3,,][mask]),3)))
    show.image(make.image(matrix(z$fa,n1,n2)))
@@ -142,6 +144,7 @@ setMethod("plot", "dtiTensor", function(x, y, slice=1, view="axial", quant=0, mi
    rg<-quantile(img,qrange)
    img[img>rg[2]]<-rg[2]
    img[img<rg[1]]<-rg[1]
+   img <- (img-rg[1])/(rg[2]-rg[1])
    show.image(make.image(img))
    title(paste("Dyz: min",signif(min(D[5,,][mask]),3),"max",signif(max(D[5,,][mask]),3)))
    andir.image(matrix(z$fa,n1,n2),array(z$andir,c(3,n1,n2)),quant=quant,minfa=minfa)
@@ -209,7 +212,7 @@ setMethod("plot", "dwiMixtensor", function(x, y, slice=1, view="axial", what="fa
          zind<-(1:x@ddim[3])
          img <- extract.image(img)
          image(1:dim(img)[1],1:dim(img)[2],img,col=grey((0:255)/255))
-         identify.fa(view,slice,xind,yind,zind)
+         identifyFA(view,slice,xind,yind,zind)
       } else {
          par(oldpar)
          invisible(img)
@@ -291,7 +294,7 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
       andirection <- make.image(andirection,gammatype="ITU")
       if(show) show.image(andirection,...)
       if(identify){
-         identify.fa(view,slice,xind,yind,zind)
+         identifyFA(view,slice,xind,yind,zind)
       } else {
         par(oldpar)
         invisible(andirection)
@@ -300,7 +303,7 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
       dim(anindex) <- dim(andirection)[2:3]
       image(anindex,...)
       if(identify){
-         identify.fa(view,slice,xind,yind,zind)
+         identifyFA(view,slice,xind,yind,zind)
       } else {
         par(oldpar)
         invisible(NULL)
@@ -312,7 +315,7 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
       bary <- make.image(aperm(andirection,c(2,3,1)))
       if(show) show.image(bary,...)
       if(identify){
-         identify.fa(view,slice,xind,yind,zind)
+         identifyFA(view,slice,xind,yind,zind)
       } else {
          par(oldpar)
          invisible(bary)
@@ -320,7 +323,7 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
     } else if(show) {
       image(andirection[1,,],...)
       if(identify){
-         identify.fa(view,slice,xind,yind,zind)
+         identifyFA(view,slice,xind,yind,zind)
       } else {
          par(oldpar)
          invisible(NULL)
@@ -337,7 +340,7 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
       img.hsi <- make.image(img.hsi.data,gammatype="ITU",xmode="HSI")
       if(show) show.image(img.hsi,...)
       if(identify){
-         identify.fa(view,slice,xind,yind,zind)
+         identifyFA(view,slice,xind,yind,zind)
       } else {
          par(oldpar)
          invisible(img.hsi)
@@ -345,14 +348,14 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
     } else if(show) {
       image(andirection[1,,],...)
       if(identify){
-         identify.fa(view,slice,xind,yind,zind)
+         identifyFA(view,slice,xind,yind,zind)
       } else {
          par(oldpar)
          invisible(NULL)
       }
     }
   } else if (method==6) {
-    data("colqFA")
+    data("colqFA", envir = environment())
     if (adimpro) {
       colqFA <- col2rgb(colqFA)/255
       img.data <- array(0, dim=c(dim(anindex), 3))
@@ -364,7 +367,7 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
       img <- make.image(img.data, gammatype="ITU")
       if(show) show.image(img, ...)
       if(identify){
-         identify.fa(view,slice,xind,yind,zind)
+         identifyFA(view,slice,xind,yind,zind)
       } else {
          par(oldpar)
          invisible(img)
@@ -372,7 +375,7 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
     } else if (show) {
       image(anindex, col=colqFA)
       if(identify){
-         identify.fa(view,slice,xind,yind,zind)
+         identifyFA(view,slice,xind,yind,zind)
       } else {
          par(oldpar)
          invisible(NULL)

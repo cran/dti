@@ -14,33 +14,31 @@
   The function provides 3D visualization of \code{"dtiData"}, \code{"dtiTensor"}, \code{"dwiQball"} and \code{"dtiIndices"} objects using the \code{"rgl"}-package. Functionality of the rgl-package allows to rotate and zoom the displayed object.
 }
 \usage{
-\S4method{show3d}{dtiData}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, quant=.8, scale=.4,
-         bgcolor="black", add=FALSE, maxobjects=729, what="ADC", 
+\S4method{show3d}{dtiData}(obj, xind=NULL, yind=NULL, zind=NULL, quant=.8, scale=.4,
+         bgcolor="black", add=FALSE, maxobjects=729, what=c("adc","data"), 
          minalpha=1, nn=1, normalize=FALSE, box=FALSE, title=FALSE, \dots)
-\S4method{show3d}{dtiTensor}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, minfa=.3, mask=NULL, fibers=FALSE, 
+\S4method{show3d}{dtiTensor}(obj, xind=NULL, yind=NULL, zind=NULL, method=1, minfa=.3, mask=NULL, fibers=FALSE, 
          maxangle = 30,level=0, quant=.8, scale=.4, bgcolor="black", add=FALSE, 
-         subdivide=2, maxobjects=729, what="tensor", odfscale = 1, 
+         subdivide=2, maxobjects=729, what=c("tensor","adc","odf"), odfscale = 1, 
          minalpha=.25, normalize=NULL, box=FALSE, title=FALSE,\dots)
-\S4method{show3d}{dtiIndices}(obj, index="FA", nx=NULL, ny=NULL, nz=NULL, center=NULL, method=1, 
+\S4method{show3d}{dtiIndices}(obj, index=c("fa","ga"), xind=NULL, yind=NULL, zind=NULL, method=1, 
          minfa=0, bgcolor="black", add=FALSE, lwd=1, box=FALSE, 
          title=FALSE, \dots)
-\S4method{show3d}{dwiMixtensor}(obj, nx=NULL, ny=NULL, nz=NULL, 
-         center=NULL, minfa=.3, minorder = 1, mineo=1, fibers=FALSE, maxangle=30, level=0,           
+\S4method{show3d}{dwiMixtensor}(obj, xind=NULL, yind=NULL, zind=NULL, minfa=.3, minorder = 1, mineo=1, fibers=FALSE, maxangle=30, level=0,           
          quant=.8, scale=.4, bgcolor="black", add=FALSE, 
-         subdivide=3, maxobjects=729, what="ODF", odfscale=1, 
+         subdivide=3, maxobjects=729, what=c("odf","axis","both"), odfscale=1, 
          minalpha=1, lwd=3, box=FALSE, title=FALSE, \dots) 
-\S4method{show3d}{dwiQball}(obj, nx=NULL, ny=NULL, nz=NULL, center=NULL, level=0, quant=.8,                 
+\S4method{show3d}{dwiQball}(obj, xind=NULL, yind=NULL, zind=NULL, level=0, quant=.8,                 
          scale=0.4, odfscale=1, bgcolor="black", add=FALSE, 
          subdivide=3, maxobjects=729, minalpha=1, box=FALSE, 
          title=FALSE, \dots)
 \S4method{show3d}{dwiFiber}(obj, add=FALSE, bgcolor="black", box=FALSE, title=FALSE, lwd=1, \dots)
 }
 \arguments{
-\item{obj}{ An object of class \code{dtiTensor} or \code{dtiIndices} }
-\item{nx}{Number of voxel in x-direction}
-\item{ny}{Number of voxel in y-direction}
-\item{nz}{Number of slices}
-\item{center}{Vector of length 3 specifying the center of the data cube (class \code{dtiData} or \code{dtiTensor}) or center of display (class \code{dtiIndices})}
+\item{obj}{ An object of class \code{dtiData}, \code{dtiTensor}, \code{dtiIndices},\code{dwiMixTensor} or \code{dwiQball}}
+  \item{xind}{ vector of x-coordinates, defaults to whole range. }
+  \item{yind}{ vector of y-coordinates, defaults to whole range. }
+  \item{zind}{ vector of z-coordinates, defaults to whole range. }
 \item{quant}{Quantile of maximal radii of objects used for scaling.}
 \item{scale}{Scale factor for the size of objects}
 \item{bgcolor}{Backgroundcolor for rgl-display}
@@ -50,7 +48,7 @@
 \item{nn}{Number of nearest neighbors used for interpolation onto a regular polyeder.}
 \item{normalize}{If \code{TRUE} normalize values (project to interval (0,1) within each voxel). For tensor objects \code{normalize=NULL} specifies a default depending on the content of argument what 
 
-(\code{normalize <- switch(tolower(what),"tensor"=FALSE,"adc"=TRUE)}).}
+(\code{normalize <- switch(what,"tensor"=FALSE,"adc"=TRUE)}).}
 \item{box}{Logical, add a bounding box.}
 \item{title}{Either a character string specifying a title or a logical. If \code{title==TRUE} a default title characterizing the type of plot is generated. }
 \item{method}{\code{method==1} and \code{method==2} specify two different color schemes for directional FA-maps.}
@@ -63,10 +61,10 @@
 \item{level}{Radius of sphere used as support for ODF visualisation}
 \item{subdivide}{Level of subdivisions for meshing, level \code{0:4} correspond to use of
 \code{c(12,42,162,642,2562)} vertices per tensor, respectively.}
-\item{what}{For dtiTensor-objects either \code{"tensor"} for visualization using ellipsoids, \code{"ADC"} for Apparent Diffusion Coefficients or \code{"ODF"} for the Orientation Density Function. 
-For dwiMixtensor-objects possible specifications are \code{"ODF"}, \code{"Axis"}
-and \code{"Both"}, with the latter superposing the estimated main directions on the estimated ODF. For \code{"Axis"}(and \code{"Both"}) the length of the axis corresponds to the mixture weights.
-For dtiData-objects choices are either \code{"data"}  or \code{"ADC"}.}
+\item{what}{For dtiTensor-objects either \code{"tensor"} for visualization using ellipsoids, \code{"adc"} for Apparent Diffusion Coefficients or \code{"odf"} for the Orientation Density Function. 
+For dwiMixtensor-objects possible specifications are \code{"odf"}, \code{"axis"}
+and \code{"both"}, with the latter superposing the estimated main directions on the estimated ODF. For \code{"axis"}(and \code{"both"}) the length of the axis corresponds to the mixture weights.
+For dtiData-objects choices are either \code{"data"}  or \code{"adc"}.}
 \item{odfscale}{Determines visualisation of the Orientation density function (ODF). For \code{odfscale=3} the
   ODF values are rescaled such that the volume of the displayes objects is constant. \code{odfscale=1} uses
   the values of the ODF as radii in the corrsponding vertice direction of the specified polyhedron. This
