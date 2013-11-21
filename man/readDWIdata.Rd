@@ -9,17 +9,18 @@
 dtiData(gradient, imagefile, ddim, bvalue = NULL, xind = NULL, yind = NULL, zind = NULL, 
         level = 0, mins0value = 1, maxvalue = 32000, voxelext = c(1, 1, 1), 
         orientation = c(0L, 2L, 5L), rotation = diag(3))
-readDWIdata(gradient, dirlist, format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), nslice = NULL, order = NULL, bvalue = NULL,
+readDWIdata(gradient, dirlist, format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), 
+        nslice = NULL, order = NULL, bvalue = NULL,
         xind = NULL, yind = NULL, zind = NULL, level = 0, mins0value = 1, 
         maxvalue = 32000, voxelext = NULL, orientation = c(0L, 2L, 5L), 
-        rotation = NULL, pattern = NULL, verbose = FALSE)
+        rotation = NULL, pattern = NULL, SPM2=TRUE, verbose = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{gradient}{ matrix of diffusion gradients (including zero gradients for S0 images) }
   \item{imagefile}{ name of data image file (binary 2Byte integers)}
   \item{ddim}{ dimension of image cube (3D) }
-  \item{dirlist}{ list of directories containing the data files }
+  \item{dirlist}{ list of directories containing the data files or name of a single data file (e.g. 4D NIFTI)}
   \item{format}{ string specifying the medical imaging format, one of ''DICOM'', ''NIFTI'', ''ANALYZE'', or ''AFNI'' }
   \item{nslice}{ number of slices (usually z-direction) }
   \item{order}{ vector, specifying a different order of the data files, i.e. other than alphabetic order in the directories given by \code{dirlist}. If not given, 1:n is used for n data files (no order change). }
@@ -34,6 +35,7 @@ readDWIdata(gradient, dirlist, format = c("DICOM", "NIFTI", "ANALYZE", "AFNI"), 
   \item{orientation}{ orientations of data as coded in AFNI }
   \item{rotation}{ optional rotation matrix for the coordinate system.}
   \item{pattern}{ pattern for file matching in the directories \code{dirlist}.}
+  \item{SPM2}{Enable some non-standard NIfTI files produced by SPM to be readable.}
   \item{verbose}{ some progress reports if TRUE }
 }
 \details{

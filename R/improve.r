@@ -680,7 +680,7 @@ setMethod("dwiMtCombine",c("dwiMixtensor","dwiMixtensor"), function(mtobj1,mtobj
   if(ncomp1<ncomp2){
    warning("first object should have larger maximum number of components \n 
             switching order\n")
-   return(combine(mtobj2,mtobj1,msc,where))
+   return(dwiMtCombine(mtobj2,mtobj1,msc,where))
   }
   if(is.null(where)||any(dim(where)!=ddim[1:3])) where <- mask
   where <- where & mask

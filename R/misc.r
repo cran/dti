@@ -230,7 +230,7 @@ dtiind3D <- function( D, mask, mc.cores = 1, verbose = TRUE){
   if (verbose) cat( "dtiind3: entering function", format( Sys.time()), "\n")
   if(mc.cores>1){
     mc.cores.old <- setCores(,reprt=FALSE)
-    setCores(mc.cores)
+    setCores(mc.cores,reprt=verbose)
   }
   bary <- andir <- matrix(0,3,nvox)
   fa <- ga <- md <- numeric(nvox)
@@ -294,40 +294,31 @@ replind <- function(gradient){
   as.integer(replind)
 }
 
-sofmchi <- function(L,to=50,delta=.01){
-minlev <- sqrt(2)*gamma(L+.5)/gamma(L)
-x <- seq(0,to,delta)
-mu <- sqrt(pi/2)*gamma(L+1/2)/gamma(1.5)/gamma(L)*hyperg_1F1(-0.5,L, -x^2/2, give=FALSE, strict=TRUE)
-s2 <- 2*L+x^2-mu^2
-s <- sqrt(s2)
-## return list containing values of noncentrality parameter (ncp),
-## mean (mu), standard deviation (sd) and variance (s2) to be used
-## in variance modeling
-list(ncp=x,mu=mu,s=s,s2=s2,minlev=minlev,L=L)
+sofmchi <- function(L, to = 50, delta = .01){
+  minlev <- sqrt(2) * gamma(L+.5)/gamma(L)
+  x <- seq(0, to, delta)
+  mu <- sqrt(pi/2)*gamma(L+1/2)/gamma(1.5)/gamma(L)*hyperg_1F1(-0.5,L, -x^2/2, give=FALSE, strict=TRUE)
+  s2 <- 2*L+x^2-mu^2
+  s <- sqrt(s2)
+  ## return list containing values of noncentrality parameter (ncp),
+  ## mean (mu), standard deviation (sd) and variance (s2) to be used
+  ## in variance modeling
+  list(ncp = x, mu = mu, s = s, s2 = s2, minlev = minlev, L = L)
 }
 
 fncchir <- function(mu,varstats){
 #
 #  Bias-correction
 #
-mu <- pmax(varstats$minlev,mu)
-ind <- 
-findInterval(mu, varstats$mu, rightmost.closed = FALSE, all.inside = FALSE)
-varstats$s[ind]
+varstats$ncp[findInterval(mu, varstats$mu, all.inside = TRUE)]
 }
 
 fncchis <- function(mu,varstats){
-mu <- pmax(varstats$minlev,mu)
-ind <- 
-findInterval(mu, varstats$mu, rightmost.closed = FALSE, all.inside = FALSE)
-varstats$s[ind]
+varstats$s[findInterval(mu, varstats$mu, all.inside = TRUE)]
 }
 
 fncchiv <- function(mu,varstats){
-mu <- pmax(varstats$minlev,mu)
-ind <- 
-findInterval(mu, varstats$mu, rightmost.closed = FALSE, all.inside = FALSE)
-varstats$s2[ind]
+varstats$s2[findInterval(mu, varstats$mu, all.inside = TRUE)]
 }
 
 fncchiL <- function(x,L){
@@ -335,7 +326,7 @@ fncchiL <- function(x,L){
 ##  standard deviation of a noncentral chi-distribution with
 ##  2*L df and noncentrality-parameter x
 ##
-require(gsl)
+#require(gsl)
 x <- pmax(x,sqrt(2)*gamma(L+.5)/gamma(L))
 z <- sqrt(pi/2)*gamma(L+1/2)/gamma(1.5)/gamma(L)*hyperg_1F1(-0.5,L, -x^2/2, give=FALSE, strict=TRUE)
 sqrt(2*L+x^2-z^2)
@@ -345,7 +336,7 @@ fncchiL2 <- function(x,L){
 ##  variance of a noncentral chi-distribution with
 ##  2*L df and noncentrality-parameter x
 ##
-require(gsl)
+#require(gsl)
 x <- pmax(x,sqrt(2)*gamma(L+.5)/gamma(L))
 z <- sqrt(pi/2)*gamma(L+1/2)/gamma(1.5)/gamma(L)*hyperg_1F1(-0.5,L, -x^2/2, give=FALSE, strict=TRUE)
 2*L+x^2-z^2
@@ -465,7 +456,7 @@ thcorr3D <- function(bw,lag=rep(5,3)){
 andir2.image <- function(dtobject,slice=1,method=1,quant=0,minfa=NULL,show=TRUE,xind=NULL,yind=NULL,...){
   if(!("dti" %in% class(dtobject))) stop("Not an dti-object")
   if(is.null(dtobject$anindex)) stop("No anisotropy index yet")
-  adimpro <- require(adimpro)
+  #adimpro <- require(adimpro)
   anindex <- dtobject$anindex
   dimg <- dim(anindex)[1:2]
   if(is.null(xind)) xind <- 1:dimg[1]
@@ -491,13 +482,13 @@ andir2.image <- function(dtobject,slice=1,method=1,quant=0,minfa=NULL,show=TRUE,
   andirection <- t(andirection)
   andirection <- andirection*as.vector(anindex)*as.numeric(anindex>minfa)
   dim(andirection)<-c(dimg,3)
-  if(adimpro) {
+#  if(adimpro) {
     andirection <- make.image(andirection)
     if(show) show.image(andirection,...)
-  } else if(show) {
-    dim(anindex) <- dimg
-    image(anindex,...)
-  }
+#  } else if(show) {
+#    dim(anindex) <- dimg
+#    image(anindex,...)
+#  }
   invisible(andirection)
 } 
 
@@ -662,7 +653,7 @@ vcrossp <- function(a, b) {
 }
 
 showFAColorScale <- function(filename = "FAcolorscale.png") {
-  if(!exists("colqFA")) data("colqFA", envir = environment())
+  data("colqFA", envir = environment())
   png( filename = filename, width = 800, height = 100, bg = "white", pointsize = 16)
   par( mar = c( 2, 0.5, 0.1, 0.5))
   image( matrix( seq( 0, 1, length = 256), 256, 1), col = colqFA, yaxt = "n")

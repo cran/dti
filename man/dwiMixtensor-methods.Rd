@@ -16,10 +16,10 @@
 \usage{
 \S4method{dwiMixtensor}{dtiData}(object, maxcomp=3,        
           model=c("MT","MTiso","MTisoFA","MTisoEV"), fa=NULL, 
-          lambda=NULL, reltol=1e-6, maxit=5000, ngc=1000, 
+          lambda=NULL, reltol=1e-10, maxit=5000, ngc=1000, 
           nguess=100*maxcomp^2, msc=c("BIC","AIC","AICC","none"), 
           mc.cores = setCores(,reprt=FALSE))
-\S4method{dwiMtCombine}{dwiMixtensor,dwiMixtensor}(mtobj1,mtobj2, msc="BIC", where=NULL)
+\S4method{dwiMtCombine}{dwiMixtensor,dwiMixtensor}(mtobj1, mtobj2, msc="BIC", where=NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{

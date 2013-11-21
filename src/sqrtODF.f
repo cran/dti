@@ -196,8 +196,8 @@ C
       subroutine sqrteap(ei,kern,nk,ng,n,l,w,nablam,ck,ck1,cres)
       implicit logical (a-z)
       integer nk,ng,n
-      real*8 ck(nk,1),kern(nk,nk,ng),ei(ng,n),l(nk),w(nk,1),
-     1       nablam(nk,1),ck1(nk,1),cres(nk,n)
+      real*8 ck(nk,*),kern(nk,nk,ng),ei(ng,n),l(nk),w(nk,*),
+     1       nablam(nk,*),ck1(nk,*),cres(nk,n)
       logical ndone
       integer i,k,ierr,thrnr
       real*8 mck,mck1

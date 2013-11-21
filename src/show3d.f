@@ -123,8 +123,8 @@ C     assumes maximum of 5 micxture components
          e1 = ev(1,j)
          e2 = ev(2,j)
 C   limit maximal excentricity to mex+1 for visualisation purposes
-         c12 = e1/(e1+e2)
-         c12fp = sqrt(e2/(e1+e2))/fourpi
+         c12 = (e1-e2)/e1
+         c12fp = sqrt(e2/e1)/fourpi
          sm = 1.d0
 C   calculate weight for order 0 component in sm
          DO k = 1,ord(j)

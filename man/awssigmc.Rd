@@ -1,5 +1,6 @@
 \name{awssigmc}
 \alias{awssigmc}
+\alias{afsigmc}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Estimate noise variance for multicoil MR systems
@@ -15,9 +16,16 @@ Estimate noise variance for multicoil MR systems
   
     The function assumes \eqn{L} to be known and estimates a global \eqn{\sigma} employing an assumption of local homogeneity for
      the noncentrality parameter \eqn{\eta}.
+    
+    Function \code{afsigmc} implements estimates from Aja-Fernandez (2009). 
 }
 \usage{
-awssigmc(y, steps, mask = NULL, ncoils = 1, vext = c(1, 1), lambda = 20, h0 = 2, verbose = FALSE, sequence = FALSE, hadj = 1, q = 0.25, qni = .8, method=c("VAR","MAD"))
+awssigmc(y, steps, mask = NULL, ncoils = 1, vext = c(1, 1), lambda = 20, 
+         h0 = 2, verbose = FALSE, sequence = FALSE, hadj = 1, q = 0.25, 
+         qni = .8, method=c("VAR","MAD"))
+afsigmc(y, level = NULL, mask = NULL,  ncoils = 1,   vext = c( 1, 1),   
+        h = 2, verbose = FALSE, hadj = 1, 
+        method = c("modevn","modem1chi","bkm2chi","bkm1chi"))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -31,6 +39,8 @@ awssigmc(y, steps, mask = NULL, ncoils = 1, vext = c(1, 1), lambda = 20, h0 = 2,
 }
   \item{mask}{
    restrict computations to voxel in mask, if \code{is.null(mask)} all voxel are used.
+   In function \code{afsigmc} mask should refer to background for \code{method \%in\% c("modem1chi","bkm2chi","bkm1chi")} and to voxel within the head for 
+   \code{method=="modevn"}. 
 }
   \item{ncoils}{
    number of coils, or equivalently number of effective degrees of freedom of non-central chi distribution
@@ -63,9 +73,13 @@ awssigmc(y, steps, mask = NULL, ncoils = 1, vext = c(1, 1), lambda = 20, h0 = 2,
   \item{qni}{
    quantile of distribution of actual sum of weights \eqn{N_i=\sum_j w_{ij}} in adaptive smoothing. Only voxel i with \eqn{N_i > q_{qni}(N_.)} are used for variance estimation. Should be larger than 0.5.  
 }
-  \item{method}{
-   method for variance estimation, either "VAR" (variance) or "MAD" (mean absolute deviation).
+  \item{method}{ in case of function \code{awssigmc} the
+   method for variance estimation, either "VAR" (variance) or "MAD" (mean absolute deviation). In function \code{afsigmc} see last column in Table 2 in Aja-Fernandez (2009). 
 }
+  \item{level}{ threshold for background separation. Used if \code{!is.null(level)}
+   to redefine mask}
+  
+  \item{h}{ bandwidth for local avaeraging}
 }
 \value{
    a list with components

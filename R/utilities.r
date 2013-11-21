@@ -8,128 +8,135 @@ sdpar <- function(object,  ...) cat("No method defined for class:",class(object)
 
 setGeneric("sdpar", function(object,  ...) standardGeneric("sdpar"))
 
-setMethod("sdpar","dtiData",function(object,level=NULL,sdmethod="sd",interactive=TRUE,threshfactor=1){
-  # determine interval of linearity
-  if(!(sdmethod%in%c("sd","mad"))){
-    warning("sdmethod needs to be either 'sd' or 'mad'")
-    return(object)
-  }
-  if(prod(object@ddim)==1){
-    warning("you need more than one voxel to model variances")
-    return(object)
-  }
-  sdcoef <- object@sdcoef
-  level0 <- if(is.null(level)) object@level else max(0,level)
-  s0ind<-object@s0ind
-  s0 <- object@si[,,,s0ind,drop=FALSE]
-  ls0ind <- length(s0ind)
-  A0 <- level0
-  if(ls0ind>1) {
-    dim(s0) <- c(prod(object@ddim),ls0ind)
-    s0mean <- s0%*%rep(1/ls0ind,ls0ind)
-    A1 <- quantile(s0mean[s0mean>0],.98)
-    dim(s0mean) <- object@ddim
-  } else {
-    dim(s0) <- object@ddim
-    A1 <- quantile(s0[s0>0],.98)
-  }
-  if(interactive) {
-    oldpar <- par( mfrow = c( 1, 3), mar = c( 3, 3, 3, 1), mgp = c( 2, 1, 0))
-    img <- if(ls0ind>1) s0mean[,,(object@ddim[3]-1)%/%2+1] else s0[,,(object@ddim[3]-1)%/%2+1]
-    maximg <- max(img)
-    accept <- FALSE
-    ddim <- object@ddim
-    ddm1 <- ddim-1
-    bw <- min(bw.nrd(if(ls0ind>1) s0mean[s0mean>0] else s0[s0>0]),diff(range(if(ls0ind>1) s0mean else s0))/256)
-    z <- density(if(ls0ind>1) s0mean[s0mean>0&s0mean<A1] else s0[s0>0&s0<A1],bw = max(bw,.01),,n=1024)
-    indx1 <- trunc(0.05*ddm1[1]):trunc(0.95*ddm1[1])+1
-    indx2 <- trunc(0.1*ddm1[1]):trunc(0.9*ddm1[1])+1
-    indx3 <- trunc(0.15*ddm1[1]):trunc(0.85*ddm1[1])+1
-    indy1 <- trunc(0.05*ddm1[2]):trunc(0.95*ddm1[2])+1
-    indy2 <- trunc(0.1*ddm1[2]):trunc(0.9*ddm1[2])+1
-    indy3 <- trunc(0.15*ddm1[2]):trunc(0.85*ddm1[2])+1
-    indz1 <- trunc(0.05*ddm1[3]):trunc(0.95*ddm1[3])+1
-    indz2 <- trunc(0.1*ddm1[3]):trunc(0.9*ddm1[3])+1
-    indz3 <- trunc(0.15*ddm1[3]):trunc(0.85*ddm1[3])+1
-    z1 <- density(if(ls0ind>1) s0mean[indx1,indy1,indz1][s0mean[indx1,indy1,indz1]>0] else s0[indx1,indy1,indz1][s0[indx1,indy1,indz1]>0],bw=bw,n=1024)
-    z2 <- density(if(ls0ind>1) s0mean[indx2,indy2,indz2][s0mean[indx2,indy2,indz2]>0] else s0[indx2,indy2,indz2][s0[indx2,indy2,indz2]>0],bw=bw,n=1024)
-    z3 <- density(if(ls0ind>1) s0mean[indx3,indy3,indz3][s0mean[indx3,indy3,indz3]>0] else s0[indx3,indy3,indz3][s0[indx3,indy3,indz3]>0],bw=bw,n=1024)
-    n <- prod(ddim)
-    n1 <- length(indx1)*length(indy1)*length(indz1)
-    n2 <- length(indx2)*length(indy2)*length(indz2)
-    n3 <- length(indx3)*length(indy3)*length(indz3)
-    ylim <- range(z$y,z1$y*n1/n,z2$y*n2/n,z3$y*n3/n)
-    while(!accept){
-      plot(z,type="l",main="Density of S0 values and cut off point",ylim=ylim)
-      lines(z1$x,z1$y*n1/n,col=2)
-      lines(z2$x,z2$y*n2/n,col=3)
-      lines(z3$x,z3$y*n3/n,col=4)
-      lines(c(A0,A0),c(0,max(z$y)/2),col=2,lwd=2)
-      legend(min(A0,0.25*max(z$x)),ylim[2],c("Full cube",paste("Central",(n1*100)%/%n,"%"),
-      paste("Central",(n2*100)%/%n,"%"),paste("Central",(n3*100)%/%n,"%")),col=1:4,lwd=rep(1,4))
-      cat("A good cut off point should be left of support of the density of grayvalues within the head\n")
-      show.image(make.image(img/maximg))
-      title("Central slice: Intensity values")
-      show.image(make.image((img<A0)))
-      title("Central slice: voxel not in mask")
-      a <- readline(paste("Accept current cut off point",A0," (Y/N):"))
-      if (toupper(a) == "N") {
-        cutpoint <-  readline("Provide value for cut off point:")
-        cutpoint <- if(!is.null(cutpoint)) as.numeric(cutpoint) else A0
-        if(!is.na(cutpoint)) {
-          level0 <-A0 <- cutpoint
-        }
-      } else {
-        accept <- TRUE
-      }
-    }
-	par( oldpar)
-  } else {
-    if(is.null(level)){
-    ddim <- object@ddim
-    indx1 <- trunc(0.4*ddim[1]):trunc(0.6*ddim[1])
-    indy1 <- trunc(0.4*ddim[2]):trunc(0.6*ddim[2])
-    indz1 <- trunc(0.7*ddim[3]):trunc(0.7*ddim[3])
-    A0a <- quantile(if(ls0ind>1) s0mean[indx1,indy1,indz1][s0mean[indx1,indy1,indz1]>1] else s0[indx1,indy1,indz1][s0[indx1,indy1,indz1]>1],.01)/(1+1/length(object@s0ind))
-#  A0a provides a guess for a threshold based on lower quantiles of intensities
-#  in a central cube (probably contained within the head)
-#  the last factor adjusts for increased accuracy with replicated s0-values
-    indx1 <- c(1:trunc(0.15*ddim[1]),trunc(0.85*ddim[1]):ddim[1])
-    indy1 <- c(1:trunc(0.15*ddim[2]),trunc(0.85*ddim[2]):ddim[2])
-    indz1 <- c(1:trunc(0.15*ddim[3]),trunc(0.85*ddim[3]):ddim[3])
-    A0b <- quantile(if(ls0ind>1) s0mean[indx1,indy1,indz1] else s0[indx1,indy1,indz1],.99)
-#  A0a provides a guess for a threshold based on upper quantiles of intensities
-#  in cubes located at the edges (probably only containing noise
-    level0 <- A0 <- min(A0a,A0b)*threshfactor
-  } 
-  }
-  # determine parameters for linear relation between standard deviation and mean
-  if(ls0ind>1) {
-    s0sd <- apply(s0,1,sdmethod)
-    ind <- s0mean>A0&s0mean<A1
-    if(length(ind)<2){
-         warning("you need more than one voxel to model variances choice of A0/A1 to restrictive")
-         return(object)
-         }
-    sdcoef0 <- coefficients(lm(s0sd[ind]~s0mean[ind]))
-    if(sdcoef0[1]<0){
-       sdcoef0 <- numeric(2)
-       sdcoef0[1] <- .25  # this is an arbitrary (small) value to avaoid zero variances
-       sdcoef0[2] <- coefficients(lm(s0sd[ind]~s0mean[ind]-1))
-       }
-    if(sdcoef0[2]<0){
-       sdcoef0 <- numeric(2)
-       sdcoef0[1] <- max(0.25,mean(s0sd[ind]))
-       sdcoef0[2] <- 0
-       }
-  } else {
-    sdcoef0 <- awslinsd(s0,hmax=5,mask=NULL,A0=A0,A1=A1)$vcoef
-  }
-  object@level <- level0
-  object@sdcoef[1:4] <- c(sdcoef0,A0,A1)
-  cat("Estimated parameters:",signif(sdcoef0[1:2],3),"Interval of linearity",signif(A0,3),"-",signif(A1,3),"\n")
-  object
-})
+setMethod("sdpar", "dtiData",
+          function(object,
+                   level = NULL,
+                   sdmethod = "sd",
+                   interactive = TRUE,
+                   threshfactor = 1) {
+            # determine interval of linearity
+            if(!(sdmethod%in%c("sd","mad"))){
+              warning("sdmethod needs to be either 'sd' or 'mad'")
+              return(object)
+            }
+            if(prod(object@ddim)==1){
+              warning("you need more than one voxel to model variances")
+              return(object)
+            }
+            sdcoef <- object@sdcoef
+            level0 <- if(is.null(level)) object@level else max(0,level)
+            s0ind<-object@s0ind
+            s0 <- object@si[,,,s0ind,drop=FALSE]
+            ls0ind <- length(s0ind)
+            A0 <- level
+            if(ls0ind>1) {
+              dim(s0) <- c(prod(object@ddim),ls0ind)
+              s0mean <- s0%*%rep(1/ls0ind,ls0ind)
+              A1 <- quantile(s0mean[s0mean>0],.98)
+              dim(s0mean) <- object@ddim
+            } else {
+              dim(s0) <- object@ddim
+              A1 <- quantile(s0[s0>0],.98)
+            }
+            if(interactive) {
+              oldpar <- par( mfrow = c( 1, 3), mar = c( 3, 3, 3, 1), mgp = c( 2, 1, 0))
+              img <- if(ls0ind>1) s0mean[,,(object@ddim[3]-1)%/%2+1] else s0[,,(object@ddim[3]-1)%/%2+1]
+              maximg <- max(img)
+              accept <- FALSE
+              ddim <- object@ddim
+              ddm1 <- ddim-1
+              bw <- min(bw.nrd(if(ls0ind>1) s0mean[s0mean>min(s0mean)] else s0[s0>0]),diff(range(if(ls0ind>1) s0mean else s0))/256)
+              z <- density(if(ls0ind>1) s0mean[s0mean>0&s0mean<A1] else s0[s0>0&s0<A1],bw = max(bw,.01),,n=1024)
+              indx1 <- trunc(0.05*ddm1[1]):trunc(0.95*ddm1[1])+1
+              indx2 <- trunc(0.1*ddm1[1]):trunc(0.9*ddm1[1])+1
+              indx3 <- trunc(0.15*ddm1[1]):trunc(0.85*ddm1[1])+1
+              indy1 <- trunc(0.05*ddm1[2]):trunc(0.95*ddm1[2])+1
+              indy2 <- trunc(0.1*ddm1[2]):trunc(0.9*ddm1[2])+1
+              indy3 <- trunc(0.15*ddm1[2]):trunc(0.85*ddm1[2])+1
+              indz1 <- trunc(0.05*ddm1[3]):trunc(0.95*ddm1[3])+1
+              indz2 <- trunc(0.1*ddm1[3]):trunc(0.9*ddm1[3])+1
+              indz3 <- trunc(0.15*ddm1[3]):trunc(0.85*ddm1[3])+1
+              z1 <- density(if(ls0ind>1) s0mean[indx1,indy1,indz1][s0mean[indx1,indy1,indz1]>0] else s0[indx1,indy1,indz1][s0[indx1,indy1,indz1]>0],bw=bw,n=1024)
+              z2 <- density(if(ls0ind>1) s0mean[indx2,indy2,indz2][s0mean[indx2,indy2,indz2]>0] else s0[indx2,indy2,indz2][s0[indx2,indy2,indz2]>0],bw=bw,n=1024)
+              z3 <- density(if(ls0ind>1) s0mean[indx3,indy3,indz3][s0mean[indx3,indy3,indz3]>0] else s0[indx3,indy3,indz3][s0[indx3,indy3,indz3]>0],bw=bw,n=1024)
+              n <- prod(ddim)
+              n1 <- length(indx1)*length(indy1)*length(indz1)
+              n2 <- length(indx2)*length(indy2)*length(indz2)
+              n3 <- length(indx3)*length(indy3)*length(indz3)
+              ylim <- range(z$y,z1$y*n1/n,z2$y*n2/n,z3$y*n3/n)
+              while(!accept){
+                plot(z,type="l",main="Density of S0 values and cut off point",ylim=ylim)
+                lines(z1$x,z1$y*n1/n,col=2)
+                lines(z2$x,z2$y*n2/n,col=3)
+                lines(z3$x,z3$y*n3/n,col=4)
+                lines(c(A0,A0),c(0,max(z$y)/2),col=2,lwd=2)
+                legend(min(A0,0.25*max(z$x)),ylim[2],c("Full cube",paste("Central",(n1*100)%/%n,"%"),
+                                                       paste("Central",(n2*100)%/%n,"%"),paste("Central",(n3*100)%/%n,"%")),col=1:4,lwd=rep(1,4))
+                cat("A good cut off point should be left of support of the density of grayvalues within the head\n")
+                show.image(make.image(img/maximg))
+                title("Central slice: Intensity values")
+                show.image(make.image((img<A0)))
+                title("Central slice: voxel not in mask")
+                a <- readline(paste("Accept current cut off point",A0," (Y/N):"))
+                if (toupper(a) == "N") {
+                  cutpoint <-  readline("Provide value for cut off point:")
+                  cutpoint <- if(!is.null(cutpoint)) as.numeric(cutpoint) else A0
+                  if(!is.na(cutpoint)) {
+                    level0 <- A0 <- cutpoint
+                  }
+                } else {
+                  accept <- TRUE
+                }
+              }
+              par( oldpar)
+            } else {
+              if(is.null(level)){
+                ddim <- object@ddim
+                indx1 <- trunc(0.4*ddim[1]):trunc(0.6*ddim[1])
+                indy1 <- trunc(0.4*ddim[2]):trunc(0.6*ddim[2])
+                indz1 <- trunc(0.7*ddim[3]):trunc(0.7*ddim[3])
+                A0a <- quantile(if(ls0ind>1) s0mean[indx1,indy1,indz1][s0mean[indx1,indy1,indz1]>1] else s0[indx1,indy1,indz1][s0[indx1,indy1,indz1]>1],.01)/(1+1/length(object@s0ind))
+                #  A0a provides a guess for a threshold based on lower quantiles of intensities
+                #  in a central cube (probably contained within the head)
+                #  the last factor adjusts for increased accuracy with replicated s0-values
+                indx1 <- c(1:trunc(0.15*ddim[1]),trunc(0.85*ddim[1]):ddim[1])
+                indy1 <- c(1:trunc(0.15*ddim[2]),trunc(0.85*ddim[2]):ddim[2])
+                indz1 <- c(1:trunc(0.15*ddim[3]),trunc(0.85*ddim[3]):ddim[3])
+                A0b <- quantile(if(ls0ind>1) s0mean[indx1,indy1,indz1] else s0[indx1,indy1,indz1],.99)
+                #  A0a provides a guess for a threshold based on upper quantiles of intensities
+                #  in cubes located at the edges (probably only containing noise
+                level0 <- A0 <- min(A0a,A0b)*threshfactor
+              } 
+            }
+            A0 <- max(level0,A1/200,1)
+# avoid A0=0 since this may lead to Inf weights in dtiTensor
+# determine parameters for linear relation between standard deviation and mean
+            if(ls0ind>1) {
+              s0sd <- apply(s0,1,sdmethod)
+              ind <- s0mean>A0&s0mean<A1
+              if(length(ind)<2){
+                warning("you need more than one voxel to model variances choice of A0/A1 to restrictive")
+                return(object)
+              }
+              sdcoef0 <- coefficients(lm(s0sd[ind]~s0mean[ind]))
+              if(sdcoef0[1]<0){
+                sdcoef0 <- numeric(2)
+                sdcoef0[1] <- .25  # this is an arbitrary (small) value to avaoid zero variances
+                sdcoef0[2] <- coefficients(lm(s0sd[ind]~s0mean[ind]-1))
+              }
+              if(sdcoef0[2]<0){
+                sdcoef0 <- numeric(2)
+                sdcoef0[1] <- max(0.25,mean(s0sd[ind]))
+                sdcoef0[2] <- 0
+              }
+            } else {
+              sdcoef0 <- awslinsd(s0,hmax=5,mask=NULL,A0=A0,A1=A1)$vcoef
+            }
+            object@level <- level0
+            object@sdcoef[1:4] <- c(sdcoef0,A0,A1)
+            cat("Estimated parameters:",signif(sdcoef0[1:2],3),"Interval of linearity",signif(A0,3),"-",signif(A1,3),"\n")
+            object
+          })
 
 getsdofsb <- function(object,  ...) cat("No method defined for class:",class(object),"\n")
 
@@ -394,7 +401,178 @@ setMethod("[","dtiTensor",function(x, i, j, k, drop=FALSE){
             )
 })
 
+setMethod("[", "dkiTensor",
+          function(x, i, j, k, drop = FALSE) {
+            
+            args <- sys.call(-1)
+            args <- c(x@call, args)
+            
+            if (missing(i)) i <- TRUE
+            if (missing(j)) j <- TRUE
+            if (missing(k)) k <- TRUE
+            
+            if (is.logical(i)) ddimi <- x@ddim[1] else ddimi <- length(i)
+            if (is.logical(j)) ddimj <- x@ddim[2] else ddimj <- length(j)
+            if (is.logical(k)) ddimk <- x@ddim[3] else ddimk <- length(k)
+            
+            swap <- rep(FALSE, 3)
+            if (!is.logical(i)) swap[1] <- (i[ 1] > i[length(i)])
+            if (!is.logical(j)) swap[2] <- (j[ 1] > j[length(j)])
+            if (!is.logical(k)) swap[3] <- (k[ 1] > k[length(k)])
+            orientation <- x@orientation
+            gradient <- x@gradient
+            btb <- x@btb
+            D <- x@D[, i, j, k, drop = FALSE]
+            W <- x@W[, i, j, k, drop = FALSE]
+            if( swap[1]) {
+              orientation[1] <- (orientation[1] + 1) %% 2
+              gradient[1, ] <- - gradient[1, ]
+              btb[2:3, ] <- - btb[2:3, ]
+              D[2:3, , , ] <- - D[2:3, , , ]
+              warning("[: kurtosis tensor not correctly transformed for reverse order!")
+              ## TODO: determine elements to change!
+              ## W[ c(?), , , ] <- - W[ c(?), , , ] 
+            }
+            if(swap[2]) {
+              orientation[2] <- (orientation[2] + 1) %% 2 + 2
+              gradient[2, ] <- - gradient[2, ]
+              btb[c(2, 5), ] <- - btb[c(2, 5), ]
+              D[c(2, 5), , , ] <- - D[c(2, 5), , , ]
+              warning("[: kurtosis tensor not correctly transformed for reverse order!")
+              ## TODO: determine elements to change!
+              ## W[ c(?), , , ] <- - W[ c(?), , , ] 
+            }
+            if(swap[3]) {
+              orientation[3] <- (orientation[3] + 1) %% 2 + 4
+              gradient[3, ] <- -gradient[3, ]
+              btb[c(3, 5), ] <- - btb[c(3, 5), ]
+              D[c(3, 5), , , ] <- - D[c(3, 5), , , ]
+              warning( "[: kurtosis tensor not correctly transformed for reverse order!")
+              ## TODO: determine elements to change!
+              ## W[ c(?), , , ] <- - W[ c(?), , , ] 
+            }
+            
+            ind <- 1:prod(x@ddim)
+            if (length(x@outlier) > 0) {
+              ind <- rep(FALSE, prod(x@ddim))
+              ind[x@outlier] <- TRUE
+              dim(ind) <- x@ddim
+              ind <- ind[i, j, k]
+              outlier <- (1:length(ind))[ind]
+            } else {
+              outlier <- numeric(0)
+            }
+            
+            invisible(new("dkiTensor",
+                          call        = args, 
+                          D           = D,
+                          W           = W,
+                          th0         = x@th0[i, j, k, drop=FALSE],
+                          ## TODO: determination of sigma!
+                          sigma       = if(x@method == "linear") x@sigma[i, j, k, drop=FALSE] else array(1, c(1, 1, 1)),
+                          scorr       = x@scorr, 
+                          bw          = x@bw,
+                          mask        = x@mask[ i, j, k, drop=FALSE],
+                          hmax        = x@hmax,
+                          gradient    = gradient,
+                          bvalue      = x@bvalue,
+                          btb         = btb,
+                          ngrad       = x@ngrad,
+                          s0ind       = x@s0ind,
+                          replind     = x@replind,
+                          ddim        = c(ddimi, ddimj, ddimk),
+                          ddim0       = x@ddim0,
+                          xind        = x@xind[i],
+                          yind        = x@yind[j],
+                          zind        = x@zind[k],
+                          voxelext    = x@voxelext,
+                          level       = x@level,
+                          orientation = as.integer(orientation),
+                          rotation    = x@rotation,
+                          outlier     = outlier,
+                          scale       = x@scale,
+                          source      = x@source,
+                          method      = x@method))
+          })
 
+#############
+
+setMethod("[", "dkiIndices",
+          function(x, i, j, k, drop=FALSE){
+
+            args <- sys.call(-1)
+            args <- c(x@call,args)
+  
+            if (missing(i)) i <- TRUE
+            if (missing(j)) j <- TRUE
+            if (missing(k)) k <- TRUE
+
+            if (is.logical(i)) ddimi <- x@ddim[1] else ddimi <- length(i)
+            if (is.logical(j)) ddimj <- x@ddim[2] else ddimj <- length(j)
+            if (is.logical(k)) ddimk <- x@ddim[3] else ddimk <- length(k)
+
+            swap <- rep(FALSE,3)
+            if (!is.logical(i)) swap[1] <- i[1] > i[length(i)]
+            if (!is.logical(j)) swap[2] <- j[1] > j[length(j)]
+            if (!is.logical(k)) swap[3] <- k[1] > k[length(k)]
+
+            orientation <- x@orientation
+            gradient <- x@gradient
+            btb <- x@btb
+            andir <- x@andir
+
+            if(swap[1]) {
+              orientation[1] <- (orientation[1]+1)%%2
+              gradient[1, ] <- -gradient[1, ]
+              btb[2:3, ] <- - btb[2:3, ]
+              andir[1, , , ] <- - andir[1, , , ]
+            }
+            if(swap[2]) {
+              orientation[2] <- (orientation[2]+1)%%2+2
+              gradient[2, ] <- -gradient[2, ]
+              btb[c(2, 5), ] <- - btb[c(2, 5), ]
+              andir[2, , , ] <- - andir[2, , , ]
+            }
+            if(swap[3]) {
+              orientation[3] <- (orientation[3]+1)%%2+4
+              gradient[3, ] <- -gradient[3, ]
+              btb[c(3, 5), ] <- - btb[c(3, 5), ]
+              andir[3, , , ] <- - andir[3, , , ]
+            }
+            
+            invisible(new("dkiIndices",
+                          call = args,
+                          fa = x@fa[i, j, k, drop=FALSE],
+                          ga = x@ga[i, j, k, drop=FALSE],
+                          md = x@md[i, j, k, drop=FALSE],
+                          andir = andir[, i, j, k, drop=FALSE],
+                          bary = x@bary[, i, j, k, drop=FALSE],
+                          k1 = x@k1[i, j, k, drop=FALSE],
+                          k2 = x@k2[i, j, k, drop=FALSE],
+                          k3 = x@k3[i, j, k, drop=FALSE],
+                          mk = x@mk[i, j, k, drop=FALSE],
+                          mk2 = x@mk2[i, j, k, drop=FALSE],
+                          kaxial = x@kaxial[i, j, k, drop=FALSE],
+                          kradial = x@kradial[i, j, k, drop=FALSE],
+                          fak = x@fak[i, j, k, drop=FALSE],
+                          gradient = gradient,
+                          bvalue = x@bvalue,
+                          btb   = btb,
+                          ngrad = x@ngrad,
+                          s0ind = x@s0ind,
+                          ddim  = c(ddimi,ddimj,ddimk),
+                          ddim0 = x@ddim0,
+                          voxelext = x@voxelext,
+                          orientation = as.integer(orientation),
+                          rotation = x@rotation,
+                          xind  = x@xind[i],
+                          yind  = x@yind[j],
+                          zind  = x@zind[k],
+                          method = x@method,
+                          level = x@level,
+                          source= x@source)
+            )
+          })
 
 #############
 setMethod("[","dwiMixtensor",function(x, i, j, k, drop=FALSE){
@@ -677,8 +855,7 @@ setMethod("extract","dwiMixtensor",function(x,
   if("order" %in% what) z$order <- x@order
   if("ev" %in% what) { 
      ev <- array(0,c(3,dim(x@ev)[-1]))
-     ev[1,,,] <- x@ev[1,,,] + x@ev[2,,,]
-     ev[2,,,] <- x@ev[2,,,]
+     ev[1:2,,,] <- x@ev
      ev[3,,,] <- x@ev[2,,,]
      z$ev <- ev
      }
@@ -696,7 +873,8 @@ setMethod("extract","dwiMixtensor",function(x,
   if("s0" %in% what) z$s0 <- x@th0
   if("mask" %in% what) z$mask <- x@mask
   if("fa" %in% what){
-      fa <- x@ev[1,,,]/sqrt((x@ev[1,,,]+x@ev[2,,,])^2+2*x@ev[2,,,]^2)
+      alpha <- (x@ev[1,,,]-x@ev[2,,,])/x@ev[2,,,]
+      fa <- alpha/sqrt(3+2*alpha+alpha^2)
       fa[x@order==0] <- 0
       dim(fa) <- x@ddim
       z$fa <- fa
@@ -766,6 +944,7 @@ setMethod("extract","dtiTensor",function(x,
   } else {
     if(needev){
       ev <- array(dti3Dev(x@D,x@mask,mc.cores=mc.cores),c(3,n1,n2,n3))
+      ev[ev<1e-12] <- 1e-12 
       if("fa" %in% what) {
         dd <- apply(ev^2,2:4,sum)
         md <- (ev[1,,,]+ev[2,,,]+ev[3,,,])/3

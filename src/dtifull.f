@@ -309,7 +309,7 @@ C
       integer i1,i2,i3,j1,j2,j3,ih1,ih2,ih3
       real*8 ssig,sw,w,h2,z1,z2,z3,z11,z22,z33
       h2=h*h
-      ih1=h/vext(1)
+      ih1=int(h/vext(1))
       DO i1=1,n1
          DO i2=1,n2
             DO i3=1,n3
@@ -319,12 +319,12 @@ C
                   if(j1.lt.1.or.j1.gt.n1) CYCLE
                   z1=(j1-i1)*vext(1)
                   z11=z1*z1
-                  ih2=sqrt(h2-z11)/vext(2)
+                  ih2=int(sqrt(h2-z11)/vext(2))
                   DO j2=i2-ih2,i2+ih2
                      if(j2.lt.1.or.j2.gt.n2) CYCLE
                      z2=(j2-i2)*vext(2)
                      z22=z11+z2*z2
-                     ih3=sqrt(h2-z22)/vext(3)
+                     ih3=int(sqrt(h2-z22)/vext(3))
                      DO j3=i3-ih3,i3+ih3
                         if(j3.lt.1.or.j3.gt.n3) CYCLE
                         z3=(j3-i3)*vext(3)

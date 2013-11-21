@@ -18,18 +18,18 @@ C
       integer n1,n2,n3
       logical mask(n1,n2,n3)
       real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),wght(2),hakt,
-     1       lwght(1)
+     1       lwght(*)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jind3,jind2,jind,
      1        clw1,clw2,clw3,dlw1,dlw2,dlw3,jw1,jw2,jw3,jwind2,jwind3
       real*8 swj,swjy,z1,z2,z3,wj,hakt2,hmax2
       hakt2=hakt*hakt
-      ih1=hakt
+      ih1=int(hakt)
 C
 C   first calculate location weights
 C
-      ih3=hakt/wght(2)
-      ih2=hakt/wght(1)
-      ih1=hakt
+      ih3=int(hakt/wght(2))
+      ih2=int(hakt/wght(1))
+      ih1=int(hakt)
       if(n3.eq.1) ih3=0
       if(n2.eq.1) ih2=0
       clw1=ih1+1
@@ -45,7 +45,7 @@ C
          if(n3.gt.1) THEN
             z3=(clw3-j3)*wght(2)
             z3=z3*z3
-            ih2=sqrt(hakt2-z3)/wght(1)
+            ih2=int(sqrt(hakt2-z3)/wght(1))
             jind3=(j3-1)*dlw1*dlw2
          ELSE
             jind3=0
@@ -54,7 +54,7 @@ C
             if(n2.gt.1) THEN
                z2=(clw2-j2)*wght(1)
                z2=z3+z2*z2
-               ih1=sqrt(hakt2-z2)
+               ih1=int(sqrt(hakt2-z2))
                jind2=jind3+(j2-1)*dlw1
             ELSE
                jind2=0
@@ -83,14 +83,14 @@ C   scaling of sij outside the loop
                   jwind3=(jw3-1)*dlw1*dlw2
                   z3=(clw3-jw3)*wght(2)
                   z3=z3*z3
-                  if(n2.gt.1) ih2=sqrt(hakt2-z3)/wght(1)
+                  if(n2.gt.1) ih2=int(sqrt(hakt2-z3)/wght(1))
                   DO jw2=clw2-ih2,clw2+ih2
                      j2=jw2-clw2+i2
                      if(j2.lt.1.or.j2.gt.n2) CYCLE
                      jwind2=jwind3+(jw2-1)*dlw1
                      z2=(clw2-jw2)*wght(1)
                      z2=z3+z2*z2
-                     ih1=sqrt(hakt2-z2)
+                     ih1=int(sqrt(hakt2-z2))
                      DO jw1=clw1-ih1,clw1+ih1
 C  first stochastic term
                         j1=jw1-clw1+i1
@@ -135,7 +135,7 @@ C
       integer n1,n2,n3
       logical mask(n1,n2,n3)
       real*8 y(n1,n2,n3),theta(n1,n2,n3),bi(n1,n2,n3),
-     1       thetan(n1,n2,n3),lambda,wght(2),hakt,lwght(1),
+     1       thetan(n1,n2,n3),lambda,wght(2),hakt,lwght(*),
      2       si2(n1,n2,n3),spmin,hhom(n1,n2,n3),
      3       gi(n1,n2,n3),gi2(n1,n2,n3)
       integer ih1,ih2,ih3,i1,i2,i3,j1,j2,j3,jw1,jw2,jw3,jwind3,jwind2,
@@ -145,13 +145,13 @@ C
       hakt2=hakt*hakt
       spmin=0.25d0
       spf=1.d0/(1.d0-spmin)
-      ih1=hakt
+      ih1=int(hakt)
 C
 C   first calculate location weights
 C
-      ih3=hakt/wght(2)
-      ih2=hakt/wght(1)
-      ih1=hakt
+      ih3=int(hakt/wght(2))
+      ih2=int(hakt/wght(1))
+      ih1=int(hakt)
       if(n3.eq.1) ih3=0
       if(n2.eq.1) ih2=0
       clw1=ih1+1
@@ -167,7 +167,7 @@ C
          if(n3.gt.1) THEN
             z3=(clw3-j3)*wght(2)
             z3=z3*z3
-            ih2=sqrt(hakt2-z3)/wght(1)
+            ih2=int(sqrt(hakt2-z3)/wght(1))
             jind3=(j3-1)*dlw1*dlw2
          ELSE
             jind3=0
@@ -176,7 +176,7 @@ C
             if(n2.gt.1) THEN
                z2=(clw2-j2)*wght(1)
                z2=z3+z2*z2
-               ih1=sqrt(hakt2-z2)
+               ih1=int(sqrt(hakt2-z2))
                jind2=jind3+(j2-1)*dlw1
             ELSE
                jind2=0
@@ -201,7 +201,7 @@ C    nothing to do, final estimate is already fixed by control
                thetai=theta(i1,i2,i3)
                bii=bi(i1,i2,i3)/lambda
 C   scaling of sij outside the loop
-               ih3=hakt/wght(2)
+               ih3=int(hakt/wght(2))
                swj=0.d0
                swjy=0.d0
                sv1=0.d0
@@ -211,14 +211,14 @@ C   scaling of sij outside the loop
                   if(j3.lt.1.or.j3.gt.n3) CYCLE
                   z3=(clw3-jw3)*wght(2)
                   z3=z3*z3
-                  if(n2.gt.1) ih2=sqrt(hakt2-z3)/wght(1)
+                  if(n2.gt.1) ih2=int(sqrt(hakt2-z3)/wght(1))
                   jwind3=(jw3-1)*dlw1*dlw2
                   DO jw2=clw2-ih2,clw2+ih2
                      j2=jw2-clw2+i2
                      if(j2.lt.1.or.j2.gt.n2) CYCLE
                      z2=(clw2-jw2)*wght(1)
                      z2=z3+z2*z2
-                     ih1=sqrt(hakt2-z2)
+                     ih1=int(sqrt(hakt2-z2))
                      jwind2=jwind3+(jw2-1)*dlw1
                      DO jw1=clw1-ih1,clw1+ih1
 C  first stochastic term

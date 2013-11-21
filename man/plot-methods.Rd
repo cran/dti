@@ -5,6 +5,7 @@
 \alias{plot,dwi-method}
 \alias{plot,dtiData-method}
 \alias{plot,dtiIndices-method}
+\alias{plot,dkiIndices-method}
 \alias{plot,dtiTensor-method}
 \alias{plot,dwiMixtensor-method}
 \alias{plot,dwiFiber-method}
@@ -25,6 +26,7 @@
    show=TRUE, identify=FALSE, density=FALSE, contrast.enh=1, what="fa", 
    xind=NULL, yind=NULL, zind=NULL, mar=c(3,3,3,.3), mgp=c(2,1,0), \dots)
 \S4method{plot}{dwiFiber}(x, y, \dots)
+\S4method{plot}{dkiIndices}(x, y, slice=1, what=c("md", "fa", "mk", "mk2"), \dots)
 }
 \arguments{
   \item{x}{ Object of class \code{"dtiIndices"}, \code{"dtiData"} or \code{"dtiTensor"}}
@@ -63,9 +65,12 @@
 
   \item{x = "dwiMixtensor"}{ Depending of \code{what} images of FA (\code{what="fa"}), number of mixture components (\code{what="order"}), effective order (\code{what="eorder"}) or maximum eigenvalues (\code{what="ev"}).  is returned. }
 
-  \item{x = "dwiFiber"}{ Creates a density plot of fiber lengths. \code{NULL} is returned. }
+  \item{x = "dwiFiber"}{ Creates a density plot of fiber lengths. \code{NULL} is returned.}     
+
+  \item{x = "dkiIndices"}{Prelimanary function to plot a slice of diffusion kurtosis indices: Mean Kurtosis \code{what="mk"} or \code{what="mk2"}, mean diffusivity \code{what="md"}, fractional anisotropy \code{what="fa"}.}
+}
   
-}}
+}
 \author{ 
   Karsten Tabelow \email{tabelow@wias-berlin.de}\cr 
   J\"org Polzehl \email{polzehl@wias-berlin.de}

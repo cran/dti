@@ -13,18 +13,20 @@ dtireg.smooth <- function(object,hmax=5,hinit=1,lambda=30,rho=1,graph=FALSE,slic
   }
   eps <- 1e-6
   maxnw <- 10000
-  if (graph) {
-    adimpro <- require(adimpro)
-    if (!adimpro) cat("No graphical output! Install package adimpro from CRAN!\n")
-    graph <- graph & adimpro
-  }
+#  if (graph) {
+#    adimpro <- require(adimpro)
+#    if (!adimpro) cat("No graphical output! Install package adimpro from CRAN!\n")
+#    graph <- graph & adimpro
+#  }
   args <- sys.call(-3)
   args <- c(object@call,args)
   sdcoef <- object@sdcoef
   if(all(sdcoef[1:4]==0)) {
-    cat("No parameters for model of error standard deviation found\n estimating these parameters\n You may prefer to run sdpar before calling dtiTensor")
-    sdcoef <- sdpar(object,interactive=FALSE)@sdcoef
-    object@sdcoef <- sdcoef
+    cat("No parameters for model of error standard deviation found\n 
+         Using constant weights\n 
+         You may prefer to run sdpar before calling dtiTensor")
+#    sdcoef <- sdpar(object,interactive=FALSE)@sdcoef
+    object@sdcoef <- c(1,0,1,1)
   }
   dtobject <- dtiTensor(object,method="nonlinear")
   scale <- dtobject@scale

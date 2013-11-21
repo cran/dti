@@ -216,14 +216,15 @@ mfunrskml2_ret getparam2(int param_length, double* param, double fmin){
    for( i = 0; i < param_length; i++){
       param_work[i] = param[i];
    }
-   for( i = 0; i < c_ord; i++){
-      sw = sw + param[3*i];
+ //  calculate weights
+   double* mix = (double*) R_alloc(c_ord, sizeof(double));
+  for( i = 0; i < c_ord; i++){
+      mix[i] = exp(param[3*i]);
+      sw = sw + mix[i];
       o[i] = i;
    }
-//  calculate weights
-   double* mix = (double*) R_alloc(c_ord, sizeof(double));
    for( i = 0; i < c_ord; i++){
-      mix[i] = param[3*i]/sw;
+      mix[i] = mix[i]/sw;
    }
    
    revsort(mix, o, c_ord);
@@ -288,14 +289,15 @@ mfunrskml1_ret getparam1(int param_length, double* param, double fmin){
    for( i = 0; i < param_length; i++){
       param_work[i] = param[i];
    }
-   for( i = 0; i < c_ord; i++){
-      sw = sw + param[3*i];
-      o[i] = i;
-   }
 //  calculate weights
    double* mix = (double*) R_alloc(c_ord, sizeof(double));
    for( i = 0; i < c_ord; i++){
-      mix[i] = param[3*i]/sw;
+      mix[i] = exp(param[3*i]);
+      sw = sw + mix[i];
+      o[i] = i;
+   }
+   for( i = 0; i < c_ord; i++){
+      mix[i] = mix[i]/sw;
    }
    
    revsort(mix, o, c_ord);
@@ -355,14 +357,15 @@ mfunrskml0_ret getparam0(int param_length, double* param, double fmin){
    for( i = 0; i < param_length; i++){
       param_work[i] = param[i];
    }
-   for( i = 0; i < c_ord; i++){
-      sw = sw + param[3*i];
-      o[i] = i;
-   }
 //  calculate weights
    double* mix = (double*) R_alloc(c_ord, sizeof(double));
    for( i = 0; i < c_ord; i++){
-      mix[i] = param[3*i]/sw;
+      mix[i] = exp(param[3*i]);
+      sw = sw + mix[i];
+      o[i] = i;
+   }
+   for( i = 0; i < c_ord; i++){
+      mix[i] = mix[i]/sw;
    }
    
    revsort(mix, o, c_ord);
@@ -444,8 +447,7 @@ void mixtrl2( int* n1, int* siind, int* ngrad0, int* maxcomp, int* maxit,
    
    int fail;              // failure code for optim: zero is OK
    double Fmin = 0.;          // minimal value of obj fct in optim 
-   
-   //Setting global variables
+    //Setting global variables
    dimx = *n1;
    siq_init = siq_in; grad = grad_in, ngradc = *ngrad0; bv = bv_in;
    alpha = *alpha_in;
@@ -468,7 +470,6 @@ void mixtrl2( int* n1, int* siind, int* ngrad0, int* maxcomp, int* maxit,
    for(i=0; i<param_length_init; i++){
        param[i] = 0;
    }
-   
    for(ii = 0; ii < dimx; ii++){ 
        for(i=0; i<param_length_init; i++){
           lower[i] = R_NegInf;
@@ -493,16 +494,17 @@ void mixtrl2( int* n1, int* siind, int* ngrad0, int* maxcomp, int* maxit,
             orient_ret[0+2*j+2*maxcompc*ii] = angles[0];
             orient_ret[1+2*j+2*maxcompc*ii] = angles[1];
             
-            param[3*j] = 1;  
-//initial value for w(j) corresponds to volume w(j)^2/(1+sum_k w(j)^2)=1/(1+maxcompc)
+            param[3*j] = 4;  
+//initial value for w(j) corresponds to volume w(j)/(1+sum_k w(j)), i.e. a 17% isotropic compartment
             param[3*j+1] = angles[0];
             param[3*j+2] = angles[1];
 // set values for lower corresponding to weights to 0
-            lower[3*j] = 1e-3;
-	    nbd[3*j] = 1;
+            lower[3*j] = -6;
+            upper[3*j] = 20;
+	    nbd[3*j] = 2;
          }
 // lower values for lambda and alpha to get lambda_1>=lambda_2>=0
-         lower[3*maxcompc+1] = 0.6;
+         lower[3*maxcompc+1] = 0.5;
          upper[3*maxcompc+1] = 10;
 	 nbd[3*maxcompc+1] = 2;
          lower[3*maxcompc] = 0.01;
@@ -533,7 +535,7 @@ void mixtrl2( int* n1, int* siind, int* ngrad0, int* maxcomp, int* maxit,
                   param_tmp[3*k] = param_work[3*k+3];
                   param_tmp[3*k+1] = param_work[3*k+4];
                   param_length=3*k+2;
-                  lower[3*k] = 0.01;
+                  lower[3*k] = 0.25;/* require 20% at least informative Volume */ 
                   lower[3*k+1] = 0.6;
                   upper[3*k+1] = 10;
  	          nbd[3*k] = 1;
@@ -706,16 +708,17 @@ void mixtrl1( int* n1, int* siind, int* ngrad0, int* maxcomp, int* maxit,
             orient_ret[0+2*j+2*maxcompc*ii] = angles[0];
             orient_ret[1+2*j+2*maxcompc*ii] = angles[1];
             
-            param[3*j] = 1;  
-//initial value for w(j) corresponds to volume w(j)^2/(1+sum_k w(j)^2)=1/(1+maxcompc)
+            param[3*j] = 4;  
+//initial value for w(j) corresponds to volume w(j)/(1+sum_k w(j)), i.e. a 17% isotropic compartment
             param[3*j+1] = angles[0];
             param[3*j+2] = angles[1];
 // set values for lower corresponding to weights to 0
-            lower[3*j] = 1e-3;
-	    nbd[3*j] = 1;
+            lower[3*j] = -6;
+            upper[3*j] = 20;
+	    nbd[3*j] = 2;
          }
-         lower[3*maxcompc] = 0.01;
-	 nbd[3*maxcompc] = 1;
+/*         lower[3*maxcompc] = 0.01;
+	 nbd[3*maxcompc] = 1;*/
 // lower value for alpha to get lambda_1>=lambda_2
          // initialize EV-parameter
          param[3*maxcompc] = lambda;//lambda_2
@@ -741,7 +744,7 @@ void mixtrl1( int* n1, int* siind, int* ngrad0, int* maxcomp, int* maxit,
                   }
                   param_tmp[3*k] = param_work[3*k+3];
                   param_length=3*k+1;
-                  lower[3*k] = 0.01;
+                  lower[3*k] = 0.25;/* require 20% at least informative Volume */ 
  	          nbd[3*k] = 1;
                   
                   for(l= 0; l < param_length; l++){
@@ -908,13 +911,14 @@ void mixtrl0( int* n1, int* siind, int* ngrad0, int* maxcomp, int* maxit,
             orient_ret[0+2*j+2*maxcompc*ii] = angles[0];
             orient_ret[1+2*j+2*maxcompc*ii] = angles[1];
             
-            param[3*j] = 1;  
-//initial value for w(j) corresponds to volume w(j)^2/(1+sum_k w(j)^2)=1/(1+maxcompc)
+            param[3*j] = 4;  
+//initial value for w(j) corresponds to volume w(j)/(1+sum_k w(j)), i.e. a 17% isotropic compartment
             param[3*j+1] = angles[0];
             param[3*j+2] = angles[1];
 // set values for lower corresponding to weights to 0
-            lower[3*j] = 1e-3;
-	    nbd[3*j] = 1;
+            lower[3*j] = -6;
+            upper[3*j] = 20;
+	    nbd[3*j] = 2;
          }
 // lower value for alpha to get lambda_1>=lambda_2
          // initialize EV-parameter

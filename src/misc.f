@@ -1,3 +1,91 @@
+      subroutine lkern1(x,n,h,kern,m,khx)
+C
+C  from package aws
+C
+      implicit logical(a-z)
+      integer n,kern,m
+      real*8 x(n),h,khx(n)
+      integer i
+      real*8 mu0, mu2, mu4, xi, xih, skhx
+      select case (kern)            
+         case (1)
+C  Gaussian
+            mu0 = 2.506628274631d0
+            mu2 = 1.d0
+            mu4 = 3.d0
+         case (2) 
+C  Uniform
+            mu0 = 0.5d0
+            mu2 = 0.333333333333d0
+            mu4 = 0.2d0
+         case (3) 
+C  Triangular
+            mu0 = 1
+            mu2 = 0.166666666666d0
+            mu4 = 0.066666666666d0
+         case (4) 
+C  Epanechnikov
+            mu0 = 4.d0/3.d0
+            mu2 = 0.2d0
+            mu4 = 3.d0/3.5d1
+         case (5) 
+C  Biweight
+            mu0 = 1.6d1/1.5d1
+            mu2 = 1.d0/7.d0
+            mu4 = 1.d0/2.1d1
+         case (6) 
+C  Triweight
+            mu0 = 3.2d1/3.5d1
+            mu2 = 1.d0/9.d0
+            mu4 = 1.d0/3.3d1
+         case default
+C  Gaussian
+            mu0 = 2.506628274631d0
+            mu2 = 1.d0
+            mu4 = 3.d0
+      end select                    
+      skhx = 0.d0
+      DO i=1,n
+         xi=x(i)
+         xih=xi/h
+         select case (kern)            
+            case (1)
+               khx(i)=exp(-xih*xih/2.d0)/mu0
+            case (2)
+               xih=abs(xih)
+               if(xih.le.1.d0) khx(i)=1.d0/mu0           
+            case (3)
+               xih=abs(xih)
+               if(xih.le.1.d0) khx(i)=(1.d0-xih)/mu0         
+            case (4)
+               if(abs(xih).le.1.d0) THEN
+                  xih=xih*xih
+                  khx(i)=(1.d0-xih)/mu0
+               ENDIF           
+            case (5)
+               if(abs(xih).le.1.d0) THEN
+                  xih=1.d0-xih*xih
+                  khx(i)=xih*xih/mu0
+               ENDIF           
+            case (6)
+               if(abs(xih).le.1.d0) THEN
+                  xih=1.d0-xih*xih
+                  khx(i)=xih*xih*xih/mu0
+               ENDIF           
+            case default
+               khx(i)=exp(-xih*xih/2.d0)/mu0
+         end select
+         skhx=skhx+khx(i)
+C  compute first order derivatives 
+         if(m.eq.1) khx(i)=xi/h*khx(i)/mu2
+C  compute second order derivatives
+         IF(m.eq.2) khx(i)=(xi/h*xi/h-mu2)/(mu4-mu2*mu2)*khx(i)
+      END DO
+      DO i=1,n
+         khx(i)=khx(i)/skhx
+      END DO
+      RETURN
+      END
       subroutine initdata(si,n1,n2,n3,nb,maxvalue)
 C
 C   project all values to (1,maxvalue) to avoid infinite estimates
@@ -23,7 +111,7 @@ C
 C   replace physically meaningless Si values by mean S0
 C
       implicit logical(a-z)
-      integer n,nb,ls0,s0ind(ls0),siind(1)
+      integer n,nb,ls0,s0ind(ls0),siind(*)
       real*8 si(nb,n),sinew(nb,n)
       logical ind(n)
       integer i,j1,j,ls0m1
@@ -279,7 +367,7 @@ C   assumes that we search for a connected region in segm==.TRUE.
 C   that contains seed voxel (i1,i2,i3)
 C   result: mask == .TRUE. if voxel is connected to seed
       implicit logical (a-z)
-      integer n1,n2,n3,i1,i2,i3,ind1(1),ind2(1),ind3(1)
+      integer n1,n2,n3,i1,i2,i3,ind1(*),ind2(*),ind3(*)
       logical final,mask(n1,n2,n3),segm(n1,n2,n3)
       integer j1,j2,j3,k,l1,l2,l3,lind,lind0,ichecked
 C     first find pixel close to (i1,i2) with segm(j1,j2)=0
@@ -400,5 +488,33 @@ C
       END DO
       RETURN
       END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C   Calculate exceedence probabilities in awstestprop
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine exceed(x,n,z,nz,exprob)
+      implicit logical (a-z)
+      integer n,nz
+      real*8 x(n),z(nz),exprob(nz)
+      integer i,j
+      real*8 sk,zj
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(n,nz,x,z,exprob)
+C$OMP& PRIVATE(i,j,sk,zj)
+C$OMP DO SCHEDULE(GUIDED)
+      DO j=1,nz
+         sk=0.d0
+         zj=z(j)
+         DO i=1,n
+            if(x(i).gt.zj) sk=sk+1
+         END DO
+         exprob(j)=sk/n
+      END DO
+C$OMP END DO NOWAIT
+C$OMP END PARALLEL
+C$OMP FLUSH(exprob)
+      Return
+      End
 
 

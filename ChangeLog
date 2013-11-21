@@ -1,3 +1,8 @@
+2013-11-26 version 1.1-7
+  - Diffusion Kurtosis Imaging (DKI), new methods dkiTensor() and dkiIndices()
+  - msPOAS implemented
+  - new fibre tracking analysis tools
+
 2013-03-22 version 1.1-4
   - corrections in openMP for MacOS X
   - extended models for tensor mixtures (new models with isotropic comartment)

@@ -1,5 +1,5 @@
 pmatrix <- function(x, FUN, ..., mc.cores = setCores(,reprt=FALSE)){
-     require(parallel)
+     #require(parallel)
      cl <- makeCluster(mc <- mc.cores)
 #
 #   parCapply does not pass dimension attributes to FUN !!!!
@@ -47,30 +47,20 @@ pnlrdtirg <- function(si,btb,sdcoef,s0ind,ngrad){
                  PACKAGE="dti")$res
     z
 }
-pnltens <- function(si,grad,s0ind,sdcoef){
-#
-#  to be used with pmatrix
-#
-ngrad <- length(grad)/3
-lindD <- length(si)/(ngrad+length(s0ind))
-dim(si) <- c(ngrad+length(s0ind),lindD)
-zmat <- matrix(0,ngrad+8,lindD)
-for(i in 1:lindD){
-s0 <- si[s0ind,i]
-sb <- si[-s0ind,i]
-zz <- optim(c(1,0,0,1,0,1),opttensR,method="BFGS",si=sb,s0=s0,grad=grad,sdcoef=sdcoef)
-zmat[7,i] <- s0
-if(zz$convergence>1&&!is.na(zz$value)&&zz$value<1e12){
-zmat[1:6,i] <- rho2D(zz$par)
-zmat[8,i] <- zz$value
-zmat[-(1:8),i] <- tensRres(zz$par,sb,s0,grad)
-} else {
-zmat[1:6,i] <- c(1,0,0,1,0,1)
-zmat[8,i] <- 1e12
-zmat[-(1:8),i] <- rep(0,ngrad)
-}
-}
-zmat
+ptensnl <- function(x,ngrad,btb,sdcoef,maxit=1000,reltol=1e-7){
+   nvox <- dim(x)[2]
+   matrix(.C("dtens",
+          as.integer(nvox),
+          param=as.double(x[1:7,]),
+          as.double(x[-(1:7),]),
+          as.integer(ngrad),
+          as.double(btb),
+          as.double(sdcoef),
+          as.double(rep(0,ngrad)),#si
+          as.double(rep(1,ngrad)),#var                         
+          as.integer(maxit),#maxit
+          as.double(reltol),#reltol
+          PACKAGE="dti",DUP=TRUE)$param,7,nvox)
 }
 
 pmixtens <- function(x,ngrad0,maxcomp,maxit,pen,grad,reltol,th,penIC,vert){
@@ -121,7 +111,9 @@ z <- .C("mixtrl0",
           order   = integer(nvox),#order_ret selected order of mixture
           mix     = double(maxcomp*nvox),#mixture weights
           DUPL=FALSE, PACKAGE="dti")[c("sigma2","orient","order","mix")]
-lev <- c(alpha,1)*lambda
+lev <- matrix(0,2,nvox)
+lev[1,] <- (alpha+1)*lambda
+lev[2,] <- lambda
 rbind(z$order,z$sigma2,matrix(lev,2,nvox),matrix(z$mix,maxcomp,nvox),matrix(z$orient,2*maxcomp,nvox))
 }
 
@@ -149,7 +141,9 @@ z <- .C("mixtrl1",
           lambda  = double(nvox),#lambda_ret lambda_2 
           mix     = double(maxcomp*nvox),#mixture weights
           DUPL=FALSE, PACKAGE="dti")[c("sigma2","orient","order","lambda","mix")]
-lev <- c(alpha,1)*z$lambda
+lev <- matrix(0,2,nvox)
+lev[1,] <- (alpha+1)*z$lambda
+lev[2,] <- z$lambda
 rbind(z$order,z$sigma2,matrix(lev,2,nvox),matrix(z$mix,maxcomp,nvox),matrix(z$orient,2*maxcomp,nvox))
 }
 
@@ -178,8 +172,10 @@ z <- .C("mixtrl2",
           lambda  = double(nvox),#lambda_ret lambda_2 
           mix     = double(maxcomp*nvox),#mixture weights
           DUPL=FALSE, PACKAGE="dti")[c("sigma2","orient","order","alpha","lambda","mix")] 
-lev <- c(z$alpha,1)*z$lambda
-rbind(z$order,z$sigma2,matrix(lev,2,nvox),matrix(z$mix,maxcomp,nvox),matrix(z$orient,2*maxcomp,nvox))
+lev <- matrix(0,2,nvox)
+lev[1,] <- (z$alpha+1)*z$lambda
+lev[2,] <- z$lambda
+rbind(z$order,z$sigma2,lev,matrix(z$mix,maxcomp,nvox),matrix(z$orient,2*maxcomp,nvox))
 }
 pgetsii30 <- function(x,maxcomp,dgrad,th,isample0,nsi,nth,nvico,nguess){
          nvox <- length(x)/(nsi+2)

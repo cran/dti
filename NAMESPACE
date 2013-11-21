@@ -2,17 +2,16 @@ useDynLib(dti)
 
 #exportPattern("^[^\\.]")
 
-import("methods", "oro.dicom", "awsMethods")
-importFrom(graphics,plot)
-importFrom(adimpro,make.image,show.image)
-importFrom(rgl,rgl.lines,open3d,plot3d,rgl.bg)
-exportClasses("dwi","dtiData","dtiTensor","dtiIndices","dwiQball","dwiMixtensor","dwiFiber")
-exportMethods("show","plot","print","summary","dti.smooth","dtiTensor","dtiIndices","dwiQball",
-              "dwiMixtensor","dwiMtCombine","dwiRiceBias","dwiSqrtODF")
-exportMethods("extract","show3d","tracking","selectFibers","reduceFibers","getmask")
-export(dtiData,readDWIdata,subsetg,combineDWIdata,awssigmc)
-export(tensor2medinria,medinria2tensor)
-exportMethods("sdpar","getsdofsb")
-exportMethods("dwi.smooth")
-export(pmatrix,plmatrix)
-export(showFAColorScale)
+import(methods, parallel, oro.nifti, oro.dicom, adimpro, gsl, rgl, awsMethods)
+importFrom(graphics, plot)
+exportClasses("dwi", "dtiData", "dtiTensor", "dtiIndices", "dwiQball",
+              "dwiMixtensor", "dwiFiber", "dkiTensor", "dkiIndices")
+exportMethods("show", "plot", "print", "summary", "dti.smooth", "dtiTensor",
+              "dtiIndices", "dwiQball", "dwiMixtensor", "dwiMtCombine", 
+              "dwiRiceBias", "dwiSqrtODF", "dkiTensor", "dkiIndices")
+exportMethods("extract", "show3d", "tracking", "selectFibers", "reduceFibers",
+              "touchingFibers", "combineFibers", "getmask", "sdpar", 
+              "getsdofsb", "dwi.smooth", "dwi.smooth.ms")
+export(dtiData, readDWIdata, subsetg, combineDWIdata, awssigmc, afsigmc,
+       dkiIndices, showFAColorScale, tensor2medinria, medinria2tensor)
+

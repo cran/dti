@@ -6,6 +6,7 @@
 \alias{show3d,dtiData-method}
 \alias{show3d,dtiIndices-method}
 \alias{show3d,dtiTensor-method}
+\alias{show3d,dkiTensor-method}
 \alias{show3d,dwiMixtensor-method}
 \alias{show3d,dwiQball-method}
 \alias{show3d,dwiFiber-method}
@@ -14,25 +15,34 @@
   The function provides 3D visualization of \code{"dtiData"}, \code{"dtiTensor"}, \code{"dwiQball"} and \code{"dtiIndices"} objects using the \code{"rgl"}-package. Functionality of the rgl-package allows to rotate and zoom the displayed object.
 }
 \usage{
-\S4method{show3d}{dtiData}(obj, xind=NULL, yind=NULL, zind=NULL, quant=.8, scale=.4,
+\S4method{show3d}{dtiData}(obj, xind=NULL, yind=NULL, zind=NULL, quant=.8, 
+         scale=.4,
          bgcolor="black", add=FALSE, maxobjects=729, what=c("adc","data"), 
          minalpha=1, nn=1, normalize=FALSE, box=FALSE, title=FALSE, \dots)
-\S4method{show3d}{dtiTensor}(obj, xind=NULL, yind=NULL, zind=NULL, method=1, minfa=.3, mask=NULL, fibers=FALSE, 
+\S4method{show3d}{dtiTensor}(obj, xind=NULL, yind=NULL, zind=NULL, method=1,
+         minfa=.3, mask=NULL, fibers=FALSE, 
          maxangle = 30,level=0, quant=.8, scale=.4, bgcolor="black", add=FALSE, 
          subdivide=2, maxobjects=729, what=c("tensor","adc","odf"), odfscale = 1, 
          minalpha=.25, normalize=NULL, box=FALSE, title=FALSE,\dots)
-\S4method{show3d}{dtiIndices}(obj, index=c("fa","ga"), xind=NULL, yind=NULL, zind=NULL, method=1, 
+\S4method{show3d}{dkiTensor}(obj, xind=NULL, yind=NULL, zind=NULL, method=1, 
+         minfa=.3, mask=NULL, level=0, quant=.8, scale=.4, bgcolor="black", 
+         add=FALSE, subdivide=2, maxobjects=729, what=c("KT", "DT"),  
+         minalpha=.25, normalize=NULL, box=FALSE, title=FALSE,\dots)
+\S4method{show3d}{dtiIndices}(obj, index=c("fa","ga"), xind=NULL, yind=NULL, 
+         zind=NULL, method=1, 
          minfa=0, bgcolor="black", add=FALSE, lwd=1, box=FALSE, 
          title=FALSE, \dots)
-\S4method{show3d}{dwiMixtensor}(obj, xind=NULL, yind=NULL, zind=NULL, minfa=.3, minorder = 1, mineo=1, fibers=FALSE, maxangle=30, level=0,           
+\S4method{show3d}{dwiMixtensor}(obj, xind=NULL, yind=NULL, zind=NULL, minfa=.3, 
+         minorder = 1, mineo=1, fibers=FALSE, maxangle=30, level=0,           
          quant=.8, scale=.4, bgcolor="black", add=FALSE, 
          subdivide=3, maxobjects=729, what=c("odf","axis","both"), odfscale=1, 
          minalpha=1, lwd=3, box=FALSE, title=FALSE, \dots) 
-\S4method{show3d}{dwiQball}(obj, xind=NULL, yind=NULL, zind=NULL, level=0, quant=.8,                 
-         scale=0.4, odfscale=1, bgcolor="black", add=FALSE, 
+\S4method{show3d}{dwiQball}(obj, xind=NULL, yind=NULL, zind=NULL, level=0, 
+         quant=.8, scale=0.4, odfscale=1, bgcolor="black", add=FALSE, 
          subdivide=3, maxobjects=729, minalpha=1, box=FALSE, 
          title=FALSE, \dots)
-\S4method{show3d}{dwiFiber}(obj, add=FALSE, bgcolor="black", box=FALSE, title=FALSE, lwd=1, \dots)
+\S4method{show3d}{dwiFiber}(obj, add=FALSE, bgcolor="black", box=FALSE, 
+         title=FALSE, lwd=1, \dots)
 }
 \arguments{
 \item{obj}{ An object of class \code{dtiData}, \code{dtiTensor}, \code{dtiIndices},\code{dwiMixTensor} or \code{dwiQball}}
@@ -93,6 +103,8 @@ For dtiData-objects choices are either \code{"data"}  or \code{"adc"}.}
   \item{obj = "dtiTensor"}{Ellipsoids/ADC's are visualized at the voxel centers. Orientation and size correspond to the tensor
   values, color is determined by the main direction of anisotropy using the colorsceme specified with \code{method}. The fractional anisotropy value is coded as transparency. The value of \code{maxobjects} limits the size of datacube and may be increased
  on hardware with suitable graphics capabilities. }
+ 
+  \item{obj = "dkiTensor"}{Prelimenary show3d method for diffusion kurtosis tensors.}
  
   \item{obj = "dwiQball"}{Estimated ODF/ADC's are visualized at the voxel centers. Color 
   is determined by directions, ODF/ADC values are reflected by both radial extend and

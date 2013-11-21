@@ -26,29 +26,31 @@
 
   \item{obj = "ANY"}{ Returns a warning. }
 
-  \item{obj = "dtiData"}{ Estimate diffusion tensor from data in each voxel with the different options for the regression type and model for variance estimation.  If \code{method=="linear"} estimates are obtained using a linearization of the tensor model. This was the estimate used in Tabelow et.al. (2008).  \code{method=="nonlinear"} uses a nonlinear regression model with reparametrization that ensures the tensor to be  positive semidefinite, see  Koay et.al. (2006).  If \code{varmethod=="replicates"} the error variance is estimated from replicated gradient directions if possible, otherwise an estimate is obtained from the residual sum of squares.  If \code{varmodel=="global"} a homogeneous variance is assumed and estimated as the median of the local variance estimates. }
+  \item{obj = "dtiData"}{ Estimate diffusion tensor from data in each voxel with the different options for the regression type and model for variance estimation.  If \code{method=="linear"} estimates are obtained using a linearization of the tensor model. This was the estimate used in Tabelow et.al. (2008).  \code{method=="nonlinear"} uses a nonlinear regression model with reparametrization that ensures the tensor to be  positive semidefinite, see  Koay et.al. (2006).  The imlementation is based on R's internal C code for the
+  BFGS optimization. If \code{varmethod=="replicates"} the error variance is estimated from replicated gradient directions if possible, otherwise an estimate is obtained from the residual sum of squares.  If \code{varmodel=="global"} a homogeneous variance is assumed and estimated as the median of the local variance estimates. }
 
 }
 }
 \references{ J. Polzehl and K. Tabelow, 
              \emph{Beyond the diffusion tensor model: The package \pkg{dti}},
-             Journal of Statistical Software, to appear.
+             Journal of Statistical Software, 44(12), 1-26 (2011).
 
              K. Tabelow, H.U. Voss and J. Polzehl, 
              \emph{Modeling the orientation distribution function by 
              mixtures of angular central Gaussian distributions},
-             Journal of Neuroscience Methods, to appear.
+             Journal of Neuroscience Methods, 203(1), 200-211 (2012).
 
              J. Polzehl and K. Tabelow, 
              \emph{Structural adaptive smoothing in diffusion tensor imaging: 
-             The R package dti}, Journal of Statistical Software, 31 (2009) pp. 1--24.
+             The R package dti}, Journal of Statistical Software, 31(9) 1-24 (2009).
              
               K. Tabelow, J. Polzehl, V. Spokoiny and H.U. Voss. 
               \emph{Diffusion Tensor Imaging: Structural adaptive smoothing}, 
               NeuroImage 39(4), 1763-1773 (2008).
 
               C.G. Koay, J.D. Carew, A.L. Alexander, P.J. Basser and M.E. Meyerand.
-              \emph{ Investigation of Anomalous Estimates of Tensor-Derived Quantities in Diffusion Tensor Imaging}, 
+              \emph{ Investigation of Anomalous Estimates of Tensor-Derived Quantities 
+              in Diffusion Tensor Imaging}, 
               Magnetic Resonance in Medicine, 2006, 55, 930-936.
 
               \url{ http://www.wias-berlin.de/projects/matheon_a3/} 

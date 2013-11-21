@@ -154,11 +154,12 @@ C   calculate mean s0 value
 C   sweep s0 from si to generate  siq
 C   calculate variance of siq
 C
+      implicit logical (a-z)
       integer n,ng0,ng1
       real*8 si(n,ng1),s0(n,ng0)
       real*8 siq(n,ng1),ms0(n)
       integer i,k
-      real*8 s0mean
+      real*8 s0mean,z
       DO i=1,n
          z=0.d0
          DO k=1,ng0

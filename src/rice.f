@@ -37,7 +37,7 @@ C  avoid transform to zero for numerical stability
                DO i=1,n
                   sii=si(k,i)
                   minsi=min(sii,minsi)
-                  j=sii*z+1
+                  j=int(sii*z+1)
                   if(j.gt.10000) THEN
                      sth=sth+sii*w(i)
                      ss2=ss2+w(i)*((sii*sii+th2)*0.5d0-sii*thk)

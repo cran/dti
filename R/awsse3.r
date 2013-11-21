@@ -109,26 +109,28 @@ c("Gapprox","Gapprox2","Chi","Chi2")){
   } else {
      gradstats <- getkappas(grad,dist=dist)
      hseq <- gethseqfullse3(kstar,gradstats,kappa0,vext=vext)
+     hseq$h <- cbind(rep(1,ngrad),hseq$h)
   }
-  kappa <- hseq$kappa
   nind <- as.integer(hseq$n*1.25)#just to avoid n being to small due to rounding
   hseq <- hseq$h
 # make it nonrestrictive for the first step
   ni <- array(1,dim(sb))
   minlevel <- if(model==1) 2*ncoils else sqrt(2)*gamma(ncoils+.5)/gamma(ncoils)  
   minlevel0 <- if(model==1) 2*ns0*ncoils else sqrt(2)*gamma(ns0*ncoils+.5)/gamma(ns0*ncoils)
-  z <- list(th=pmax(sb,minlevel), ni = ni)
-  th0 <- pmax(s0,minlevel0)
+#  z <- list(th=pmax(sb,minlevel), ni = ni)
+  z <- list(th=array(minlevel,dim(sb)), ni = ni)
+#  th0 <- pmax(s0,minlevel0)
+  th0 <- array(minlevel0,dim(s0))
   prt0 <- Sys.time()
   cat("adaptive smoothing in SE3, kstar=",kstar,if(verbose)"\n" else " ")
-  kinit <- if(lambda<1e10) 1 else kstar
+  kinit <- if(lambda<1e10) 0 else kstar
   mc.cores <- setCores(,reprt=FALSE)
   for(k in kinit:kstar){
     gc()
-    hakt <- hseq[,k]
+    hakt <- hseq[,k+1]
     if(multishell){
        thmsh <- interpolatesphere(z$th,msstructure)
-       param <- lkfullse3msh(hakt,kappa/hakt,gradstats,vext,nind) 
+       param <- lkfullse3msh(hakt,kappa0/hakt,gradstats,vext,nind) 
 #       save(z,thmsh,param,msstructure,file=paste("thmsh",k,".rsc",sep=""))
        if(length(sigma)==1) {
        z <- .Fortran("adsmse3m",
@@ -163,12 +165,12 @@ c("Gapprox","Gapprox2","Chi","Chi2")){
        return(object)
        }
     } else {
-       param <- lkfullse3(hakt,kappa/hakt,gradstats,vext,nind) 
+       param <- lkfullse3(hakt,kappa0/hakt,gradstats,vext,nind) 
        if(length(sigma)==1) {
        z <- .Fortran("adsmse3p",
                 as.double(sb),
                 as.double(z$th),
-                ni=as.double(z$ni/if(model==2) fncchiv(z$th,varstats) else 1),
+                ni=as.double(z$ni/if(model>=2) fncchiv(z$th,varstats) else 1),
                 as.logical(mask),
                 as.integer(ddim[1]),
                 as.integer(ddim[2]),
@@ -243,13 +245,17 @@ if(verbose){
 #
 #  back to original scale
 #
-  s0factor <- switch(model+1,ns0,ns0,sqrt(ns0))
-  si[,,,1] <-  pmax(th0,minlevel0)*sigma/s0factor
-  si[,,,-1] <- pmax(z$th,minlevel)*sigma
+  s0factor <- switch(model+1,ns0,ns0,sqrt(ns0),ns0)
+#cat("sigma",sigma,"s0factor",s0factor,"minlevel0",minlevel,"maxth0",max(th0),"lth0",length(th0),"\n")
+#  si[,,,1] <-  pmax(th0,minlevel0)*sigma/s0factor
+#  si[,,,-1] <- pmax(z$th,minlevel)*sigma
+  bvalue <- c(0,object@bvalue[-object@s0ind])
+  si[,,,1] <-  th0*sigma/s0factor
+  si[,,,-1] <- z$th*sigma
   object@si <- if(model==1) sqrt(si) else si
   object@gradient <- grad <- cbind(c(0,0,0),grad)
-  object@bvalue <- c(0,object@bvalue[-object@s0ind])
-  object@btb <- create.designmatrix.dti(grad)
+  object@bvalue <- bvalue
+  object@btb <- sweep(create.designmatrix.dti(grad), 2, bvalue, "*")
   object@s0ind <- as.integer(1)
   object@replind <- as.integer(1:ngrad)
   object@ngrad <- as.integer(ngrad)
@@ -258,26 +264,6 @@ if(verbose){
 }
 )
 
-koayinv <- function(r,th0,eps=1e-6){
-eps <- max(max(1e-8,eps))
-if(r<400){
-r <- max(sqrt(pi/(4-pi))+eps,r)
-thsq <- th0*th0
-db <-(2+thsq)*besselI(thsq/4,0,TRUE)+thsq*besselI(thsq/4,1,TRUE)
-ksi <- 2+thsq-pi/8*db*db
-th1 <- sqrt(ksi*(1+r*r)-2)
-while(abs(th0-th1)>eps){
-th0 <- th1
-thsq <- th0*th0
-db <-(2+thsq)*besselI(thsq/4,0,TRUE)+thsq*besselI(thsq/4,1,TRUE)
-ksi <- 2+thsq-pi/8*db*db
-th1 <- sqrt(ksi*(1+r*r)-2)
-}
-} else {
-th1 <- r*0.9999953
-}
-th1
-}
 
 lkfullse3 <- function(h,kappa,gradstats,vext,n){
       ngrad <- dim(gradstats$bghat)[2]

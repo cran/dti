@@ -5,8 +5,10 @@
 \alias{show,dti-method}
 \alias{show,dtiData-method}
 \alias{show,dtiTensor-method}
+\alias{show,dkiTensor-method}
 \alias{show,dwiMixtensor-method}
 \alias{show,dtiIndices-method}
+\alias{show,dkiIndices-method}
 \alias{show,dwiFiber-method}
 \title{ Methods for Function `show' in Package `dti' }
 \description{
@@ -17,7 +19,7 @@
   \S4method{show}{dti}(object)
 }
 \arguments{
-  \item{object}{ Object of class \code{dtiIndices}, \code{dtiData}, \code{dtiTensor}, \code{dwiMixtensor}, \code{dwiQball} or \code{dwiFiber}}
+  \item{object}{ Object of class \code{dtiIndices}, \code{dtiData}, \code{dtiTensor}, \code{dkiTensor}, \code{dkiIndices}, \code{dwiMixtensor}, \code{dwiQball} or \code{dwiFiber}}
 }
 \section{Methods}{
 \describe{

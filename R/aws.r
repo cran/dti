@@ -25,11 +25,11 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
 #
   wlse <- TRUE
   eps <- 1e-6
-  if (graph) {
-    adimpro <- require(adimpro)
-    if (!adimpro) cat("No graphical output! Install package adimpro from CRAN!\n")
-    graph <- graph & adimpro
-  }
+#  if (graph) {
+#    adimpro <- require(adimpro)
+#    if (!adimpro) cat("No graphical output! Install package adimpro from CRAN!\n")
+#    graph <- graph & adimpro
+#  }
   args <- sys.call(-3)
   args <- c(object@call,args)
   s0ind <- object@s0ind
@@ -265,7 +265,7 @@ dtilin.smooth <- function(object,hmax=5,hinit=NULL,lambda=52,
     lambda0 <- lambda*lseq[k]*scorrfactor     
   }
 #  replace non-tensors (with negative eigenvalues) by a small isotropic tensor 
-      ind <- array(dti3Dev(D,mask),c(3,n1,n2,n3))[1,,,]<1e-6
+      ind <- array(dti3Dev(z$D,mask),c(3,n1,n2,n3))[1,,,]<1e-6
        if(sum(ind&mask)>0){
            dim(z$D) <- c(6,n1*n2*n3)
            z$D[c(1,4,6),ind&mask] <- 1e-6

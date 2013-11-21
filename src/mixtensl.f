@@ -76,7 +76,7 @@ C  extract parameters
       ncomp=npar/3
       sw=1.d0
       DO i=1,ncomp
-         wi=par(3*i-2)
+         wi=exp(par(3*i-2))
          w(i)=wi
          phi(i)=par(3*i-1)
          eta(i)=par(3*i)
@@ -193,7 +193,7 @@ C  extract parameters
 C need to have positive alpha to guarantee lambda1 >= lambda2
       sw=1.d0
       DO i=1,ncomp
-         wi=par(3*i-2)
+         wi=exp(par(3*i-2))
          w(i)=wi
          phi(i)=par(3*i-1)
          eta(i)=par(3*i)
@@ -222,7 +222,7 @@ C  compute derivatives
 C  derivative with respect to phi_i
          dval(3*i)=-alpha*blam*w(i)*embclgd2(i)*dgtd(3,i)/sw
 C  derivative with respect to eta_i
-         dval(3*i-2)=(embclgd2(i)-fval)/sw
+         dval(3*i-2)=(embclgd2(i)-fval)/sw*w(i)
 C  derivative with respect to eta_i
       END DO
       dlam=f1l-b/sw*f2l
@@ -248,7 +248,7 @@ C  extract parameters
 C need to have positive alpha to guarantee lambda1 >= lambda2
       sw=1.d0
       DO i=1,ncomp
-         wi=par(3*i-2)
+         wi=exp(par(3*i-2))
          w(i)=wi
          phi(i)=par(3*i-1)
          eta(i)=par(3*i)
@@ -275,7 +275,7 @@ C  compute derivatives
 C  derivative with respect to phi_i
          dval(3*i)=-alpha*blam*w(i)*embclgd2(i)*dgtd(3,i)/sw
 C  derivative with respect to eta_i
-         dval(3*i-2)=(embclgd2(i)-fval)/sw
+         dval(3*i-2)=(embclgd2(i)-fval)/sw*w(i)
 C  derivative with respect to eta_i
       END DO
       dlam=f1l-b/sw*f2l
@@ -299,7 +299,7 @@ C  extract parameters
 C need to have positive alpha to guarantee lambda1 >= lambda2
       sw=1.d0
       DO i=1,ncomp
-         wi=par(3*i-2)
+         wi=exp(par(3*i-2))
          w(i)=wi
          phi(i)=par(3*i-1)
          eta(i)=par(3*i)
@@ -322,7 +322,7 @@ C  compute derivatives
 C  derivative with respect to phi_i
          dval(3*i)=-alpha*blam*w(i)*embclgd2(i)*dgtd(3,i)/sw
 C  derivative with respect to eta_i
-         dval(3*i-2)=(embclgd2(i)-fval)/sw
+         dval(3*i-2)=(embclgd2(i)-fval)/sw*w(i)
 C  derivative with respect to eta_i
       END DO
       RETURN

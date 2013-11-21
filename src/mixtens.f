@@ -54,7 +54,7 @@ C
       integer m,lpar,n
       real*8 par(lpar),w(m),siq(n),g(3,n),z(n,m),res(n),resd(n),
      1       dkgj(n,m),dkgj2(n,m),ddkdphig(n,m),ddkdetag(n,m),
-     2       dzdpars(n,m,3),work1(n,m),work2(n,m),dfdparw(1)
+     2       dzdpars(n,m,3),work1(n,m),work2(n,m),dfdparw(*)
       integer i,j
       real*8 th,m2th,sphi,cphi,seta,ceta,z1,z2,p0,p1,d1,d2,
      1       dphi1,dphi2
@@ -131,7 +131,7 @@ C   code is restricted to m<=6
 C
       implicit logical (a-z)
       integer m,lpar,n
-      real*8 par(lpar),w(1),siq(n),g(3,n),z(n,m),erg
+      real*8 par(lpar),w(*),siq(n),g(3,n),z(n,m),erg
       integer i,j
       real*8 th,sw,sth,z1,p0,p1,d1,d2,d3
       th = par(1)
@@ -175,7 +175,7 @@ C
       integer m,lpar,n
       real*8 par(lpar),w(m+1),siq(n),g(3,n),z(n,m),res(n),
      1       resd(n),dkgj(n,m),dkgj2(n,m),ddkdphig(n,m),ddkdetag(n,m),
-     3       dzdpars(n,m,3),work1(n,m),work2(n,m),dfdparw(1)
+     3       dzdpars(n,m,3),work1(n,m),work2(n,m),dfdparw(*)
       integer i,j
       real*8 th,m2th,sphi,cphi,seta,ceta,z1,z2,p0,p1,sres,d1,d2,
      1       dphi1,dphi2
@@ -852,7 +852,7 @@ C  restricted to ngrad<=1000 and m <=10
 C
       implicit logical (a-z)
       integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
-     1       isample(1),indth(nvox),iandir(nvox)
+     1       isample(*),indth(nvox),iandir(nvox)
       real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
      1       th(nth),egrad(ngrad,nv),z(ngrad,ns),mval(nvox),
      2       vsi(nvox),dgradv(nv,nv),maxc
@@ -981,7 +981,7 @@ C  restricted to ngrad<=1000 and m <=10
 C
       implicit logical (a-z)
       integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
-     1       isample(1),indth(nvox),iandir(nvox)
+     1       isample(*),indth(nvox),iandir(nvox)
       real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
      1       th(nth),egrad(ngrad,nv),z(ngrad,ns),mval(nvox),
      2       vsi(nvox),dgradv(nv,nv),maxc
@@ -1106,7 +1106,7 @@ C
       integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
      1       isample(m,ntry),indth(nvox)
       real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
-     1       th(nth),egrad(ngrad,nv),z(ngrad,1),mval(nvox),
+     1       th(nth),egrad(ngrad,nv),z(ngrad,*),mval(nvox),
      2       vsi(nvox)
       logical mask(nvox)
       integer i,k,ibest,mode,ind(12),l,j,ii,iw,wind(5),nwi(5),mp1
@@ -1224,9 +1224,9 @@ C  restricted to ngrad<=1000 and m <=10
 C
       implicit logical (a-z)
       integer nvox,ngrad,ns,siind(ns,nvox),m,ntry,nth,nv,
-     1       isample(1),indth(nvox),iandir(nvox)
+     1       isample(*),indth(nvox),iandir(nvox)
       real*8 si(ngrad,nvox),sms(ngrad),dgrad(ngrad,nv),
-     1       th(nth),egrad(ngrad,nv),z(ngrad,1),mval(nvox),
+     1       th(nth),egrad(ngrad,nv),z(ngrad,*),mval(nvox),
      2       vsi(nvox),dgradv(nv,nv),maxc
       logical mask(nvox),skip
       integer i,k,mode,ind(12),l,j,ii,iw,wind(5),nwi(5),mis,

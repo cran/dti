@@ -5,6 +5,8 @@
 \alias{print,dwi-method}
 \alias{print,dtiData-method}
 \alias{print,dtiTensor-method}
+\alias{print,dkiIndices-method}
+\alias{print,dkiTensor-method}
 \alias{print,dwiMixtensor-method}
 \alias{print,dtiIndices-method}
 \alias{print,dwiQball-method}
@@ -12,13 +14,13 @@
 \title{ Methods for Function `print' in Package `dti' }
 \description{
   The function provides information on data dimensions, data source and existing slot-names for objects of class \code{"dti"}, \code{"dtiData"},
- \code{"dtiTensor"}, \code{"dtiIndices"}, \code{"dwiMixtensor"},  \code{"dwiQball"} and \code{"dwiFiber"}.
+ \code{"dtiTensor"}, \code{"dtiIndices"}, \code{"dkiIndices"}, \code{"dkiTensor"}, \code{"dwiMixtensor"},  \code{"dwiQball"} and \code{"dwiFiber"}.
 }
 \usage{
   \S4method{print}{dwi}(x)
 }
 \arguments{
-  \item{x}{ Object of class \code{"dtiIndices"}, \code{"dtiData"}, \code{"dtiTensor"}, \code{"dwiFiber"}, \code{"dwiMixtensor"} or \code{"dwiQball"}}
+  \item{x}{ Object of class \code{"dtiIndices"}, \code{"dtiData"}, \code{"dtiTensor"}, \code{"dkiIndices"}, \code{"dkiTensor"}, \code{"dwiFiber"}, \code{"dwiMixtensor"} or \code{"dwiQball"}}
 }
 \section{Methods}{
 \describe{

@@ -1,18 +1,3 @@
-sphtrarea <- function(g1,g2,g3){
-##  Compute area of sherical triangle spanned by vectors 
-##  g1,g2,g3 on unit sphere
-##  use absolute values to identify opposite directions with each other
-c12 <- abs(g1%*%g2)
-c13 <- abs(g1%*%g3)
-c23 <- abs(g2%*%g3)
-s12 <- sqrt(1-c12^2)
-s13 <- sqrt(1-c13^2)
-s23 <- sqrt(1-c23^2)
-b1 <- (c23-c12*c13)/s12/s13 
-b2 <- (c13-c12*c23)/s12/s23 
-b3 <- (c12-c23*c13)/s23/s13 
-acos(b1)+acos(b2)+acos(b3)-pi
-}
 
 sphtrarea1 <- function(g1,g2,g3){
 ##  Compute area of sherical triangle spanned by vectors 
@@ -99,7 +84,6 @@ for(i in 1:nbv){
             w[,j,k] <- c(1,0,0)
          } else {
             z <- getsphwghts(grad[,k],grad[,ijk[1]],grad[,ijk[2]],grad[,ijk[3]])
-            ijk1 <- ijk
             l <- 1
             if(z$ierr==1){
 #  order triplets in perm according
@@ -143,13 +127,6 @@ for(i in 1:n3g$nbv){
       mstheta[i,,,,j] <- theta[,n3g$ind[,i,j]]%*%n3g$w[,i,j] 
    }
 }
-# now inforce monotonicity 
-#msthmin <- msthmax <- mstheta
-#if(n3g$nbv>1){
-#for(i in 2:n3g$nbv) msthmin[i,,,,] <- pmin(msthmin[i-1,,,,],msthmin[i,,,,])
-#for(i in n3g$nbv:2) msthmax[i-1,,,,] <- pmax(msthmax[i-1,,,,],msthmax[i,,,,])
-#(msthmin+msthmax)/2
-#}
 mstheta
 }
 
@@ -162,6 +139,7 @@ lkfullse3msh <- function(h,kappa,gradstats,vext,n){
     ind <- matrix(0,5,n)
     w <- numeric(n)
     nn <- 0
+    dist <- 4
     for(i in 1:nbv){
       gshell <- list(k456=gradstats$k456[[i]],bghat=gradstats$bghat[[i]],dist=dist) 
       z <- lkfullse3(h[bvind[[i]]],kappa[bvind[[i]]],gshell,vext,n)
@@ -177,26 +155,27 @@ list(h=h,kappa=kappa,ind=ind[,1:nn],w=w[1:nn],nind=nn)
 }
 
 gethseqfullse3msh <-
-function (kstar, gradstats, kappa=NULL, vext = c(1, 1)) 
+function (kstar, gradstats, kappa, vext = c(1, 1)) 
 {
 #
 #  generate information on local bandwidths and variance reduction
 #  for smoothing on multiple shells
 #
     nbv <- gradstats$nbv
-    dist <- gradstats$dist
     ngrad <- gradstats$ngrad
-    h <- vr <- matrix(0,ngrad,kstar)
+    h <- vr <- matrix(1,ngrad,kstar+1)
     n <- 0
+    dist <- 4
     for(i in 1:nbv){
        gshell <- list(k456=gradstats$k456[[i]],bghat=gradstats$bghat[[i]],dist=dist)
        z <- gethseqfullse3(kstar, gshell, kappa=kappa, vext=vext)
-       h[gradstats$bvind[[i]],] <- z$h
-       vr[gradstats$bvind[[i]],] <- z$vred
+       h[gradstats$bvind[[i]],-1] <- z$h
+       vr[gradstats$bvind[[i]],-1] <- z$vred
+       vr[gradstats$bvind[[i]],1] <- vr[gradstats$bvind[[i]],2]/1.25
        n <- n+z$n
     }
         cat("\n total number of positive weights:",n,"mean maximal bandwidth",signif(mean(h[,kstar]),3), "\n")
-    list(h=h,kappa=kappa,vred=vr,n=n)
+    list(h=h,vred=vr,n=n)
 }
 
 

@@ -3,8 +3,10 @@
 \alias{dwi-class}
 \alias{dtiData-class}
 \alias{dtiTensor-class}
+\alias{dkiTensor-class}
 \alias{dwiMixtensor-class}
 \alias{dtiIndices-class}
+\alias{dkiIndices-class}
 \alias{dwiQball-class}
 \alias{dwiFiber-class}
 \title{Class "dwi" }
@@ -66,6 +68,43 @@ For class \code{"dtiIndices"}:
     \item{ \code{md}: }{ Object of class \code{"array"}, Mean diffusivity values (MD) }
     \item{ \code{andir}: }{ Object of class \code{"array"}, Main directions of anisotropy }
     \item{ \code{bary}: }{ Object of class \code{"array"}, Shape parameters }
+    \item{ \code{method}: }{ Object of class \code{"character"} either \code{"linear"} or \code{"nonlinear"} or \code{"unknown"}. Indicates the regression model used for estimating the tensors.}
+}
+
+For class \code{"dkiTensor"}:
+
+\describe{
+    \item{ \code{D}: }{ Object of class \code{"array"}, estimated tensors, dimension \code{c(6,ddim)}.
+          Tensors are stored as upper diagonal matrices.} 
+    \item{ \code{W}: }{ Object of class \code{"array"}, estimated kurtosis tensors, dimension \code{c(15,ddim)}.} 
+    \item{ \code{th0}: }{ Object of class \code{"array"}, estimated intensities in S0 images, dimension \code{ddim}} 
+    \item{ \code{sigma}: }{ Object of class \code{"array"}, estimated error variances if \code{method=="linear"}, zero otherwise.} 
+    \item{ \code{scorr}: }{ Object of class \code{"numeric"}, estimated spatial correlations in coordinate directions} 
+    \item{ \code{bw}: }{ Object of class \code{"numeric"}, bandwidth for a Gaussian kernel that approximately creates the estimated spatial correlations. Needed for adjustments of critical values in the adaptive smoothing algorithm used in function \code{dti.smooth}} 
+    \item{ \code{mask}: }{ Object of class \code{"array"}, logical indicating the voxel where the tensor was estimated.} 
+    \item{ \code{hmax}: }{ Object of class \code{"numeric"}, maximal bandwidth in case of adaptive smoothing, 1 otherwise.} 
+    \item{ \code{outlier}: }{ Object of class \code{"numeric"}, index of voxel where physical constraints are not met, i.e. where the observed values in gradient images Si were larger than the corresponding S0 values. These are probably motion effects or registration errors. Values are replaced by the corresponding (mean) S0 values.}
+    \item{\code{scale}:}{Numerical value corresponding to the 95\% quantile of the maximal eigenvalues of estimated tensors within the mask.
+          Used for scaling in function \code{show3d.dtiTensor}}
+    \item{ \code{method}: }{ Object of class \code{"character"}, either \code{"linear"} or \code{"nonlinear"} or \code{"unknown"}. Indicates the regression model used for estimating the tensors.}
+}
+
+For class \code{"dkiIndices"}:
+
+\describe{
+    \item{ \code{fa}: }{ Object of class \code{"array"}, Fractional anisotropy values (FA)}
+    \item{ \code{ga}: }{ Object of class \code{"array"}, Geodetic anisotropy values (GA)}
+    \item{ \code{md}: }{ Object of class \code{"array"}, Mean diffusivity values (MD) }
+    \item{ \code{andir}: }{ Object of class \code{"array"}, Main directions of anisotropy }
+    \item{ \code{bary}: }{ Object of class \code{"array"}, Shape parameters }
+    \item{ \code{k1}: }{ Object of class \code{"array"}, Kurtosis along DT (Hui et al. 2008) }
+    \item{ \code{k2}: }{ Object of class \code{"array"}, Kurtosis along DT (Hui et al. 2008) }
+    \item{ \code{k3}: }{ Object of class \code{"array"}, Kurtosis along DT (Hui et al. 2008) }
+    \item{ \code{mk}: }{ Object of class \code{"array"}, Mean kurtosis (Hui et al. 2008) }
+    \item{ \code{mk2}: }{ Object of class \code{"array"}, Mean Kurtosis (Tabesh et al. (2011))}
+    \item{ \code{kaxial}: }{ Object of class \code{"array"}, Axial kurtosis (Hui et al. 2008) }
+    \item{ \code{kradial}: }{ Object of class \code{"array"}, Radial kurtosis (Hui et al. 2008) }
+    \item{ \code{fak}: }{ Object of class \code{"array"}, Kurtosis anisotropy (Hui et al. 2008) }
     \item{ \code{method}: }{ Object of class \code{"character"} either \code{"linear"} or \code{"nonlinear"} or \code{"unknown"}. Indicates the regression model used for estimating the tensors.}
 }
 

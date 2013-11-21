@@ -240,14 +240,14 @@ setMethod("tracking","dtiIndices", function(obj, roix=NULL, roiy=NULL, roiz=NULL
 })
 
 setMethod("tracking", "dwiMixtensor",
-function(obj, roix=NULL, roiy=NULL, roiz=NULL, mask=NULL, method="LINEPROP", minfa=0.3, maxangle=30, subsample = 1)
+function(obj, roix=NULL, roiy=NULL, roiz=NULL, mask=NULL, method="LINEPROP", minfa=0.3, maxangle=30, subsample = 1, mincompartsize=0)
 {
 
   args <- sys.call(-1)
   args <- c(obj@call,args)
   imethod <- switch(method, "LINEPROP" = 1,
                            1)
-
+  if(mincompartsize>0) obj <- reduceMixtens(obj,mincompartsize)
   dimx <- obj@ddim[1]
   dimy <- obj@ddim[2]
   dimz <- obj@ddim[3]
@@ -360,3 +360,30 @@ function(obj, roix=NULL, roiy=NULL, roiz=NULL, mask=NULL, method="LINEPROP", min
             )
 })
 
+reduceMixtens <- function(mtobj,mincompartsize=0){
+##
+##  remove small compartments from tensor mixture 
+##  for internal use with tracking only !!!
+##
+   if(mincompartsize>0){
+      mix <- mtobj@mix
+      order <- mtobj@order
+      dmix <- dim(mix)
+      dord <- dim(order)
+      nvox <- prod(dord)
+      dim(mix) <- c(dmix[1],nvox)
+      norder <- order
+      maxord <- max(order)
+      for(i in 1:maxord){
+         ind <- (1:nvox)[order==i]
+         for(j in i:1){
+            indj <- ind[mix[j,ind]<mincompartsize]
+            mix[j,indj] <- 0
+            norder[indj] <- norder[indj]-1
+         }
+      }
+      mtobj@mix <- array(mix,dmix)
+      mtobj@order <- norder
+   }
+   mtobj
+}

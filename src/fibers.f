@@ -20,7 +20,7 @@ C   lengthf(nfibers) -  length(fibers)
          DO j=1,ilen
             DO k=1,3
                j1=istart+j-1
-               ifiber(k,j)=fiber(j1,k)/vext(k)+1
+               ifiber(k,j)=int(fiber(j1,k)/vext(k))+1
             END DO
          END DO
 C  we now have the voxelcoords for this fiber
@@ -204,5 +204,69 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
          END IF
          call rchkusr()
       END DO
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C   Select fibers from fibers1 that touch any fiber in fibers2
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine touchfi(fibers1,nsegm1,startf1,endf1,nfibers1,
+     1                   keep,fibers2,nsegm2,maxdist)
+      implicit logical (a-z)
+      integer nsegm1,nfibers1,startf1(nfibers1),endf1(nfibers1),nsegm2
+      logical keep(nfibers1)
+      real*8 fibers1(6,nsegm1),fibers2(3,nsegm2),maxdist
+      integer i,j,k,l,alength
+      real*8 x1,z1,y1,d
+C Initialize keep to none
+      DO i=1,nfibers1
+         keep(i)=.FALSE.
+      END DO
+      alength=0
+C check which fibers in fibers1 are to be kept
+C$OMP PARALLEL DEFAULT(NONE)
+C$OMP& SHARED(fibers1,nsegm1,startf1,endf1,nfibers1,keep,fibers2,
+C$OMP& nsegm2,maxdist,alength)
+C$OMP& PRIVATE(i,j,x1,y1,z1,d,k)
+C$OMP DO SCHEDULE(GUIDED)
+      DO i=1,nfibers1
+         DO j=startf1(i),endf1(i)
+            x1=fibers1(1,j)
+            y1=fibers1(2,j)
+            z1=fibers1(3,j)
+            d=1e10
+            k=1
+            DO while(d.gt.maxdist.and.k.le.nsegm2)
+               d=abs(fibers2(1,k)-x1)+abs(fibers2(2,k)-y1)+
+     1           abs(fibers2(3,k)-z1)
+               k=k+1
+            END DO
+            if(d.le.maxdist) THEN
+               keep(i)=.TRUE.
+               EXIT
+            END IF
+         END DO
+      END DO
+C$OMP END DO 
+C$OMP END PARALLEL
+C$OMP FLUSH(keep)
+C now reorganize fibers1, keeping only the fibers touching fibers2
+      j=0
+      DO i=1,nfibers1
+         if(keep(i)) THEN
+            j=j+1
+            alength=endf1(i)-startf1(i)
+            DO k=0,alength
+               DO l=1,6
+                  fibers1(l,startf1(j)+k)=fibers1(l,startf1(i)+k)
+               END DO
+               if(j.lt.nfibers1) startf1(j+1)=startf1(j)+alength+1
+            END DO
+         END IF
+      END DO
+      nfibers1=j
+      nsegm1=startf1(j)+alength
+C we now have the touching fibers described by fibers1, startf1 and nfibers1
       RETURN
       END

@@ -59,12 +59,50 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       real*8 D(6),rho(6)
       logical negdefin
       call regularD(D,negdefin)
-      rho(1)=sqrt(max(1d-16,D(1)))
+      rho(1)=sqrt(max(1d-12,D(1)))
       rho(2)=D(2)/rho(1)
       rho(3)=D(3)/rho(1)
-      rho(4)=sqrt(max(1d-16,D(4)-rho(2)*rho(2)))
+      rho(4)=sqrt(max(1d-12,D(4)-rho(2)*rho(2)))
       rho(5)=(D(5)-rho(2)*rho(3))/rho(4)
-      rho(6)=sqrt(max(1d-16,D(6)-rho(3)*rho(3)-rho(5)*rho(5)))
+      rho(6)=sqrt(max(1d-12,D(6)-rho(3)*rho(3)-rho(5)*rho(5)))
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C     get rho from D (uses c(1,0,0,1,0,1) in case of inplausible D
+C     use of estimated tensors (linearized model) as initial values
+C     for nonlinear regression
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine D2Rall(D,rho,nvox)
+      implicit logical(a-z)
+      integer nvox
+      real*8 D(6,nvox),rho(6,nvox)
+      integer i,ierr
+      real*8 ew(3),ev(3,3),r1,r2,r3,r4,r5
+      DO i=1,nvox
+         call eigen3(D(1,i),ew,ev,ierr)
+         if(ew(1).le.1.d-6) THEN
+            rho(1,i) = 1.d-2
+            rho(2,i) = 0.d0
+            rho(3,i) = 0.d0
+            rho(4,i) = 1.d-2
+            rho(5,i) = 0.d0
+            rho(6,i) = 1.d-2           
+         ELSE         
+            r1=sqrt(max(1d-12,D(1,i)))
+            r2=D(2,i)/r1
+            r3=D(3,i)/r1
+            r4=sqrt(max(1d-12,D(4,i)-r2*r2))
+            r5=(D(5,i)-r2*r3)/r4
+            rho(6,i)=sqrt(max(1d-16,D(6,i)-r3*r3-r5*r5))
+            rho(5,i)=r5
+            rho(4,i)=r4
+            rho(3,i)=r3
+            rho(2,i)=r2
+            rho(1,i)=r1
+         END IF
+      END DO
       RETURN
       END
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -75,13 +113,41 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       subroutine rho2D(rho,D)
       implicit logical(a-z)
       real*8 D(6),rho(6),eps
-      eps=0.d-16
+      eps=0.d-12
       D(1)=rho(1)*rho(1)+eps
       D(2)=rho(1)*rho(2)
       D(3)=rho(1)*rho(3)
       D(4)=rho(2)*rho(2)+rho(4)*rho(4)+eps
       D(5)=rho(2)*rho(3)+rho(4)*rho(5)
       D(6)=rho(3)*rho(3)+rho(5)*rho(5)+rho(6)*rho(6)+eps
+C      call testreg2(D,rho,111)
+      RETURN
+      END
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+C
+C     get D from rho 
+C
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+      subroutine R2Dall(rho,D,nvox)
+      implicit logical(a-z)
+      integer nvox,i
+      real*8 D(6,nvox),rho(6,nvox),eps
+      real*8 r1,r2,r3,r4,r5,r6
+      eps=0.d-12
+      DO i=1,nvox
+         r1=rho(1,i)
+         r2=rho(2,i)
+         r3=rho(3,i)
+         r4=rho(4,i)
+         r5=rho(5,i)
+         r6=rho(6,i)
+         D(1,i)=r1*r1+eps
+         D(2,i)=r1*r2
+         D(3,i)=r1*r3
+         D(4,i)=r2*r2+r4*r4+eps
+         D(5,i)=r2*r3+r4*r5
+         D(6,i)=r3*r3+r5*r5+r6*r6+eps
+      END DO
 C      call testreg2(D,rho,111)
       RETURN
       END

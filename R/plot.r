@@ -28,7 +28,7 @@ function(x, y,slice=1, gradient=NULL, view= "axial", show=TRUE, density=FALSE, x
     }
     return(invisible(z))
   }
-  adimpro <- require(adimpro)
+  #adimpro <- require(adimpro)
   if (view == "sagittal") {
     if(slice<1||slice>x@ddim[1]) {
       warning("slice number out of range, show central slice")
@@ -49,12 +49,12 @@ function(x, y,slice=1, gradient=NULL, view= "axial", show=TRUE, density=FALSE, x
     img <- x@si[xind,yind,slice,gradient]
   }
   oldpar <- par(mar=mar,mgp=mgp, ...)
-  if(adimpro) {
+  #if(adimpro) {
     img <- make.image(65535*img/maxsi)
     if(show) show.image(img,...)
-  } else if(show) {
-    image(img,...)
-  }
+  #} else if(show) {
+  #  image(img,...)
+  #}
   par(oldpar)
   invisible(img)
 })
@@ -63,7 +63,7 @@ function(x, y,slice=1, gradient=NULL, view= "axial", show=TRUE, density=FALSE, x
 
 setMethod("plot", "dtiTensor", function(x, y, slice=1, view="axial", quant=0, minfa=NULL, contrast.enh=1,what="fa", qrange=c(.01,.99),xind=NULL,yind=NULL,zind=NULL, mar=c(2,2,2,.2),mgp=c(2,1,0),...) {
   if(is.null(x@D)) cat("No diffusion tensor yet")
-  adimpro <- require(adimpro)
+  #adimpro <- require(adimpro)
   if(is.null(xind)) xind<-(1:x@ddim[1])
   if(is.null(yind)) yind<-(1:x@ddim[2])
   if(is.null(zind)) zind<-(1:x@ddim[3])
@@ -131,7 +131,7 @@ setMethod("plot", "dtiTensor", function(x, y, slice=1, view="axial", quant=0, mi
    title(paste("Anisotropy Index  (GA)  range:",signif(min(z$fa[mask]),3),"-",
                 signif(max(z$fa[mask]),3)))
    } else {
-   title(paste("Geodesic Anisotropy (FA)  range:",signif(min(z$fa[mask]),3),"-",
+   title(paste("Fractional Anisotropy (FA)  range:",signif(min(z$fa[mask]),3),"-",
                 signif(max(z$fa[mask]),3)))
    }
    img<-D[4,,]
@@ -170,7 +170,7 @@ setMethod("plot", "dtiTensor", function(x, y, slice=1, view="axial", quant=0, mi
 ##############
 
 setMethod("plot", "dwiMixtensor", function(x, y, slice=1, view="axial", what="fa", minfa=NULL, identify=FALSE,  xind=NULL,yind=NULL,zind=NULL, mar=c(2,2,2,.2),mgp=c(2,1,0),...) {
-  adimpro <- require(adimpro)
+  #adimpro <- require(adimpro)
   if(is.null(xind)) xind<-(1:x@ddim[1])
   if(is.null(yind)) yind<-(1:x@ddim[2])
   if(is.null(zind)) zind<-(1:x@ddim[3])
@@ -240,7 +240,7 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
    }
    return(invisible(z))
   }
-  adimpro <- require(adimpro)
+  #adimpro <- require(adimpro)
   oldpar <- par(mar=mar,mgp=mgp, ...)
   if (view == "sagittal") {
     anindex <- if(what=="ga") tanh(x@ga[slice,yind,zind]) else x@fa[slice,yind,zind]
@@ -289,7 +289,7 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
     }
     andirection <- aperm(andirection,c(2,3,1))
     andirection <- andirection*as.vector(anindex)*as.numeric(anindex>minfa)
-    if(adimpro) {
+#    if(adimpro) {
       andirection[is.na(andirection)] <- 0
       andirection <- make.image(andirection,gammatype="ITU")
       if(show) show.image(andirection,...)
@@ -299,18 +299,18 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
         par(oldpar)
         invisible(andirection)
       }
-    } else if(show) {
-      dim(anindex) <- dim(andirection)[2:3]
-      image(anindex,...)
-      if(identify){
-         identifyFA(view,slice,xind,yind,zind)
-      } else {
-        par(oldpar)
-        invisible(NULL)
-      }
-    }
+#    } else if(show) {
+#      dim(anindex) <- dim(andirection)[2:3]
+#      image(anindex,...)
+#      if(identify){
+#         identifyFA(view,slice,xind,yind,zind)
+#      } else {
+#        par(oldpar)
+#        invisible(NULL)
+#      }
+#    }
   } else if (method==3) {
-    if(adimpro) {
+#    if(adimpro) {
       andirection[is.na(andirection)] <- 0
       bary <- make.image(aperm(andirection,c(2,3,1)))
       if(show) show.image(bary,...)
@@ -320,17 +320,17 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
          par(oldpar)
          invisible(bary)
       }
-    } else if(show) {
-      image(andirection[1,,],...)
-      if(identify){
-         identifyFA(view,slice,xind,yind,zind)
-      } else {
-         par(oldpar)
-         invisible(NULL)
-      }
-    }
+#    } else if(show) {
+#      image(andirection[1,,],...)
+#      if(identify){
+#         identifyFA(view,slice,xind,yind,zind)
+#      } else {
+#         par(oldpar)
+#         invisible(NULL)
+#      }
+#    }
   } else if (method==5) {
-    if(adimpro) {
+#    if(adimpro) {
       andirection[is.na(andirection)] <- 0
       img.hsi.data <- array(0,dim=c(dim(andirection)[2:3],3))
       img.hsi.data[,,1] <- atan2(andirection[2,,],andirection[1,,])
@@ -345,18 +345,18 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
          par(oldpar)
          invisible(img.hsi)
       }
-    } else if(show) {
-      image(andirection[1,,],...)
-      if(identify){
-         identifyFA(view,slice,xind,yind,zind)
-      } else {
-         par(oldpar)
-         invisible(NULL)
-      }
-    }
+#    } else if(show) {
+#      image(andirection[1,,],...)
+#      if(identify){
+#         identifyFA(view,slice,xind,yind,zind)
+#      } else {
+#         par(oldpar)
+#         invisible(NULL)
+#      }
+#    }
   } else if (method==6) {
     data("colqFA", envir = environment())
-    if (adimpro) {
+#    if (adimpro) {
       colqFA <- col2rgb(colqFA)/255
       img.data <- array(0, dim=c(dim(anindex), 3))
       for (i in 1:dim(anindex)[1]) { # i dont like for loops in R!
@@ -372,15 +372,15 @@ function(x, y, slice=1, view= "axial", method=1, quant=0, minfa=NULL, show=TRUE,
          par(oldpar)
          invisible(img)
       }
-    } else if (show) {
-      image(anindex, col=colqFA)
-      if(identify){
-         identifyFA(view,slice,xind,yind,zind)
-      } else {
-         par(oldpar)
-         invisible(NULL)
-      }
-    }
+#    } else if (show) {
+#      image(anindex, col=colqFA)
+#      if(identify){
+#         identifyFA(view,slice,xind,yind,zind)
+#      } else {
+#         par(oldpar)
+#         invisible(NULL)
+#      }
+#    }
   }
 })
 
@@ -391,3 +391,32 @@ function(x, y, ...) {
    invisible(NULL)
 })
 
+setMethod("plot", "dkiIndices", 
+          function(x, 
+                   y, 
+                   slice = 1, 
+                   #view = "axial", 
+                   what = c("md", "fa", "mk", "mk2"),
+                   #method = 1, 
+                   #quant = 0, 
+                   #minfa = NULL, 
+                   #show = TRUE, 
+                   #identify = FALSE, 
+                   #density = FALSE, 
+                   #contrast.enh = 1,
+                   #xind = NULL,
+                   #yind = NULL,
+                   #zind = NULL, 
+                   #mar = c(3, 3, 3, .3),
+                   #mgp = c(2, 1, 0), 
+                   ...) {
+            
+            switch(what,
+                   md = image(x@md[, , slice], col=grey(0:255/255), ...),
+                   fa = image(x@fa[, , slice], col=grey(0:255/255), ...),
+                   mk = image(x@mk[, , slice], col=grey(0:255/255), ...),
+                   mk2 = image(x@mk2[, , slice], col=grey(0:255/255), ...))
+            
+            
+            
+          })

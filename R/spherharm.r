@@ -12,12 +12,12 @@ getsphericalharmonicseven <- function( order, theta, phi) {
   kseq <- seq( 0, order, 2)
   n <- length( phi)
   values <- matrix( 0, (order+1)*(order+2)/2, n)
-  if ( require( gsl, quietly = TRUE, warn.conflicts = FALSE)) {
+#  if ( require( gsl, quietly = TRUE, warn.conflicts = FALSE)) {
     for (k in kseq) {
       mseq <- seq( -k, k, 1)
       for (m in mseq) {
         ind <- (k^2+k+2)/2+m
-        z <- legendre_sphPlm( k, abs(m), cos(theta))
+        z <- legendre_sphPlm( k, abs(m), cos(theta))## gsl
         if (m < 0) {
           z <- sqrt(2)*z*cos(m*phi)
         } 
@@ -27,9 +27,9 @@ getsphericalharmonicseven <- function( order, theta, phi) {
         values[ ind, ] <- z
       }
     }
-  } else {
-    warning("gsl package not available \n returning zeros instead of estimates")
-  }
+#  } else {
+#    warning("gsl package not available \n returning zeros instead of estimates")
+#  }
   values
 }
 
