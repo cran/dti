@@ -163,7 +163,6 @@ C    used as initial values
 C  this is scale invarinviant sice sqrbii scales with sqrt(sigma2) (standard deviation)
                call eigen3(thi,ew,ev,ierr)
                if(ierr.ne.0) THEN
-                  call intpr("ierr",4,ierr,1)
                   thi(1)=1
                   thi(2)=0
                   thi(3)=0
@@ -239,7 +238,6 @@ C  use Plateau kernel
                               swsi2(k)=swsi2(k)+wij*z
                            END DO
                           if(nselect.ge.nw) THEN
-C                              call intpr("nselect>nw",10,nselect,1)
                               CYCLE
                            ENDIF
                            nselect=nselect+1
@@ -298,7 +296,6 @@ C   this also adjusts for eliminating \theta by combining the second and 4th mom
                   END DO
                END IF
                call eigen3(Dn(1,i1,i2,i3),ew,ev,ierr)
-               IF(ew(1).lt.0.d0) call dblepr("C0",2,ew,3)
                mew=(ew(1)+ew(2)+ew(3))/3.d0
                z1=ew(1)-mew
                z2=ew(2)-mew

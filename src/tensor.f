@@ -33,7 +33,6 @@ C
       integer i
       double precision D(6),th0,rss,res
       th0=par(1)
-C      call dblepr("par",3,par,7)
       call rho2D(par(2),D)
       call sihat(th0,D,b,gv,nb)
 C
@@ -45,7 +44,6 @@ C
          rss=rss+res*res*vinv(i)
       END DO
       fv=rss
-C      call dblepr("fv",2,fv,1)
 C
 C   now we have value of the criterion in fv
 C

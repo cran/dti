@@ -77,12 +77,14 @@ sioutlier1 <- function( si, s0ind, level, mask, mc.cores = 1, verbose = TRUE){
   if(ns0>1) {
     s0 <- rep(1/ns0,ns0)%*%s0
   }
-  if(is.null(mask)) mask <- array(s0 > level,dsi[-length(dsi)])
-  mask <- connect.mask(mask)
+  if(is.null(mask)){
+    mask <- array(s0 > level,dsi[-length(dsi)])
+    mask <- connect.mask(mask)
+  }
   nvox <- sum(mask)
 
   t2 <- Sys.time()
-  if (verbose) cat( difftime( t2, t1), attr(difftime( t2, t1), "units"), "for", n, "voxel\n")
+  if (verbose) cat( difftime( t2, t1), attr(difftime( t2, t1), "units"), "for", nvox, "voxel\n")
   if(mc.cores>1) setCores(mc.cores.old,reprt=FALSE)
   list(si=zz[,mask],s0=s0[mask],index=index,mask=mask)
 }
@@ -475,7 +477,7 @@ thcorr3D <- function(bw,lag=rep(5,3)){
 }
 
 andir2.image <- function(dtobject,slice=1,method=1,quant=0,minfa=NULL,show=TRUE,xind=NULL,yind=NULL,...){
-  if(!("dti" %in% class(dtobject))) stop("Not an dti-object")
+  if(!inherits(dtobject,"dti")) stop("Not an dti-object")
   if(is.null(dtobject$anindex)) stop("No anisotropy index yet")
   #adimpro <- require(adimpro)
   anindex <- dtobject$anindex
@@ -612,8 +614,8 @@ vcrossp <- function(a, b) {
 
 showFAColorScale <- function(filename = "FAcolorscale.png") {
   data("colqFA", envir = environment())
-  png( filename = filename, width = 800, height = 100, bg = "white", pointsize = 16)
-  par( mar = c( 2, 0.5, 0.1, 0.5))
+  png( filename = filename, width = 600, height = 75, bg = "white", pointsize = 12)
+  par( mar = c( 2, 0.75, 0.1, 0.75))
   image( matrix( seq( 0, 1, length = 256), 256, 1), col = dti::colqFA, yaxt = "n")
   axis(1, at = seq( 0, 1, by = 0.1))
   text( 0.1, 0, "FA", pos = 4, cex = 2, font = 2, col = "white")
@@ -648,4 +650,28 @@ unifybvals <- function(bval,dbv=51){
    }
    for(bv in unique(nbval)) nbval[nbval==bv] <- trunc(mean(bval[nbval==bv]))
    nbval
+}
+
+expanddwiobj <- function(object){
+   if(!inherits(object,"dtiData")) stop("Needs dtiData object")
+   ns0 <- attributes(object)$ns0
+   if(is.numeric(ns0)) if(ns0>1&&object@s0ind==1){
+     grad <- cbind(matrix(0,3,ns0),object@gradient[,-1])
+     bvalue <- c(rep(0,ns0-1),object@bvalue)
+     ngrad <- object@ngrad+ns0-1
+     s0 <- object@si[,,,object@s0ind[1]]
+     si <- object@si[,,,-object@s0ind]
+     sinew <- array(0,c(dim(s0),ngrad))
+     sinew[,,,-(1:ns0)] <- si
+     sinew[,,,1:ns0] <- s0
+     object@si <- sinew
+     object@gradient <- grad 
+     object@bvalue <- bvalue
+     object@btb <- sweep(create.designmatrix.dti(grad), 2, bvalue, "*")
+     object@s0ind <- as.integer(1:ns0)
+     object@replind <- replind(grad)
+     object@ngrad <- as.integer(ngrad)
+     attr(object,"ns0") <- NULL
+   }
+     object
 }

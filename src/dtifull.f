@@ -60,7 +60,6 @@ C  now anisotropic smoothing
 C  this is scale invariant sice sqrbii scales with sqrt(sigma2) (standard deviation)
                call eigen3(thi,ew,ev,ierr)
                if(ierr.ne.0) THEN
-                  call intpr("ierr",4,ierr,1)
                   thi(1)=1
                   thi(2)=0
                   thi(3)=0

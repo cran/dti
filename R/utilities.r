@@ -81,7 +81,7 @@ setMethod("sdpar", "dtiData", function(object,
       adimpro::show.image(adimpro::make.image(img/maximg))
       title("Central slice: Intensity values")
       adimpro::show.image(adimpro::make.image((img<A0)))
-      title("Central slice: voxel not in mask")
+      title("Central slice: intensity below threshold")
       a <- readline(paste("Accept current cut off point",A0," (Y/N):"))
       if (toupper(a) == "N") {
         cutpoint <-  readline("Provide value for cut off point:")
@@ -129,7 +129,7 @@ setMethod("sdpar", "dtiData", function(object,
        sdcoef0 <- coefficients(lm(s0sd[ind]~s0mean[ind]))
        if(sdcoef0[1]<0){
           sdcoef0 <- numeric(2)
-          sdcoef0[1] <- .25  # this is an arbitrary (small) value to avaoid zero variances
+          sdcoef0[1] <- .25  # this is an arbitrary (small) value to avoid zero variances
           sdcoef0[2] <- coefficients(lm(s0sd[ind]~s0mean[ind]-1))
        }
        if(sdcoef0[2]<0){
@@ -1084,6 +1084,28 @@ setMethod("extract","dwiQball",function(x,
   invisible(z)
 })
 
+setmask <- function(object,  ...) cat("No method defined for class:",class(object),"\n")
+
+setGeneric("setmask", function(object,  ...) standardGeneric("setmask"))
+
+setMethod("setmask","dtiData",function(object, maskfile){
+  ddim <- object@ddim0[1:3]
+  xind <- object@xind
+  yind <- object@yind
+  zind <- object@zind
+  mask <- oro.nifti::readNIfTI(maskfile, reorient = FALSE)
+  dmask <- dim(mask)
+  if(all(ddim == dmask)){
+    object@mask <- mask[xind,yind,zind] > 0
+  } else if(all(dmask == object@ddim)){
+    object@mask <- mask > 0
+  } else {
+    stop("Incorrect dimensions of mask file")
+  }
+  object
+}
+)
+
 getmask <- function(object,  ...) cat("No method defined for class:",class(object),"\n")
 
 setGeneric("getmask", function(object,  ...) standardGeneric("getmask"))
@@ -1110,6 +1132,7 @@ setMethod("getmask","dtiData",function(object, level=NULL, prop=.4, size=3){
   z
 }
 )
+
 setMethod("getmask","array",function(object, level=NULL, prop=.4, size=3){
   if(length(dim(object))!=3){
     level <- NULL
@@ -1144,7 +1167,7 @@ selectCube <- function(xind,yind,zind,ddim,maxobj){
   n1 <- length(xind)
   n2 <- length(yind)
   n3 <- length(zind)
-  if(any(c(xind[1],yind[1],zind[1]) < 1 || any(c(xind[n1]-ddim[1],yind[n2]-ddim[2],zind[n3]-ddim[3])>0))){
+  if(any(c(xind[1],yind[1],zind[1]) < 1) || any(c(xind[n1]-ddim[1],yind[n2]-ddim[2],zind[n3]-ddim[3])>0)){
     stop("Error in index specification, specified cube exceeds dimensions of object")
   }
   l1 <- (xind[n1]-xind[1]+1-n1) == 0

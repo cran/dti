@@ -34,6 +34,7 @@ setMethod("dkiTensor", "dtiData",
             mc.cores <- min(mc.cores, detectCores())
 
             ## define the design matrix of the estimation problem
+            if(!is.null(attributes(object)$ns0)) object <- expanddwiobj(object)
             s0ind <- object@s0ind
             xxx <- dkiDesign(object@gradient[, - s0ind])
 
@@ -51,6 +52,8 @@ setMethod("dkiTensor", "dtiData",
 
             ## check for outliers and
             ## we need the mean s0 image and a mask
+            if(is.null(mask)) mask <- object@mask
+            # prefer mask from object over mask defined by level
             z <- sioutlier1(object@si,s0ind,object@level,mask,mc.cores=mc.cores)
             ## z$si and z$s0 only contain voxel in the mask
             ## first dimension of matrix z$si corresponds to gradients

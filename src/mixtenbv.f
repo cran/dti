@@ -420,10 +420,7 @@ C  now search for minima of sms (or weighted sms
             if(i.eq.16) THEN
           END IF
           call nnls(z,ngrad,ngrad,m+1,sms,w,erg,work2,work1,ind,mode)
-          IF(mode.gt.1) THEN
-              call intpr("mode",4,mode,1)
-              call intpr("isample",7,isample(1,k),m)
-          ELSE
+          IF(mode.le.1) THEN
               IF(erg.lt.krit) THEN
                 krit=erg
                 ibest=k
@@ -528,10 +525,7 @@ C
 C  thats the Hansson-Larsson code for linear regression with positivity
 C          constraints
 C
-            IF(mode.gt.1) THEN
-               call intpr("mode",4,mode,1)
-               call intpr("isample",7,isample(1,k),m)
-            ELSE
+            IF(mode.le.1) THEN
                IF(erg.lt.krit) THEN
                  krit=erg
                  ibest=k

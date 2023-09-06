@@ -272,9 +272,6 @@ C
      1            mode)
 C  1d-6  is a limit for condition number
       IF(mode.eq.0) THEN
-C      IF(mode.ne.0) THEN
-C         call intpr("mode",4,mode,1)
-C      ELSE
          sw=0.d0
 C penalize for extreme th values
          if(th.gt.1.d1) sw=sw+th-1.d1
@@ -427,9 +424,6 @@ C
       call dcopy(n*m,z,1,work1,1)
       call dgelsy(n,m,1,work1,n,w,n,jpvt,1d-8,rank,work,25,mode)
 C  1d-6  is a limit for condition number
-      IF(mode.gt.1) THEN
-         call intpr("mode",4,mode,1)
-      END IF
 C
 C   thats weights in w now V, dVdth, dVdphi, dVdeta, dzdpars
 C
@@ -628,10 +622,7 @@ C  now search for minima of sms (or weighted sms
                     call dcopy(ngrad,egrad(1,isample(l,k)),1,z(1,l),1)
                   END DO
              call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
-                  IF(mode.gt.1) THEN
-                     call intpr("mode",4,mode,1)
-                     call intpr("isample",7,isample(1,k),m)
-                  ELSE
+                  IF(mode.le.1) THEN
                      IF(erg.lt.krit) THEN
                         krit=erg
                         ibest=k
@@ -736,10 +727,7 @@ C  now search for minima of sms (or weighted sms
                   call dcopy(ngrad,egrad(1,isample(l,k)),1,z(1,l),1)
                END DO
              call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
-               IF(mode.gt.1) THEN
-                  call intpr("mode",4,mode,1)
-                  call intpr("isample",7,isample(1,k),m)
-               ELSE
+               IF(mode.le.1) THEN
                   IF(erg.lt.krit) THEN
                      krit=erg
                      ibest=k
@@ -868,10 +856,6 @@ C  now search for minima of sms (or weighted sms)
                   call dcopy(ngrad,egrad(1,is(m)),1,z(1,m),1)
         call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
                   IF(mode.le.1) THEN
-C                  IF(mode.gt.1) THEN
-C                     call intpr("mode",4,mode,1)
-C                     call intpr("isample",7,is,m)
-C                  ELSE
                      IF(erg.lt.krit) THEN
                         krit=erg
                         iw=0
@@ -993,10 +977,6 @@ C  now search for minima of sms (or weighted sms)
                call dcopy(ngrad,egrad(1,is(m)),1,z(1,m),1)
         call nnls(z,ngrad,ngrad,m,sms,w,erg,work2,work1,ind,mode)
                IF(mode.le.1) THEN
-C               IF(mode.gt.1) THEN
-C                  call intpr("mode",4,mode,1)
-C                  call intpr("isample",7,is,m)
-C               ELSE
                   IF(erg.lt.krit) THEN
                      krit=erg
                      iw=0

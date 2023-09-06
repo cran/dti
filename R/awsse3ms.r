@@ -35,6 +35,7 @@ setMethod("dwi.smooth.ms",
             ngrad <- ngrad - ns0
             grad <- object@gradient[,-s0ind]
             bvalues <- object@bvalue[-s0ind]
+            if(is.null(mask)) mask <- object@mask
             sdcoef <- object@sdcoef
             level <- object@level
             vext <- object@voxelext[2:3]/object@voxelext[1]
@@ -92,7 +93,7 @@ setMethod("dwi.smooth.ms",
             object@bvalue <- bvalue <- c(0,object@bvalue[-object@s0ind])
             object@btb <- sweep(create.designmatrix.dti(grad), 2, bvalue, "*")
             object@s0ind <- as.integer(1)
-            object@replind <- as.integer(1:ngrad)
+            object@replind <- replind(grad)
             object@ngrad <- as.integer(ngrad)
             object@call <- args
             attr(object,"ns0") <- ns0

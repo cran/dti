@@ -1,6 +1,6 @@
 Package: dti
-Version: 1.5.1
-Date: 2020-02-25
+Version: 1.5.4
+Date: 2023-09-06
 Title: Analysis of Diffusion Weighted Imaging (DWI) Data
 Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "karsten.tabelow@wias-berlin.de"),
@@ -30,10 +30,10 @@ Description: Diffusion Weighted Imaging (DWI) is a Magnetic Resonance Imaging
 License: GPL (>= 2)
 Copyright: This package is Copyright (C) 2005-2020 Weierstrass
         Institute for Applied Analysis and Stochastics.
-URL: http://www.wias-berlin.de/research/ats/imaging/
+URL: https://www.wias-berlin.de/research/ats/imaging/
 Suggests: covr
 RoxygenNote: 6.1.0
 NeedsCompilation: yes
-Packaged: 2020-02-27 08:24:57 UTC; tabelow
+Packaged: 2023-09-06 14:21:02 UTC; polzehl
 Repository: CRAN
-Date/Publication: 2020-02-28 22:40:20 UTC
+Date/Publication: 2023-09-06 15:30:09 UTC
