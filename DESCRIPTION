@@ -1,6 +1,6 @@
 Package: dti
-Version: 1.5.4
-Date: 2023-09-06
+Version: 1.5.4.3
+Date: 2024-09-26
 Title: Analysis of Diffusion Weighted Imaging (DWI) Data
 Authors@R: c(person("Karsten", "Tabelow", role = c("aut", "cre"),
                     email = "karsten.tabelow@wias-berlin.de"),
@@ -34,6 +34,6 @@ URL: https://www.wias-berlin.de/research/ats/imaging/
 Suggests: covr
 RoxygenNote: 6.1.0
 NeedsCompilation: yes
-Packaged: 2023-09-06 14:21:02 UTC; polzehl
+Packaged: 2024-09-26 10:09:05 UTC; tabelow
 Repository: CRAN
-Date/Publication: 2023-09-06 15:30:09 UTC
+Date/Publication: 2024-09-26 12:10:03 UTC

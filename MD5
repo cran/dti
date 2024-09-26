@@ -1,5 +1,5 @@
 403cf803518b82f6cb54ff4a392dcb75 *ChangeLog
-bb7c55020f381a52a2b2431310b4c605 *DESCRIPTION
+a20a41a6b7cbd91310825446a8e82cd7 *DESCRIPTION
 9ca52282349be08955232baba0051b87 *NAMESPACE
 7fe2ac58f9a9bd07e6c760ba49d01899 *R/Classes.r
 5def770bb144f0eb4c1ef9624e8197ba *R/MD.r
@@ -25,7 +25,8 @@ b3794c53aa52e4a7d7b2460814199bbf *R/show3d.r
 62186b378d0bf61c43379ec58fe1f1c5 *R/tracking.r
 3ddd7a75d83a7bf8455b07c737849ef8 *R/utilities.r
 9c2c48ee10d6ee7e5e40f1c2b5b210b5 *R/varest.r
-800df3170a57ccced124ece4cb95bb7e *build/partial.rdb
+fba3f425938f3e32f2dfcdb00060d9a1 *README.md
+572e594fed353f1360dfb2c7cf436281 *build/partial.rdb
 8879bf6df2543e79acff3e9163ac11a2 *data/colqFA.rda
 20c485f74344eaf1de08a1dcf9319ff8 *data/optgradients.rda
 5dba0b972ed4b3070192a01c24b34428 *data/polyeders.rda
@@ -61,7 +62,7 @@ bd50dcbe2fde558f1e978eb3b7aac6ac *man/dwiMD-methods.Rd
 7ce9691de8721b28a11fcd463f1c74cf *man/dwiQball-methods.Rd
 8aa21b22fd994a8ee97ec643b02e96f3 *man/dwiRiceBias-methods.Rd
 6b3854ff3958d70b057ddde97624f286 *man/dwiSqrtODF-methods.Rd
-5a76a636cce6f20d6ed911bcdc7685c2 *man/extract-methods.Rd
+bee058de8881f72adda0f05b01c26ccc *man/extract-methods.Rd
 ec020a8ea7e73ea90f1647305e9b7d4f *man/getmask-methods.Rd
 30fd6da4438c9cd4fd9b3ea44625199d *man/getsdofsb-methods.Rd
 ef13ecdd586f035d5261a0c02cd33f3a *man/medinria.Rd
@@ -87,7 +88,7 @@ c285f70592f7a2558e936b354c0f7775 *src/Fiber.cpp
 67216ecf635d74a89d1c0b6377cb1b7e *src/Fibertracking.h
 57d7603e4cc8806d2c5a4b41c1b5a1e9 *src/LawsonHansonnnls.f
 2a6f9e9e044a78154d3cfda5936d6f48 *src/Makevars
-68d44c01f5de4194c52daa9902041fca *src/TrackingInterface.cpp
+3299fdb30d218a298911a97fa23ea59c *src/TrackingInterface.cpp
 ef37ec4c30886cf12b37991ae7dbd95b *src/Vector.cpp
 c0ebc844ab7f569daa02bb4fea0da913 *src/Vector.h
 48bc7475999ddc7ea206f6ddd1315384 *src/VectorList.cpp
@@ -97,7 +98,7 @@ dba6b6c56e6c799550d71d4d5cbefcf4 *src/VectorList.h
 83c0b683f464eb1d096ed0426d05f3d0 *src/aniso.f
 fe562b8357704dd873f33af5c96eaa5e *src/awsvar.f
 8eea6c57385510697cb056997560f69b *src/bessel.c
-10fc3e67ae1d46b255d42ba8d2c1ecea *src/bmixtensorpl.c
+ad97644715b5cde2e1b76ee29c5bdec5 *src/bmixtensorpl.c
 82971a121d4fbe2023a6938df1b52ed3 *src/dtifull.f
 ae392226154e9f87c9fae824faded297 *src/dtinraw2.f
 2e6973862b4e24f49933874ed5030023 *src/fibers.f
@@ -106,10 +107,10 @@ ae392226154e9f87c9fae824faded297 *src/dtinraw2.f
 b7bd340e3bc0be1c3ae6262afa4ce3c3 *src/mixtenbv.f
 d32ed3deb35a5434b8be3621b5ddff92 *src/mixtens.f
 1f24313862ad64395635f02d67fee963 *src/mixtensl.f
-54514b3e3a78e4bd12284f8146a903dc *src/mixtensorpl.c
+d508a4dbdded607601493bcaac1aae2d *src/mixtensorpl.c
 97dde94646fc200ee056e735a514b835 *src/nlrdtirg.f
 7215b4a032e8b9559df6418cf58121c6 *src/rice.f
 7177d6f7acbc7a56237f9e8fe1554a5d *src/show3d.f
 dc1bc943d4cb0e7766d70a0ae0145359 *src/smse3.f
 c2202da22ca40bb7fec99002f7e2c610 *src/tensor.f
-ccd5bf2b81218b3210b06d7e8606f26a *src/tensorc.c
+a9279ee174dd5d3f5f8d8ed70c2a8a7b *src/tensorc.c
